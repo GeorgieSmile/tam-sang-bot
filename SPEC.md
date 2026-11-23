@@ -8,8 +8,8 @@
 ---
 
 ## 1. Context Pointers (Read First)
-- `/Users/georgiesmile/Documents/Personal Project/Line-Order-Agent/line-order-agent/docs/04-demo-menu.md` — Source 24-item fictional `ครัวอิ่มจัง` menu (dishes, base prices, option groups, `ingredient_key` mappings, and default delivery fee rule). Seed `menu.yaml` from this file; do not copy application code or architecture from `Line-Order-Agent`.
-- `/Users/georgiesmile/Documents/Personal Project/tam-sang-bot/SPEC.md` — This spec (single source of truth for schema, behavior, and verification).
+- `menu.yaml` — Source of truth for the 24-item `ครัวอิ่มจัง` menu (dishes, base prices, option groups, `ingredient_key` mappings, opening hours, and delivery fee rule).
+- `SPEC.md` — This spec (single source of truth for schema, behavior, and verification).
 
 ---
 
@@ -160,7 +160,6 @@ The executing agent must run and pass all checks below after its last edit befor
 - **Agent may decide and log (reversible)**: Internal function/module structure, exact Thai wording polish (preserving required meanings), `/kitchen` CSS styling, local test fixture data, and `ruff`/`mypy` config flags.
 - **Agent MUST stop and ask (irreversible / intent-changing)**:
   - Any live paid LLM API call (e.g., OpenRouter) or live LINE push/reply call during Tickets 1–4 (all automated tests must use mocked/stubbed HTTP & LLM clients).
-  - Modifying anything inside `/Users/georgiesmile/Documents/Personal Project/Line-Order-Agent`.
   - Adding frameworks, external databases, auth libraries, or unrequested dependencies beyond the listed stack.
   - Committing, pushing to a remote, deploying to cloud infrastructure, or changing external LINE OA console settings.
 - **Rollback Plan**: `N/A` (greenfield local SQLite project; deleting `shop.db` cleanly re-initializes schema on restart).
