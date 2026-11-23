@@ -6,6 +6,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .env
+.dev.log
 shop.db
 shop.db-shm
 shop.db-wal

@@ -56,9 +56,7 @@ def handle_owner_text(db: ShopDB, menu: Menu, settings: Settings, text: str) -> 
     if compact in ("โหมดปกติ", "หายยุ่งแล้ว", "หายยุ่ง", "ปกติ", "เลิกยุ่ง"):
         db.set_busy_mode(False)
         return "กลับสู่โหมดปกติแล้วค่ะ"
-    if compact.startswith(("ยุ่ง", "โหมดยุ่ง", "คิวยุ่ง")) or re.match(
-        r"^คิว\d+นาที$", compact
-    ):
+    if compact.startswith(("ยุ่ง", "โหมดยุ่ง", "คิวยุ่ง")) or re.match(r"^คิว\d+นาที$", compact):
         match = re.search(r"(\d+)", raw)
         mins = int(match.group(1)) if match else 20
         mins = max(5, min(mins, 180))

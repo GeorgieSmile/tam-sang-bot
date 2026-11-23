@@ -41,8 +41,7 @@ TOOLS: list[dict[str, Any]] = [
         "function": {
             "name": "get_shop_status",
             "description": (
-                "ดูสถานะร้าน (เปิด/ปิด เวลาเปิด โหมดยุ่งและเวลารอ ของหมด กติกาค่าส่ง "
-                "และที่อยู่จัดส่งเดิมของลูกค้าคนนี้)"
+                "ดูสถานะร้าน (เปิด/ปิด เวลาเปิด โหมดยุ่งและเวลารอ ของหมด กติกาค่าส่ง และที่อยู่จัดส่งเดิมของลูกค้าคนนี้)"
             ),
             "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
         },
@@ -108,9 +107,7 @@ TOOLS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "build_order_card",
-            "description": (
-                "สร้างการ์ดสรุปออเดอร์ (LINE Flex) พร้อมปุ่มยืนยันเมื่อมีรายการและวิธีรับอาหารครบแล้ว"
-            ),
+            "description": ("สร้างการ์ดสรุปออเดอร์ (LINE Flex) พร้อมปุ่มยืนยันเมื่อมีรายการและวิธีรับอาหารครบแล้ว"),
             "parameters": {"type": "object", "properties": {}, "additionalProperties": False},
         },
     },
@@ -312,20 +309,14 @@ def handle_location_message(
                 wait_minutes=status.wait_minutes if status.busy_mode else None,
             )
             reply = f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ ตรวจสอบรายการบนการ์ดแล้วกดยืนยันได้เลยนะคะ"
-            db.append_conversation_event(
-                line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply
-            )
+            db.append_conversation_event(line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply)
             return AgentTurn(reply_text=reply, flex_card=flex, reason="ok")
         reply_err = err or f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ"
-        db.append_conversation_event(
-            line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply_err
-        )
+        db.append_conversation_event(line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply_err)
         return AgentTurn(reply_text=reply_err, reason="ok")
 
     reply_empty = f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ ต้องการสั่งเมนูอะไรดีคะ?"
-    db.append_conversation_event(
-        line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply_empty
-    )
+    db.append_conversation_event(line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply_empty)
     return AgentTurn(reply_text=reply_empty, reason="ok")
 
 

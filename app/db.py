@@ -208,8 +208,7 @@ def _resolve_open_status(
     scheduled_open = menu.is_scheduled_open(now)
     open_override = (
         str(state_row["open_override"])
-        if state_row["override_date"] == today
-        and state_row["open_override"] in ("open", "closed")
+        if state_row["override_date"] == today and state_row["open_override"] in ("open", "closed")
         else None
     )
     if open_override == "open":
@@ -478,9 +477,7 @@ class ShopDB:
             return False
         return self.now_bkk() <= until
 
-    def save_conversation_messages(
-        self, conv_id: int, messages: list[dict[str, Any]]
-    ) -> None:
+    def save_conversation_messages(self, conv_id: int, messages: list[dict[str, Any]]) -> None:
         with self._tx(immediate=True) as conn:
             conn.execute(
                 "UPDATE conversations SET messages_json = ?, updated_at = ? WHERE id = ?",
@@ -541,9 +538,7 @@ class ShopDB:
             ).fetchone()
             return int(row["draft_revision"])
 
-    def set_active_card(
-        self, conv_id: int, card_id: str, card_snapshot: dict[str, Any]
-    ) -> None:
+    def set_active_card(self, conv_id: int, card_id: str, card_snapshot: dict[str, Any]) -> None:
         with self._tx(immediate=True) as conn:
             conn.execute(
                 """
@@ -596,9 +591,7 @@ class ShopDB:
                 (card_id, line_user_id),
             ).fetchone()
             if existing is not None:
-                return ConfirmResult(
-                    ok=True, order=_row_to_order(existing), already_confirmed=True
-                )
+                return ConfirmResult(ok=True, order=_row_to_order(existing), already_confirmed=True)
 
             conv_row = conn.execute(
                 "SELECT * FROM conversations WHERE line_user_id = ? AND shop_date = ?",
@@ -626,9 +619,7 @@ class ShopDB:
                     error=f"ตอนนี้ร้านปิดรับออเดอร์แล้วค่ะ (ปกติเปิด {menu.shop.hours_text_th()})",
                 )
 
-            ov_rows = conn.execute(
-                "SELECT kind, key, is_available FROM menu_overrides"
-            ).fetchall()
+            ov_rows = conn.execute("SELECT kind, key, is_available FROM menu_overrides").fetchall()
             overrides: OverrideMap = {
                 (str(r["kind"]), str(r["key"])): bool(r["is_available"]) for r in ov_rows
             }

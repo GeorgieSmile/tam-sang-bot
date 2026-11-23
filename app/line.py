@@ -186,9 +186,7 @@ def build_order_flex(
 
     body_contents.append({"type": "separator", "margin": "md"})
 
-    fulfillment_text = (
-        f"ส่ง: {address}" if fulfillment == "delivery" and address else "รับเองที่ร้าน"
-    )
+    fulfillment_text = f"ส่ง: {address}" if fulfillment == "delivery" and address else "รับเองที่ร้าน"
     body_contents.append(
         {"type": "text", "text": fulfillment_text, "size": "sm", "wrap": True, "margin": "md"}
     )

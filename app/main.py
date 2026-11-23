@@ -209,9 +209,7 @@ def create_app(
         return {"ok": True}
 
     @app.post("/api/kitchen/orders/{order_id}/done")
-    def kitchen_mark_done(
-        order_id: int, request: Request, body: DoneOrderBody
-    ) -> dict[str, Any]:
+    def kitchen_mark_done(order_id: int, request: Request, body: DoneOrderBody) -> dict[str, Any]:
         if not _check_kitchen_auth(request, cfg.kitchen_secret):
             raise HTTPException(status_code=403, detail="Invalid kitchen key")
         order = shop_db.mark_order_done(order_id)
@@ -286,8 +284,7 @@ def create_app(
                     )
                     if not res.already_confirmed:
                         confirm_note = (
-                            f"[ลูกค้ากดยืนยันออเดอร์ #{res.order.queue_number} บนการ์ดแล้ว "
-                            "ตะกร้าใหม่ว่างแล้ว]"
+                            f"[ลูกค้ากดยืนยันออเดอร์ #{res.order.queue_number} บนการ์ดแล้ว ตะกร้าใหม่ว่างแล้ว]"
                         )
                         shop_db.append_conversation_event(
                             user_id,
@@ -326,9 +323,7 @@ def create_app(
                     else "การ์ดนี้ถูกยกเลิกหรือยืนยันไปแล้วค่ะ"
                 )
                 if cancelled:
-                    shop_db.append_conversation_event(
-                        user_id, "[ลูกค้ากดปุ่มยกเลิกการ์ดออเดอร์]", msg
-                    )
+                    shop_db.append_conversation_event(user_id, "[ลูกค้ากดปุ่มยกเลิกการ์ดออเดอร์]", msg)
                 _safe_reply(reply_token, [text_message(msg)], event_id)
             return
 
