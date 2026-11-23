@@ -107,39 +107,39 @@ tam-sang-bot/
 ## 4. Acceptance Criteria (Observable Behavior)
 
 ### Menu, Pricing & Shop Hours
-- [ ] Given `menu.yaml` seeded with the 24 `ครัวอิ่มจัง` items, when pricing `ข้าวกะเพรา` (`50`) + `หมูกรอบ` (`+10`) + `ไข่ดาวไม่สุก` (`+10`) x 2 boxes, then code computes `food_total = 140`, `delivery_fee = 0`, `total = 140` for both pickup and delivery.
-- [ ] Given a 1-box delivery order with `food_total = 70` (< 100), then code computes `delivery_fee = 10` and `total = 80`; given the same order as `pickup`, then `delivery_fee = 0` and `total = 70`.
-- [ ] Given `menu.yaml` with `delivery_fee: 0`, then any delivery order has `delivery_fee = 0`.
-- [ ] Given `ingredient_key = "crispy_pork"` marked unavailable in `menu_overrides`, then `หมูกรอบ` is disabled across `kaphrao`, `curry_paste`, and `kale`, while other proteins on those dishes remain available.
-- [ ] Given `menu.yaml` schedule `09:00–20:00` (`Asia/Bangkok`), when local time is `21:00` with no override, shop is closed; when owner sets `open_override = 'open'` for today, shop is open until midnight, and at `00:01` next day the override and `busy_mode` no longer apply.
+- [x] Given `menu.yaml` seeded with the 24 `ครัวอิ่มจัง` items, when pricing `ข้าวกะเพรา` (`50`) + `หมูกรอบ` (`+10`) + `ไข่ดาวไม่สุก` (`+10`) x 2 boxes, then code computes `food_total = 140`, `delivery_fee = 0`, `total = 140` for both pickup and delivery.
+- [x] Given a 1-box delivery order with `food_total = 70` (< 100), then code computes `delivery_fee = 10` and `total = 80`; given the same order as `pickup`, then `delivery_fee = 0` and `total = 70`.
+- [x] Given `menu.yaml` with `delivery_fee: 0`, then any delivery order has `delivery_fee = 0`.
+- [x] Given `ingredient_key = "crispy_pork"` marked unavailable in `menu_overrides`, then `หมูกรอบ` is disabled across `kaphrao`, `curry_paste`, and `kale`, while other proteins on those dishes remain available.
+- [x] Given `menu.yaml` schedule `09:00–20:00` (`Asia/Bangkok`), when local time is `21:00` with no override, shop is closed; when owner sets `open_override = 'open'` for today, shop is open until midnight, and at `00:01` next day the override and `busy_mode` no longer apply.
 
 ### Order Lifecycle & `/kitchen` Board
-- [ ] Given a valid active order card, when Confirm is invoked once, then exactly 1 `orders` row is created with sequential `queue_number` (`1`, `2`, ...) for `shop_date`, `status = 'queued'`, draft is cleared, and `customers.last_address` / `last_location_url` are updated for delivery orders.
-- [ ] Given an already-confirmed `card_id`, when Confirm is invoked a second time, then no duplicate row is created and the existing `queue_number` and `total` are returned.
-- [ ] Given a card whose dish/option became sold out or whose `draft_revision` changed after card creation, when Confirm is invoked, then no order is created and an error describing what changed is returned.
-- [ ] Given `/kitchen` without valid `KITCHEN_SECRET`, then HTTP 401/403 is returned; with valid secret, `/kitchen` renders HTML and `/api/kitchen/state` returns active `queued` tickets (oldest first), today's completed/cancelled totals, shop status, busy mode, and sold-out states.
-- [ ] Given a `queued` order on `/kitchen`, when `POST /api/kitchen/orders/{id}/done` is called with `notify=false`, status becomes `done` and 0 LINE pushes are sent; with `notify=true`, status becomes `done` and 1 LINE push is sent; when `POST /api/kitchen/orders/{id}/cancel` is called with a reason, status becomes `cancelled` and 1 LINE push containing that reason is sent.
+- [x] Given a valid active order card, when Confirm is invoked once, then exactly 1 `orders` row is created with sequential `queue_number` (`1`, `2`, ...) for `shop_date`, `status = 'queued'`, draft is cleared, and `customers.last_address` / `last_location_url` are updated for delivery orders.
+- [x] Given an already-confirmed `card_id`, when Confirm is invoked a second time, then no duplicate row is created and the existing `queue_number` and `total` are returned.
+- [x] Given a card whose dish/option became sold out or whose `draft_revision` changed after card creation, when Confirm is invoked, then no order is created and an error describing what changed is returned.
+- [x] Given `/kitchen` without valid `KITCHEN_SECRET`, then HTTP 401/403 is returned; with valid secret, `/kitchen` renders HTML and `/api/kitchen/state` returns active `queued` tickets (oldest first), today's completed/cancelled totals, shop status, busy mode, and sold-out states.
+- [x] Given a `queued` order on `/kitchen`, when `POST /api/kitchen/orders/{id}/done` is called with `notify=false`, status becomes `done` and 0 LINE pushes are sent; with `notify=true`, status becomes `done` and 1 LINE push is sent; when `POST /api/kitchen/orders/{id}/cancel` is called with a reason, status becomes `cancelled` and 1 LINE push containing that reason is sent.
 
 ### LINE Webhook, Media & Customer Agent
-- [ ] Given a `POST /line/webhook` request with an invalid `x-line-signature`, then HTTP 400 is returned and no handler runs; given a valid request with a duplicate `webhookEventId`, then HTTP 200 is returned without re-processing.
-- [ ] Given a customer `location` message, then delivery address and `https://maps.google.com/?q={lat},{lng}` are stored on the draft and returned to the customer without requiring re-typing.
-- [ ] Given a customer `image` message, then 0 LLM calls are made, the bot replies once with `"ได้รับรูปแล้วค่ะ ส่งให้ร้านดูให้นะคะ"` and sets `handed_over_until`; a second `image` while handed over sends 0 replies.
-- [ ] Given a customer `sticker`, `audio`, or `video` message, then HTTP 200 is returned with 0 replies and 0 LLM calls.
-- [ ] Given a customer ordering `"กะเพราหมูกรอบ 1 กล่อง รับเอง"`, then the agent applies default spice (`เผ็ดปกติ`) without asking for spice level, builds a Flex order card with code-calculated total `60`, and includes `wait_minutes` text on the card when `busy_mode` is active.
-- [ ] Given a returning delivery customer with saved `last_address`, when they order for delivery without typing an address, then the draft pre-fills `last_address` (and `last_location_url` if present) and states it once.
-- [ ] Given a customer message asking to edit a `queued` order, a bare greeting (`"สวัสดีค่ะ"`), or an unlisted dish/allergy question, then the bot replies once with the hand-over message and sets `handed_over_until`; a follow-up `"ขอบคุณค่ะ"` produces 0 replies; a new order or `"ถึงไหนแล้ว"` wakes the bot and replies normally.
-- [ ] Given `bot_enabled = 0`, then customer text messages produce 0 replies (owner commands still work).
-- [ ] Given a turn hitting 6 tool calls, 40s deadline, or 30 customer turns in a day, then execution stops safely (at 30 turns, hands over to the owner for the rest of today).
+- [x] Given a `POST /line/webhook` request with an invalid `x-line-signature`, then HTTP 400 is returned and no handler runs; given a valid request with a duplicate `webhookEventId`, then HTTP 200 is returned without re-processing.
+- [x] Given a customer `location` message, then delivery address and `https://maps.google.com/?q={lat},{lng}` are stored on the draft and returned to the customer without requiring re-typing.
+- [x] Given a customer `image` message, then 0 LLM calls are made, the bot replies once with `"ได้รับรูปแล้วค่ะ ส่งให้ร้านดูให้นะคะ"` and sets `handed_over_until`; a second `image` while handed over sends 0 replies.
+- [x] Given a customer `sticker`, `audio`, or `video` message, then HTTP 200 is returned with 0 replies and 0 LLM calls.
+- [x] Given a customer ordering `"กะเพราหมูกรอบ 1 กล่อง รับเอง"`, then the agent applies default spice (`เผ็ดปกติ`) without asking for spice level, builds a Flex order card with code-calculated total `60`, and includes `wait_minutes` text on the card when `busy_mode` is active.
+- [x] Given a returning delivery customer with saved `last_address`, when they order for delivery without typing an address, then the draft pre-fills `last_address` (and `last_location_url` if present) and states it once.
+- [x] Given a customer message asking to edit a `queued` order, a bare greeting (`"สวัสดีค่ะ"`), or an unlisted dish/allergy question, then the bot replies once with the hand-over message and sets `handed_over_until`; a follow-up `"ขอบคุณค่ะ"` produces 0 replies; a new order or `"ถึงไหนแล้ว"` wakes the bot and replies normally.
+- [x] Given `bot_enabled = 0`, then customer text messages produce 0 replies (owner commands still work).
+- [x] Given a turn hitting 6 tool calls, 40s deadline, or 30 customer turns in a day, then execution stops safely (at 30 turns, hands over to the owner for the rest of today).
 
 ### Owner LINE Commands & Hybrid Alerts
-- [ ] Given a webhook message from `OWNER_LINE_USER_ID`:
+- [x] Given a webhook message from `OWNER_LINE_USER_ID`:
   - `"หมูกรอบหมด"` disables `ingredient:crispy_pork`; `"หมูกรอบมาแล้ว"` re-enables it; `"เปิดครบ"` clears all sold-out overrides.
   - `"ยุ่ง 25 นาที"` sets `busy_mode=1, wait_minutes=25` for today; `"ยุ่ง"` defaults `wait_minutes=20`; `"โหมดปกติ"` clears `busy_mode`.
   - `"ปิดร้าน"` / `"เปิดร้าน"` sets today's `open_override` to `'closed'` / `'open'`.
   - `"หยุดบอท"` / `"เปิดบอท"` sets `bot_enabled` to `0` / `1`.
   - `"เปิดแจ้งเตือน"` / `"ปิดแจ้งเตือน"` sets `notify_owner_on_order` to `1` / `0`.
   - `"คิว"` replies with active `queued` count + `/kitchen` link; `"สรุปวันนี้"` replies with today's `done` count, `cancelled` count, and sum of `done` totals in baht.
-- [ ] Given `notify_owner_on_order = 1`, when a customer confirms an order, then 1 LINE push with the ticket summary is sent to `OWNER_LINE_USER_ID`; when `notify_owner_on_order = 0`, 0 pushes are sent to the owner.
+- [x] Given `notify_owner_on_order = 1`, when a customer confirms an order, then 1 LINE push with the ticket summary is sent to `OWNER_LINE_USER_ID`; when `notify_owner_on_order = 0`, 0 pushes are sent to the owner.
 
 ---
 
@@ -169,59 +169,59 @@ The executing agent must run and pass all checks below after its last edit befor
 
 ## Vertical Tracer-Bullet Tickets
 
-### Ticket 1: Menu, SQLite Store & Kitchen Board
+### Ticket 1: Menu, SQLite Store & Kitchen Board — Done
 - **Mode**: AFK
 - **Blocked by**: None
 - **Slice**: Initialize project (`pyproject.toml`, `.env.example`, `menu.yaml`, `app/config.py`, `app/menu.py`, `app/db.py`, `app/main.py`, `app/kitchen.html`) delivering the complete menu/pricing engine, SQLite persistence, rough schedule + same-day overrides, order lifecycle (`queued` / `done` / `cancelled`), and live mobile-first `/kitchen` UI + API.
 - **Acceptance Criteria**:
-  - [ ] All 5 **Menu, Pricing & Shop Hours** criteria in Section 4 pass.
-  - [ ] All 5 **Order Lifecycle & `/kitchen` Board** criteria in Section 4 pass (with LINE push client injected as a no-op/spy stub in tests).
-  - [ ] `/kitchen` includes Wake Lock request, audio beep unlock on first tap, 3s polling, Open/Close toggle, Busy chips (`ปกติ`, `ยุ่ง 15น.`, `ยุ่ง 30น.`), sold-out chips, clickable `เปิดแผนที่` link when `location_url` is set, `ทำเสร็จแล้ว`, `เสร็จ + แจ้งลูกค้า`, and `ยกเลิก` with preset reasons.
+  - [x] All 5 **Menu, Pricing & Shop Hours** criteria in Section 4 pass.
+  - [x] All 5 **Order Lifecycle & `/kitchen` Board** criteria in Section 4 pass (with LINE push client injected as a no-op/spy stub in tests).
+  - [x] `/kitchen` includes Wake Lock request, audio beep unlock on first tap, 3s polling, Open/Close toggle, Busy chips (`ปกติ`, `ยุ่ง 15น.`, `ยุ่ง 30น.`), sold-out chips, clickable `เปิดแผนที่` link when `location_url` is set, `ทำเสร็จแล้ว`, `เสร็จ + แจ้งลูกค้า`, and `ยกเลิก` with preset reasons.
 - **Verification**:
   - `uv run ruff check . && uv run mypy app tests`
   - `uv run pytest -q tests/test_menu.py tests/test_orders.py`
   - Local `uvicorn` smoke check via `curl` on `/health` and `/api/kitchen/state` (unauthorized vs. authorized).
 
-### Ticket 2: LINE Webhook, Media Routing & Confirm/Cancel Postbacks
+### Ticket 2: LINE Webhook, Media Routing & Confirm/Cancel Postbacks — Done
 - **Mode**: AFK
 - **Blocked by**: Ticket 1
 - **Slice**: Implement `app/line.py` (HMAC-SHA256 signature verification, `line_events` dedupe, loading animation, reply/push HTTP helpers, Flex order card builder) and wire `POST /line/webhook` in `app/main.py` for non-text media (`location`, `image`, `sticker`/`audio`/`video`) and idempotent `confirm` / `cancel` postbacks (including `PAYMENT_INFO_TEXT` in confirm reply and returning customer address persistence).
 - **Acceptance Criteria**:
-  - [ ] Invalid signature returns HTTP 400; duplicate `webhookEventId` returns HTTP 200 without re-running.
-  - [ ] `location` pin updates draft delivery address + Google Maps URL; `image` skips LLM, replies once + hands over (silent on repeat while handed over); `sticker`/`audio`/`video` ignored with 0 replies.
-  - [ ] Confirm postback creates 1 `queued` order via free reply token (0 pushes), returns same receipt on double-tap, refuses stale/sold-out cards, and persists `last_address`/`last_location_url` for delivery orders.
-  - [ ] Cancel postback cancels the active draft card and replies via reply token.
+  - [x] Invalid signature returns HTTP 400; duplicate `webhookEventId` returns HTTP 200 without re-running.
+  - [x] `location` pin updates draft delivery address + Google Maps URL; `image` skips LLM, replies once + hands over (silent on repeat while handed over); `sticker`/`audio`/`video` ignored with 0 replies.
+  - [x] Confirm postback creates 1 `queued` order via free reply token (0 pushes), returns same receipt on double-tap, refuses stale/sold-out cards, and persists `last_address`/`last_location_url` for delivery orders.
+  - [x] Cancel postback cancels the active draft card and replies via reply token.
 - **Verification**:
   - `uv run ruff check . && uv run mypy app tests`
   - `uv run pytest -q tests/test_webhook.py tests/test_orders.py`
 
-### Ticket 3: Customer Ordering Agent & Hand-Over
+### Ticket 3: Customer Ordering Agent & Hand-Over — Done
 - **Mode**: AFK
 - **Blocked by**: Ticket 2
 - **Slice**: Implement `app/agent.py` (Thai system prompt + cacheable menu block, OpenAI SDK client configured from `.env`, tools: `get_shop_status`, `update_cart`, `set_fulfillment`, `build_order_card`, `get_my_orders`, `cancel_order`, `hand_over`, smart defaults for spice/sweetness, returning delivery address reuse, hand-over silence, and 6-call / 40s / 30-turn guardrails) wired into `/line/webhook` under per-customer `asyncio.Lock`.
 - **Acceptance Criteria**:
-  - [ ] Messy Thai orders with default spice/sweetness build accurate code-priced Flex cards (including busy wait-time notice when `busy_mode=1`).
-  - [ ] Returning delivery customer reuses `last_address` (and `last_location_url`) automatically and states it once.
-  - [ ] Closed shop refuses cart additions/confirmations and states normal opening hours.
-  - [ ] Bare greeting, confirmed-order edit request, unlisted dish, or allergy question triggers 1 hand-over reply; subsequent non-order messages produce 0 replies; new order / status / `queued` cancel wakes the bot.
-  - [ ] `bot_enabled=0` silences customer replies; 6-call, 40s, and 30-turn guardrails terminate safely.
+  - [x] Messy Thai orders with default spice/sweetness build accurate code-priced Flex cards (including busy wait-time notice when `busy_mode=1`).
+  - [x] Returning delivery customer reuses `last_address` (and `last_location_url`) automatically and states it once.
+  - [x] Closed shop refuses cart additions/confirmations and states normal opening hours.
+  - [x] Bare greeting, confirmed-order edit request, unlisted dish, or allergy question triggers 1 hand-over reply; subsequent non-order messages produce 0 replies; new order / status / `queued` cancel wakes the bot.
+  - [x] `bot_enabled=0` silences customer replies; 6-call, 40s, and 30-turn guardrails terminate safely.
 - **Verification**:
   - `uv run ruff check . && uv run mypy app tests`
   - `uv run pytest -q tests/test_agent.py tests/test_webhook.py`
 
-### Ticket 4: Owner LINE Commands & Push Alerts
+### Ticket 4: Owner LINE Commands & Push Alerts — Done
 - **Mode**: AFK
 - **Blocked by**: Ticket 3
 - **Slice**: Implement `app/owner.py` (route `OWNER_LINE_USER_ID` messages in `/line/webhook`, parse natural Thai owner commands with deterministic matching + optional LLM fallback, execute state updates and reply via free reply token) and connect live LINE push calls for `notify_owner_on_order`, `/kitchen` `เสร็จ + แจ้งลูกค้า`, and `/kitchen` `ยกเลิก`.
 - **Acceptance Criteria**:
-  - [ ] All owner commands (`หมูกรอบหมด`, `หมูกรอบมาแล้ว`, `เปิดครบ`, `ยุ่ง 25 นาที`, `ยุ่ง`, `โหมดปกติ`, `ปิดร้าน`, `เปิดร้าน`, `หยุดบอท`, `เปิดบอท`, `เปิดแจ้งเตือน`, `ปิดแจ้งเตือน`, `คิว`, `สรุปวันนี้`) update SQLite state and reply accurately with 0 LINE pushes.
-  - [ ] `notify_owner_on_order=1` sends 1 compact ticket push to `OWNER_LINE_USER_ID` on order confirmation; `0` sends none.
-  - [ ] `/kitchen` `done` (`notify=true`) and `cancel` send the expected Thai LINE push to the customer; `done` (`notify=false`) sends 0 pushes.
+  - [x] All owner commands (`หมูกรอบหมด`, `หมูกรอบมาแล้ว`, `เปิดครบ`, `ยุ่ง 25 นาที`, `ยุ่ง`, `โหมดปกติ`, `ปิดร้าน`, `เปิดร้าน`, `หยุดบอท`, `เปิดบอท`, `เปิดแจ้งเตือน`, `ปิดแจ้งเตือน`, `คิว`, `สรุปวันนี้`) update SQLite state and reply accurately with 0 LINE pushes.
+  - [x] `notify_owner_on_order=1` sends 1 compact ticket push to `OWNER_LINE_USER_ID` on order confirmation; `0` sends none.
+  - [x] `/kitchen` `done` (`notify=true`) and `cancel` send the expected Thai LINE push to the customer; `done` (`notify=false`) sends 0 pushes.
 - **Verification**:
   - `uv run ruff check . && uv run mypy app tests`
   - `uv run pytest -q` (entire suite passes with 0 skips).
 
-### Ticket 5: Live LINE Phone Walkthrough
+### Ticket 5: Live LINE Phone Walkthrough — Pending (HITL)
 - **Mode**: HITL
 - **Blocked by**: Ticket 4
 - **Slice**: Configure `.env` with real LINE OA + OpenRouter credentials, expose local `uvicorn` via `cloudflared tunnel`, set the LINE webhook URL, and test end-to-end from a real phone in both normal and busy modes.
