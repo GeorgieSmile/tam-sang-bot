@@ -372,3 +372,29 @@ def test_agent_preserves_location_pin_and_handles_bad_tool_args_and_closed_shop(
     )
     assert t_closed.reason == "ok"
     assert db.get_or_create_conversation("U_CLOSED").draft == {}
+
+    # 5. Live state system note reflects restocked items and empty cart despite old chat text
+    db.set_open_override("open")
+    db.set_override("ingredient", "crispy_pork", True)
+    conv_restock = db.get_or_create_conversation("U_RESTOCK")
+    db.save_conversation_messages(
+        conv_restock.id,
+        [
+            {"role": "user", "content": "กะเพราหมูกรอบ"},
+            {"role": "assistant", "content": "ขออภัยค่ะ หมูกรอบหมดแล้ว"},
+        ],
+    )
+    stub_restock = StubLLM([_resp(content="รับทราบค่ะ ไข่ดาวสุกหรือไม่สุกคะ")])
+    handle_customer_text(
+        db, menu, "U_RESTOCK", "กะเพราหมูกรอบ ไข่ดาว 1", llm_client=stub_restock, settings=cfg
+    )
+    sent_msgs = stub_restock.calls[0]["messages"]
+    live_note = next(
+        m["content"]
+        for m in sent_msgs
+        if m["role"] == "system"
+        and isinstance(m["content"], str)
+        and "สถานะระบบล่าสุดตอนนี้" in m["content"]
+    )
+    assert "ของหมดตอนนี้=ไม่มี" in live_note
+    assert "ตะกร้าปัจจุบัน=ว่าง" in live_note

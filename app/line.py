@@ -138,11 +138,7 @@ def build_order_flex(
 
     for line in lines:
         opts = [str(o) for o in line.get("option_names_th", [])]
-        detail_parts = []
-        if opts:
-            detail_parts.append(", ".join(opts))
-        if line.get("note"):
-            detail_parts.append(f"หมายเหตุ: {line['note']}")
+        note_str = str(line.get("note") or "").strip()
         row_box: dict[str, Any] = {
             "type": "box",
             "layout": "horizontal",
@@ -166,13 +162,24 @@ def build_order_flex(
             ],
         }
         body_contents.append(row_box)
-        if detail_parts:
+        if opts:
             body_contents.append(
                 {
                     "type": "text",
-                    "text": " · ".join(detail_parts),
+                    "text": ", ".join(opts),
                     "size": "xs",
                     "color": "#666666",
+                    "wrap": True,
+                }
+            )
+        if note_str:
+            body_contents.append(
+                {
+                    "type": "text",
+                    "text": f"หมายเหตุ: {note_str}",
+                    "size": "xs",
+                    "color": "#B45309",
+                    "weight": "bold",
                     "wrap": True,
                 }
             )

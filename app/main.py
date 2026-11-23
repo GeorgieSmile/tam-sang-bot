@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 from starlette.types import Receive, Scope, Send
@@ -137,13 +137,13 @@ def create_app(
         return resp
 
     @app.get("/api/kitchen/state")
-    def kitchen_state(request: Request) -> dict[str, Any]:
+    def kitchen_state(request: Request) -> JSONResponse:
         if not _check_kitchen_auth(request, cfg.kitchen_secret):
             raise HTTPException(status_code=403, detail="Invalid kitchen key")
         status = shop_db.get_shop_status(loaded_menu)
         overrides = shop_db.get_overrides()
         orders = shop_db.get_kitchen_orders_today()
-        return {
+        payload = {
             "shop": {
                 "name": loaded_menu.shop.name,
                 "shop_date": status.shop_date,
@@ -176,6 +176,7 @@ def create_app(
             },
             "orders": orders,
         }
+        return JSONResponse(content=payload, headers={"Cache-Control": "no-store"})
 
     @app.post("/api/kitchen/shop")
     def kitchen_update_shop(request: Request, body: ShopUpdateBody) -> dict[str, bool]:
@@ -283,6 +284,17 @@ def create_app(
                         already_confirmed=res.already_confirmed,
                         wait_minutes=st.wait_minutes if st.busy_mode else None,
                     )
+                    if not res.already_confirmed:
+                        confirm_note = (
+                            f"[ลูกค้ากดยืนยันออเดอร์ #{res.order.queue_number} บนการ์ดแล้ว "
+                            "ตะกร้าใหม่ว่างแล้ว]"
+                        )
+                        shop_db.append_conversation_event(
+                            user_id,
+                            confirm_note,
+                            receipt,
+                            compact_for_confirmed_order=True,
+                        )
                     _safe_reply(reply_token, [text_message(receipt)], event_id)
                     if (
                         not res.already_confirmed
@@ -313,6 +325,10 @@ def create_app(
                     if cancelled
                     else "การ์ดนี้ถูกยกเลิกหรือยืนยันไปแล้วค่ะ"
                 )
+                if cancelled:
+                    shop_db.append_conversation_event(
+                        user_id, "[ลูกค้ากดปุ่มยกเลิกการ์ดออเดอร์]", msg
+                    )
                 _safe_reply(reply_token, [text_message(msg)], event_id)
             return
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 import uuid
 from dataclasses import dataclass
@@ -178,10 +179,15 @@ def _system_prompt(menu: Menu, overrides: dict[tuple[str, str], bool]) -> dict[s
         "กฎสำคัญ:\n"
         "1. ตอบภาษาไทยสั้น สุภาพ ลงท้ายค่ะ/นะคะ ใช้ข้อความธรรมดา (ห้ามใช้ Markdown เช่น ** หรือ #)\n"
         "2. ใช้เฉพาะ dish_id และ option_ids จากเมนู JSON ห้ามเดาราคา คิดเลขเอง หรือให้ส่วนลด "
-        "ยอดรวมและค่าส่งต้องมาจากผลเครื่องมือเท่านั้น\n"
+        "ยอดรวมและค่าส่งต้องมาจากผลเครื่องมือเท่านั้น ยึดสถานะ 'ของหมดตอนนี้' และ 'ตะกร้าปัจจุบัน' "
+        "จากข้อมูลระบบล่าสุดเสมอ ห้ามอ้างอิงข้อความเก่าในแชทว่าของยังหมดหรือยังอยู่ในตะกร้า "
+        "(ตอบตามสถานะปัจจุบันอย่างเป็นธรรมชาติ ไม่ต้องอธิบายว่าข้อความเก่าไม่ใช่สถานะปัจจุบัน)\n"
         "3. ค่าเริ่มต้นอัตโนมัติ: ความเผ็ดเป็น 'เผ็ดปกติ' และความหวานเป็น 'หวานปกติ' "
-        "ไม่ต้องถามถ้าลูกค้าไม่ได้ระบุ ถามเฉพาะสิ่งที่กำกวมจริง เช่น เนื้อสัตว์ที่ต้องเลือก "
-        "(เช่น กะเพราหมู -> หมูสับหรือหมูชิ้น), สุกี้ (แห้งหรือน้ำ), หรือไข่ดาว (สุกหรือไม่สุก)\n"
+        "ห้ามถามระดับความเผ็ด ความหวาน หรือเสนอเพิ่มไข่/ท็อปปิ้งถ้าลูกค้าไม่ได้ขอ "
+        "ถามเฉพาะสิ่งที่กำกวมจริง เช่น เนื้อสัตว์ที่ต้องเลือก "
+        "(เช่น กะเพราหมู -> หมูสับหรือหมูชิ้น), สุกี้ (แห้งหรือน้ำ), หรือไข่ดาว (สุกหรือไม่สุก) "
+        "ถ้าจานนั้นยังขาดตัวเลือกที่ต้องถาม ให้ถามพร้อมวิธีรับอาหารในข้อความเดียวก่อนเรียก update_cart "
+        "(อย่าเพิ่มจานที่ยังไม่ครบลงตะกร้าก่อน)\n"
         "4. 'พิเศษ' ให้ใส่ option_ids=['special'] สำหรับจานหลักได้เลยโดยไม่ต้องถามเพิ่ม "
         "คำขอปรับแต่งบนเมนูที่มี เช่น ไม่ใส่ผัก แยกน้ำ ให้เก็บใน note "
         "ถ้าลูกค้าขอเมนู/เส้น/เนื้อสัตว์ที่ไม่มีในเมนู หรือถามเรื่องส่วนผสม/แพ้อาหาร "
@@ -192,10 +198,15 @@ def _system_prompt(menu: Menu, overrides: dict[tuple[str, str], bool]) -> dict[s
         "ถ้าลูกค้าเลือกส่งและมีที่อยู่เดิมในระบบ ให้ใช้ที่อยู่เดิมและแจ้งครั้งเดียวว่า "
         "'ส่งที่เดิม (...) นะคะ ถ้าเปลี่ยนที่อยู่บอกได้เลยค่ะ'\n"
         "6. เมื่อรายการและวิธีรับอาหารครบแล้ว ให้เรียก build_order_card เพื่อให้ระบบส่งการ์ดยืนยัน "
-        "ห้ามอ้างว่าสั่งสำเร็จจนกว่าลูกค้าจะกดปุ่มยืนยันบนการ์ด ถ้าร้านปิดให้แจ้งเวลาเปิดปกติและไม่รับออเดอร์\n"
+        "เมื่อ build_order_card สำเร็จ ระบบจะส่งการ์ดสรุปเต็มรูปแบบให้ลูกค้าเอง "
+        "ให้ตอบข้อความสั้นเพียง 1 บรรทัด (เช่น 'ตรวจสอบรายการบนการ์ดแล้วกดยืนยันได้เลยนะคะ') "
+        "ไม่ต้องทวนรายการอาหารหรือราคาซ้ำในข้อความ ห้ามอ้างว่าสั่งสำเร็จจนกว่าลูกค้าจะกดปุ่มยืนยันบนการ์ด "
+        "ถ้าร้านปิดให้แจ้งเวลาเปิดปกติและไม่รับออเดอร์\n"
         "7. ถ้าระบบระบุว่าร้านอยู่ในโหมดยุ่ง ให้แจ้งเวลารอให้ลูกค้าทราบตอนรับออเดอร์ด้วย\n"
         "8. ถามสถานะออเดอร์เรียก get_my_orders ขอยกเลิกออเดอร์ที่ยัง queued เรียก cancel_order "
-        "แต่ถ้าขอแก้ไขออเดอร์ที่ยืนยันไปแล้ว ทักทายล้วนๆ ('สวัสดีค่ะ') หรือคุยเล่น ให้เรียก hand_over อย่างเดียว"
+        "แต่ถ้าขอแก้ไขออเดอร์ที่ยืนยันไปแล้ว ทักทายล้วนๆ ('สวัสดีค่ะ') หรือคุยเล่น ให้เรียก hand_over อย่างเดียว\n"
+        "9. ออเดอร์ที่ลูกค้ากดยืนยันไปแล้วถือว่าเสร็จสิ้นและระบบเคลียร์ตะกร้าให้ใหม่แล้ว "
+        "ห้ามนำรายการหรือยอดของออเดอร์เก่ามารวมกับตะกร้าใหม่ และห้ามทักว่ารายการเก่าหายไปจากตะกร้า"
     )
     menu_json = json.dumps(
         menu.to_prompt_dict(overrides), ensure_ascii=False, separators=(",", ":")
@@ -254,6 +265,15 @@ def build_card_snapshot_for_conv(
     return snapshot, None
 
 
+_PLUS_CODE_RE = re.compile(r"^[A-Z0-9]{4,8}\+[A-Z0-9]{2,4}\s+")
+
+
+def clean_location_address(raw_address: str, latitude: float, longitude: float) -> str:
+    """Strip leading Google Plus Codes (e.g. 'XGV6+R86 ') from LINE location addresses."""
+    cleaned = _PLUS_CODE_RE.sub("", raw_address.strip()).strip()
+    return cleaned or f"พิกัด {latitude:.5f}, {longitude:.5f}"
+
+
 def handle_location_message(
     db: ShopDB,
     menu: Menu,
@@ -275,7 +295,7 @@ def handle_location_message(
         db.clear_handed_over(conv.id)
 
     loc_url = f"https://maps.google.com/?q={latitude},{longitude}"
-    clean_addr = address.strip() or f"พิกัด {latitude:.5f}, {longitude:.5f}"
+    clean_addr = clean_location_address(address, latitude, longitude)
     draft = dict(conv.draft)
     draft["fulfillment"] = "delivery"
     draft["address"] = clean_addr
@@ -291,17 +311,22 @@ def handle_location_message(
                 shop_name=menu.shop.name,
                 wait_minutes=status.wait_minutes if status.busy_mode else None,
             )
-            return AgentTurn(
-                reply_text=f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ ตรวจสอบรายการแล้วกดยืนยันได้เลยนะคะ",
-                flex_card=flex,
-                reason="ok",
+            reply = f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ ตรวจสอบรายการบนการ์ดแล้วกดยืนยันได้เลยนะคะ"
+            db.append_conversation_event(
+                line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply
             )
-        return AgentTurn(reply_text=err or f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ", reason="ok")
+            return AgentTurn(reply_text=reply, flex_card=flex, reason="ok")
+        reply_err = err or f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ"
+        db.append_conversation_event(
+            line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply_err
+        )
+        return AgentTurn(reply_text=reply_err, reason="ok")
 
-    return AgentTurn(
-        reply_text=f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ ต้องการสั่งเมนูอะไรดีคะ?",
-        reason="ok",
+    reply_empty = f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ ต้องการสั่งเมนูอะไรดีคะ?"
+    db.append_conversation_event(
+        line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply_empty
     )
+    return AgentTurn(reply_text=reply_empty, reason="ok")
 
 
 def handle_image_message(db: ShopDB, line_user_id: str) -> AgentTurn:
@@ -310,6 +335,7 @@ def handle_image_message(db: ShopDB, line_user_id: str) -> AgentTurn:
     if db.is_handed_over(conv):
         return AgentTurn(reply_text=None, reason="silent")
     db.set_handed_over(conv.id)
+    db.append_conversation_event(line_user_id, "[ลูกค้าส่งรูปภาพ]", IMAGE_HANDOVER_REPLY)
     return AgentTurn(reply_text=IMAGE_HANDOVER_REPLY, reason="hand_over")
 
 
@@ -341,13 +367,27 @@ def handle_customer_text(
 
     overrides = db.get_overrides()
     system_msgs: list[dict[str, Any]] = [_system_prompt(menu, overrides)]
-    if status.busy_mode and status.wait_minutes:
-        system_msgs.append(
-            {
-                "role": "system",
-                "content": f"สถานะร้านตอนนี้: โหมดยุ่ง รอประมาณ {status.wait_minutes} นาที",
-            }
-        )
+
+    # Dynamic live-state note (separate from cached menu prefix) so the LLM never trusts stale chat
+    sold_parts = [*status.sold_out_ingredients, *status.sold_out_dishes]
+    sold_text = ", ".join(sold_parts) if sold_parts else "ไม่มี (ทุกเมนูและวัตถุดิบพร้อมขาย)"
+    draft_items = list(conv.draft.get("items") or [])
+    cart_text = f"มี {len(draft_items)} รายการ" if draft_items else "ว่าง (0 รายการ)"
+    busy_text = (
+        f"โหมดยุ่ง รอประมาณ {status.wait_minutes} นาที"
+        if status.busy_mode and status.wait_minutes
+        else "โหมดปกติ"
+    )
+    open_text = "เปิดรับออเดอร์" if status.is_open else f"ปิดร้าน (ปกติเปิด {status.hours_text})"
+    system_msgs.append(
+        {
+            "role": "system",
+            "content": (
+                f"สถานะระบบล่าสุดตอนนี้ (ยึดข้อมูลนี้เหนือข้อความเก่าในแชท): "
+                f"ร้าน={open_text} | {busy_text} | ของหมดตอนนี้={sold_text} | ตะกร้าปัจจุบัน={cart_text}"
+            ),
+        }
+    )
     if handed_over:
         system_msgs.append({"role": "system", "content": HANDED_OVER_NOTE})
 
@@ -504,7 +544,17 @@ def handle_customer_text(
                     draft["location_url"] = cust.last_location_url
                     used_saved = True
                 elif not current_addr:
-                    return {"ok": False, "error": "ยังไม่มีที่อยู่จัดส่ง กรุณาขอที่อยู่หรือพิกัดจากลูกค้าค่ะ"}, False
+                    draft["fulfillment"] = "delivery"
+                    db.save_draft(conv.id, draft)
+                    conv = db.get_or_create_conversation(line_user_id)
+                    return {
+                        "ok": False,
+                        "fulfillment": "delivery",
+                        "error": (
+                            "ลูกค้าเลือกให้จัดส่งแล้ว แต่ยังไม่มีที่อยู่จัดส่ง "
+                            "กรุณาขอเฉพาะที่อยู่หรือให้ส่งพิกัด (ไม่ต้องถามว่ารับเองหรือส่งอีก)"
+                        ),
+                    }, False
 
             if "requested_time" in args and args["requested_time"] is not None:
                 draft["requested_time"] = str(args["requested_time"]).strip() or None

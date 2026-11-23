@@ -260,7 +260,7 @@ def test_media_routing_image_sticker_and_location_pin(tmp_path: Path) -> None:
                     "source": {"type": "user", "userId": "U_LOC"},
                     "message": {
                         "type": "location",
-                        "address": "45/2 หมู่ 3",
+                        "address": "XGV6+R86 45/2 หมู่ 3",
                         "latitude": 13.7563,
                         "longitude": 100.5018,
                     },
@@ -276,6 +276,7 @@ def test_media_routing_image_sticker_and_location_pin(tmp_path: Path) -> None:
     updated_conv = db.get_or_create_conversation("U_LOC")
     assert updated_conv.draft["address"] == "45/2 หมู่ 3"
     assert updated_conv.draft["location_url"] == "https://maps.google.com/?q=13.7563,100.5018"
+    assert any("45/2 หมู่ 3" in str(m.get("content", "")) for m in updated_conv.messages)
 
 
 def test_confirm_and_cancel_postbacks_and_owner_alert_toggle(tmp_path: Path) -> None:
@@ -298,6 +299,14 @@ def test_confirm_and_cancel_postbacks_and_owner_alert_toggle(tmp_path: Path) -> 
     assert err is None and snapshot is not None
     card_id = snapshot["card_id"]
 
+    # Seed stale pre-confirm chat history; confirm must compact it and record Order #1 receipt
+    db.save_conversation_messages(
+        conv.id,
+        [
+            {"role": "user", "content": "กะเพราหมูกรอบ 1"},
+            {"role": "assistant", "content": "เพิ่มแล้วค่ะ กดยืนยันบนการ์ด"},
+        ],
+    )
     # Mark conversation handed over before tapping Confirm -> postback must clear hand-over
     db.set_handed_over(conv.id)
     assert db.is_handed_over(db.get_or_create_conversation("U_BUYER")) is True
@@ -311,7 +320,12 @@ def test_confirm_and_cancel_postbacks_and_owner_alert_toggle(tmp_path: Path) -> 
         "postback": {"data": f"action=confirm&card_id={card_id}"},
     }
     assert _post_webhook(client, {"events": [confirm_evt]}).status_code == 200
-    assert db.is_handed_over(db.get_or_create_conversation("U_BUYER")) is False
+    buyer_conv_after = db.get_or_create_conversation("U_BUYER")
+    assert db.is_handed_over(buyer_conv_after) is False
+    # Old cart-building chat turns compacted away; confirmed receipt recorded for next turn
+    assert len(buyer_conv_after.messages) == 2
+    assert "ยืนยันออเดอร์ #1" in buyer_conv_after.messages[0]["content"]
+    assert "รับออเดอร์ #1 แล้วค่ะ" in buyer_conv_after.messages[1]["content"]
     assert len(spy.replies) == 1
     receipt_text = spy.replies[0][1][0]["text"]
     assert "#1" in receipt_text

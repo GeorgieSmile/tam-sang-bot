@@ -487,6 +487,41 @@ class ShopDB:
                 (json.dumps(messages, ensure_ascii=False), self.now_iso(), conv_id),
             )
 
+    def append_conversation_event(
+        self,
+        line_user_id: str,
+        user_note: str,
+        assistant_reply: str,
+        *,
+        compact_for_confirmed_order: bool = False,
+    ) -> None:
+        """Keep conversation history in sync with non-LLM events (confirm, cancel, pin, image)."""
+        conv = self.get_or_create_conversation(line_user_id)
+        if compact_for_confirmed_order:
+            # Drop stale cart-building turns; keep only earlier confirmed-order summaries today
+            kept: list[dict[str, Any]] = []
+            msgs = conv.messages
+            i = 0
+            while i < len(msgs):
+                m = msgs[i]
+                if (
+                    m.get("role") == "user"
+                    and isinstance(m.get("content"), str)
+                    and m["content"].startswith("[ลูกค้ากดยืนยันออเดอร์")
+                ):
+                    kept.append(m)
+                    if i + 1 < len(msgs) and msgs[i + 1].get("role") == "assistant":
+                        kept.append(msgs[i + 1])
+                        i += 2
+                        continue
+                i += 1
+            base = kept
+        else:
+            base = list(conv.messages)
+        base.append({"role": "user", "content": user_note})
+        base.append({"role": "assistant", "content": assistant_reply})
+        self.save_conversation_messages(conv.id, base)
+
     def save_draft(self, conv_id: int, draft: dict[str, Any]) -> int:
         with self._tx(immediate=True) as conn:
             conn.execute(

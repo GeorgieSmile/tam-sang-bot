@@ -304,6 +304,7 @@
     let audioCtx = null;
     let wakeWanted = false;
     let cancelOrderId = null;
+    let refreshing = false;
 
     function showWarn(msg) {
       document.getElementById("warn-text").textContent = msg;
@@ -311,14 +312,26 @@
     }
 
     async function api(path, method = "GET", body = null) {
-      const opts = { method, credentials: "same-origin", headers: {} };
-      if (body !== null) {
-        opts.headers["Content-Type"] = "application/json";
-        opts.body = JSON.stringify(body);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+      try {
+        const opts = {
+          method,
+          credentials: "same-origin",
+          cache: "no-store",
+          signal: controller.signal,
+          headers: { "Cache-Control": "no-cache" },
+        };
+        if (body !== null) {
+          opts.headers["Content-Type"] = "application/json";
+          opts.body = JSON.stringify(body);
+        }
+        const res = await fetch(path, opts);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } finally {
+        clearTimeout(timer);
       }
-      const res = await fetch(path, opts);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
     }
 
     async function requestWakeLock() {
@@ -327,8 +340,12 @@
     }
 
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") requestWakeLock();
+      if (document.visibilityState === "visible") {
+        requestWakeLock();
+        refresh();
+      }
     });
+    window.addEventListener("focus", () => refresh());
 
     async function unlockAudio() {
       try {
@@ -466,10 +483,16 @@
     }
 
     async function refresh() {
+      if (refreshing) return;
+      refreshing = true;
       try {
         const data = await api("/api/kitchen/state");
         render(data);
-      } catch (_) {}
+      } catch (_) {
+        document.getElementById("last-sync").textContent = "ขาดการเชื่อมต่อ (กำลังลองใหม่...)";
+      } finally {
+        refreshing = false;
+      }
     }
 
     async function toggleOpen() {

@@ -221,14 +221,14 @@ The executing agent must run and pass all checks below after its last edit befor
   - `uv run ruff check . && uv run mypy app tests`
   - `uv run pytest -q` (entire suite passes with 0 skips).
 
-### Ticket 5: Live LINE Phone Walkthrough — Pending (HITL)
+### Ticket 5: Live LINE Phone Walkthrough — Done (HITL)
 - **Mode**: HITL
 - **Blocked by**: Ticket 4
 - **Slice**: Configure `.env` with real LINE OA + OpenRouter credentials, expose local `uvicorn` via `cloudflared tunnel`, set the LINE webhook URL, and test end-to-end from a real phone in both normal and busy modes.
 - **Acceptance Criteria**:
-  - [ ] Customer orders messy Thai on LINE -> receives Flex card -> taps Confirm -> ticket appears + chimes on `/kitchen` (0 pushes) -> double-tap returns same order `#`.
-  - [ ] Customer sends a LINE location pin -> clickable `เปิดแผนที่` appears on `/kitchen` -> second order reuses saved address automatically.
-  - [ ] Customer sends a slip image -> receives single hand-over reply -> follow-up `"ขอบคุณค่ะ"` gets silence.
-  - [ ] Owner texts `"หมูกรอบหมด"` and `"ยุ่ง 25 นาที"` -> customer bot blocks crispy pork and quotes 25-min wait time; owner texts `"สรุปวันนี้"` and gets accurate total.
-  - [ ] Owner cancels a test ticket on `/kitchen` with reason -> customer receives the cancellation push on LINE.
-- **Verification**: Manual live walkthrough checklist signed off by human user.
+  - [x] Customer orders messy Thai on LINE -> receives Flex card -> taps Confirm -> ticket appears + chimes on `/kitchen` (0 pushes) -> double-tap returns same order `#`.
+  - [x] Customer sends a LINE location pin -> clickable `เปิดแผนที่` appears on `/kitchen` -> second order reuses saved address automatically.
+  - [x] Customer sends a slip image -> receives single hand-over reply -> follow-up `"ขอบคุณค่ะ"` gets silence.
+  - [x] Owner texts `"หมูกรอบหมด"` and `"ยุ่ง 25 นาที"` -> customer bot blocks crispy pork and quotes 25-min wait time; owner texts `"สรุปวันนี้"` and gets accurate total.
+  - [x] Owner cancels a test ticket on `/kitchen` with reason -> customer receives the cancellation push on LINE.
+- **Verification**: Manual live walkthrough checklist signed off by human user (2026-11-23).

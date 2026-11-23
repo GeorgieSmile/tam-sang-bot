@@ -224,7 +224,9 @@ def test_kitchen_auth_and_order_actions(tmp_path: Path) -> None:
         )
         assert db.confirm_card(f"U_{i}", f"c-{i}", menu).ok
 
-    state = client.get("/api/kitchen/state?key=secret-123").json()
+    state_resp = client.get("/api/kitchen/state?key=secret-123")
+    assert state_resp.headers.get("cache-control") == "no-store"
+    state = state_resp.json()
     assert [o["queue_number"] for o in state["orders"]["queued"]] == [1, 2, 3]
 
     # Order 1: done without notify -> 0 pushes
