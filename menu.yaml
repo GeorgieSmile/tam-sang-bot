@@ -1,0 +1,345 @@
+shop:
+  name: "ครัวอิ่มจัง"
+  timezone: "Asia/Bangkok"
+  hours:
+    open: "09:00"
+    close: "20:00"
+  delivery:
+    fee: 10
+    free_above: 100
+
+ingredients:
+  minced_pork: "หมูสับ"
+  sliced_pork: "หมูชิ้น"
+  chicken: "ไก่"
+  crispy_pork: "หมูกรอบ"
+  shrimp: "กุ้ง"
+  squid: "ปลาหมึก"
+  egg: "ไข่"
+  rice: "ข้าว"
+  chili: "พริก"
+  sugar: "น้ำตาล"
+  special: "พิเศษ"
+
+option_groups:
+  protein:
+    name_th: "เนื้อสัตว์"
+    required: true
+    min_choices: 1
+    max_choices: 1
+    options:
+      - id: minced_pork
+        name_th: "หมูสับ"
+        ingredient_key: minced_pork
+        price_delta: 0
+      - id: sliced_pork
+        name_th: "หมูชิ้น"
+        ingredient_key: sliced_pork
+        price_delta: 0
+      - id: chicken
+        name_th: "ไก่"
+        ingredient_key: chicken
+        price_delta: 0
+      - id: crispy_pork
+        name_th: "หมูกรอบ"
+        ingredient_key: crispy_pork
+        price_delta: 10
+      - id: shrimp
+        name_th: "กุ้ง"
+        ingredient_key: shrimp
+        price_delta: 10
+      - id: squid
+        name_th: "ปลาหมึก"
+        ingredient_key: squid
+        price_delta: 10
+
+  egg:
+    name_th: "เพิ่มไข่"
+    required: false
+    min_choices: 0
+    max_choices: 1
+    options:
+      - id: fried_egg_runny
+        name_th: "ไข่ดาวไม่สุก"
+        ingredient_key: egg
+        price_delta: 10
+      - id: fried_egg_cooked
+        name_th: "ไข่ดาวสุก"
+        ingredient_key: egg
+        price_delta: 10
+      - id: omelette_addon
+        name_th: "ไข่เจียวเพิ่ม"
+        ingredient_key: egg
+        price_delta: 15
+      - id: soft_egg_addon
+        name_th: "ไข่ข้นเพิ่ม"
+        ingredient_key: egg
+        price_delta: 15
+
+  egg_doneness:
+    name_th: "ความสุกไข่ดาว"
+    required: true
+    min_choices: 1
+    max_choices: 1
+    options:
+      - id: egg_runny
+        name_th: "ไข่ดาวไม่สุก"
+        ingredient_key: egg
+        price_delta: 0
+      - id: egg_cooked
+        name_th: "ไข่ดาวสุก"
+        ingredient_key: egg
+        price_delta: 0
+
+  spice:
+    name_th: "ระดับความเผ็ด"
+    required: false
+    min_choices: 0
+    max_choices: 1
+    default: spice_normal
+    options:
+      - id: spice_none
+        name_th: "ไม่เผ็ด"
+        ingredient_key: spice_none
+        price_delta: 0
+      - id: spice_mild
+        name_th: "เผ็ดน้อย"
+        ingredient_key: chili
+        price_delta: 0
+      - id: spice_normal
+        name_th: "เผ็ดปกติ"
+        ingredient_key: chili
+        price_delta: 0
+      - id: spice_extra
+        name_th: "เผ็ดมาก"
+        ingredient_key: chili
+        price_delta: 0
+
+  extra:
+    name_th: "เพิ่มข้าว"
+    required: false
+    min_choices: 0
+    max_choices: 1
+    options:
+      - id: extra_rice
+        name_th: "เพิ่มข้าว"
+        ingredient_key: rice
+        price_delta: 10
+
+  sweetness:
+    name_th: "ความหวาน"
+    required: false
+    min_choices: 0
+    max_choices: 1
+    default: sweetness_normal
+    options:
+      - id: sweetness_none
+        name_th: "ไม่เพิ่มความหวาน"
+        ingredient_key: sweetness_none
+        price_delta: 0
+      - id: sweetness_less
+        name_th: "หวานน้อย"
+        ingredient_key: sugar
+        price_delta: 0
+      - id: sweetness_normal
+        name_th: "หวานปกติ"
+        ingredient_key: sugar
+        price_delta: 0
+      - id: sweetness_extra
+        name_th: "หวานมาก"
+        ingredient_key: sugar
+        price_delta: 0
+
+  portion:
+    name_th: "ปริมาณ"
+    required: false
+    min_choices: 0
+    max_choices: 1
+    options:
+      - id: special
+        name_th: "พิเศษ"
+        ingredient_key: special
+        price_delta: 10
+
+items:
+  # Meals (15)
+  - id: kaphrao
+    name_th: "ข้าวกะเพรา"
+    aliases: ["กะเพรา", "ผัดกะเพรา"]
+    category: meal
+    base_price: 50
+    groups: [protein, egg, spice, extra, portion]
+    allowed_proteins: [minced_pork, sliced_pork, chicken, crispy_pork, shrimp, squid]
+
+  - id: garlic
+    name_th: "ข้าวกระเทียมพริกไทย"
+    aliases: ["กระเทียม", "ทอดกระเทียม", "ข้าวกระเทียม"]
+    category: meal
+    base_price: 50
+    groups: [protein, egg, extra, portion]
+    allowed_proteins: [sliced_pork, chicken, shrimp, squid]
+
+  - id: curry_paste
+    name_th: "ข้าวผัดพริกแกง"
+    aliases: ["พริกแกง", "ผัดพริกแกง"]
+    category: meal
+    base_price: 55
+    groups: [protein, egg, spice, extra, portion]
+    allowed_proteins: [sliced_pork, chicken, crispy_pork, shrimp, squid]
+
+  - id: chili_paste
+    name_th: "ข้าวผัดพริกเผา"
+    aliases: ["พริกเผา", "ผัดพริกเผา"]
+    category: meal
+    base_price: 55
+    groups: [protein, egg, spice, extra, portion]
+    allowed_proteins: [sliced_pork, chicken, shrimp, squid]
+
+  - id: kale
+    name_th: "ข้าวคะน้าน้ำมันหอย"
+    aliases: ["คะน้า", "ผัดคะน้า", "คะน้าหมูกรอบ"]
+    category: meal
+    base_price: 50
+    groups: [protein, egg, extra, portion]
+    allowed_proteins: [sliced_pork, crispy_pork]
+
+  - id: fried_rice
+    name_th: "ข้าวผัด"
+    aliases: ["ข้าวผัด"]
+    category: meal
+    base_price: 50
+    groups: [protein, egg, extra, portion]
+    allowed_proteins: [sliced_pork, chicken, shrimp]
+
+  - id: pad_see_ew
+    name_th: "ผัดซีอิ๊วเส้นใหญ่"
+    aliases: ["ผัดซีอิ๊ว", "ซีอิ๊ว"]
+    category: meal
+    base_price: 55
+    groups: [protein, portion]
+    allowed_proteins: [sliced_pork, chicken, shrimp, squid]
+
+  - id: drunken_noodles
+    name_th: "ผัดขี้เมาเส้นใหญ่"
+    aliases: ["ผัดขี้เมา", "ขี้เมา"]
+    category: meal
+    base_price: 55
+    groups: [protein, spice, portion]
+    allowed_proteins: [sliced_pork, chicken, shrimp, squid]
+
+  - id: suki_dry
+    name_th: "สุกี้แห้ง"
+    aliases: ["สุกี้แห้ง"]
+    category: meal
+    base_price: 60
+    groups: [protein, portion]
+    allowed_proteins: [sliced_pork, chicken, shrimp, squid]
+
+  - id: suki_soup
+    name_th: "สุกี้น้ำ"
+    aliases: ["สุกี้น้ำ"]
+    category: meal
+    base_price: 60
+    groups: [protein, portion]
+    allowed_proteins: [sliced_pork, chicken, shrimp, squid]
+
+  - id: omelette_rice
+    name_th: "ข้าวไข่เจียว"
+    aliases: ["ข้าวไข่เจียว"]
+    category: meal
+    base_price: 40
+    groups: [extra, portion]
+
+  - id: pork_omelette_rice
+    name_th: "ข้าวไข่เจียวหมูสับ"
+    aliases: ["ไข่เจียวหมูสับ"]
+    category: meal
+    base_price: 45
+    groups: [extra, portion]
+
+  - id: soft_egg_rice
+    name_th: "ข้าวไข่ข้น"
+    aliases: ["ข้าวไข่ข้น"]
+    category: meal
+    base_price: 45
+    groups: [extra, portion]
+
+  - id: bacon_soft_egg_rice
+    name_th: "ข้าวไข่ข้นเบคอน"
+    aliases: ["ไข่ข้นเบคอน"]
+    category: meal
+    base_price: 60
+    groups: [extra, portion]
+
+  - id: pad_thai
+    name_th: "ผัดไทยเส้นจันท์"
+    aliases: ["ผัดไทย"]
+    category: meal
+    base_price: 60
+    groups: [protein, portion]
+    allowed_proteins: [sliced_pork, chicken, shrimp]
+
+  # Sides (5)
+  - id: plain_rice
+    name_th: "ข้าวสวย"
+    aliases: ["ข้าวเปล่า"]
+    category: side
+    base_price: 10
+    groups: []
+
+  - id: fried_egg_side
+    name_th: "ไข่ดาว"
+    aliases: ["ไข่ดาวเปล่า"]
+    category: side
+    base_price: 10
+    groups: [egg_doneness]
+
+  - id: omelette_side
+    name_th: "ไข่เจียว"
+    aliases: ["ไข่เจียวเปล่า"]
+    category: side
+    base_price: 15
+    groups: []
+
+  - id: soft_egg_side
+    name_th: "ไข่ข้น"
+    aliases: ["ไข่ข้นเปล่า"]
+    category: side
+    base_price: 15
+    groups: []
+
+  - id: chicken_bites
+    name_th: "ไก่ป๊อป"
+    aliases: ["ไก่ป๊อบ"]
+    category: side
+    base_price: 55
+    groups: []
+
+  # Drinks (4)
+  - id: water
+    name_th: "น้ำเปล่า (ขวด)"
+    aliases: ["น้ำเปล่า", "น้ำดื่ม"]
+    category: drink
+    base_price: 10
+    groups: []
+
+  - id: cola
+    name_th: "โคล่า (กระป๋อง)"
+    aliases: ["โคล่า", "โค้ก", "เป๊ปซี่"]
+    category: drink
+    base_price: 15
+    groups: []
+
+  - id: thai_tea
+    name_th: "ชาไทยเย็น"
+    aliases: ["ชาไทย", "ชาเย็น"]
+    category: drink
+    base_price: 35
+    groups: [sweetness]
+
+  - id: cocoa
+    name_th: "โกโก้เย็น"
+    aliases: ["โกโก้"]
+    category: drink
+    base_price: 35
+    groups: [sweetness]

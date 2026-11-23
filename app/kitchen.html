@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>หน้าจอครัว — ครัวอิ่มจัง</title>
+  <style>
+    :root {
+      --bg: #f6f4ef;
+      --surface: #ffffff;
+      --ink: #1b1917;
+      --muted: #6b655e;
+      --border: #e5dfd5;
+      --green: #15803d;
+      --green-bg: #dcfce7;
+      --red: #b91c1c;
+      --red-bg: #fee2e2;
+      --amber: #b45309;
+      --amber-bg: #fef3c7;
+      --blue: #1d4ed8;
+      --blue-bg: #dbeafe;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Sarabun", "Noto Sans Thai", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      padding-bottom: 48px;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      padding: 12px 14px;
+    }
+    .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .space-between { justify-content: space-between; }
+    h1 { margin: 0; font-size: 1.2rem; }
+    .pill {
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 7px 13px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .pill.active-green { background: var(--green); border-color: var(--green); color: #fff; }
+    .pill.active-red { background: var(--red); border-color: var(--red); color: #fff; }
+    .pill.active-amber { background: var(--amber); border-color: var(--amber); color: #fff; }
+    .pill.active-blue { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .controls { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .sound-bar {
+      background: var(--amber-bg);
+      color: var(--amber);
+      padding: 10px 14px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .warn-bar {
+      background: var(--red-bg);
+      color: var(--red);
+      padding: 10px 14px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    main { max-width: 720px; margin: 0 auto; padding: 14px; }
+    .section-title {
+      font-size: 1rem;
+      color: var(--muted);
+      margin: 14px 0 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+    .card.flash-new { border-color: var(--amber); background: #fffbeb; }
+    .card.flash-cancelled { border-color: var(--red); background: var(--red-bg); }
+    .ticket-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .queue-num { font-size: 1.45rem; font-weight: 800; }
+    .time-label { color: var(--muted); font-size: 0.9rem; }
+    .badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+    .badge-pickup { background: var(--green-bg); color: var(--green); }
+    .badge-delivery { background: var(--blue-bg); color: var(--blue); }
+    .map-link {
+      margin-left: 8px;
+      color: var(--blue);
+      font-weight: 700;
+      text-decoration: underline;
+    }
+    .items { list-style: none; margin: 12px 0; padding: 0; border-top: 1px dashed var(--border); }
+    .items li {
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: 1.08rem;
+      line-height: 1.45;
+    }
+    .dish-title { font-weight: 700; font-size: 1.15rem; }
+    .opt-tag {
+      display: inline-block;
+      background: #f3f0ea;
+      border-radius: 6px;
+      padding: 2px 7px;
+      margin: 3px 4px 0 0;
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+    .note-tag {
+      display: inline-block;
+      background: var(--amber-bg);
+      color: var(--amber);
+      border-radius: 6px;
+      padding: 2px 8px;
+      margin: 4px 4px 0 0;
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin: 10px 0 12px;
+    }
+    .actions { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 10px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-done { background: var(--green); color: #fff; }
+    .btn-done-notify { background: var(--blue); color: #fff; }
+    .btn-cancel { background: var(--red-bg); color: var(--red); padding: 12px 14px; }
+    .drawer {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .chip-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .chip {
+      border: 1.5px solid var(--border);
+      background: #faf9f6;
+      border-radius: 999px;
+      padding: 6px 11px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .chip.sold { background: var(--red-bg); border-color: var(--red); color: var(--red); text-decoration: line-through; }
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 36px 12px;
+      background: var(--surface);
+      border-radius: 14px;
+      border: 1.5px dashed var(--border);
+    }
+    dialog {
+      border: none;
+      border-radius: 14px;
+      padding: 18px;
+      width: min(92vw, 380px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+    }
+    dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+    .reason-btn {
+      display: block;
+      width: 100%;
+      margin: 6px 0;
+      padding: 11px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+    }
+    .reason-input {
+      width: 100%;
+      padding: 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      margin: 8px 0;
+    }
+    details summary { cursor: pointer; font-weight: 700; color: var(--muted); padding: 8px 0; }
+    .finished-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      font-size: 0.94rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="sound-bar" class="sound-bar" onclick="unlockAudio()">
+    <span>แตะเพื่อเปิดเสียงเตือนออเดอร์ใหม่ + กันหน้าจอดับ</span>
+    <span>เปิดเสียง</span>
+  </div>
+  <div id="warn-bar" class="warn-bar" hidden onclick="this.hidden = true">
+    <span id="warn-text"></span>
+    <span>ปิด</span>
+  </div>
+
+  <header>
+    <div class="row space-between">
+      <h1 id="shop-name">หน้าจอครัว</h1>
+      <div class="row">
+        <button id="btn-open" class="pill" onclick="toggleOpen()">...</button>
+        <button id="btn-notify" class="pill" onclick="toggleOwnerAlert()">แจ้งเตือน LINE: ปิด</button>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="mode-normal" class="pill" onclick="setBusy(false, null)">ปกติ</button>
+      <button id="mode-busy-15" class="pill" onclick="setBusy(true, 15)">ยุ่ง 15น.</button>
+      <button id="mode-busy-30" class="pill" onclick="setBusy(true, 30)">ยุ่ง 30น.</button>
+      <button id="btn-soldout" class="pill" onclick="toggleSoldOutDrawer()">ของหมด (<span id="soldout-count">0</span>)</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="soldout-drawer" class="drawer" hidden>
+      <div class="row space-between">
+        <strong>แตะเพื่อปิด/เปิดของหมด</strong>
+        <button class="pill" onclick="clearSoldOut()">เปิดครบทั้งหมด</button>
+      </div>
+      <div style="margin-top:8px;font-size:0.85rem;color:var(--muted)">วัตถุดิบ</div>
+      <div id="ing-chips" class="chip-grid"></div>
+      <div style="margin-top:10px;font-size:0.85rem;color:var(--muted)">เมนู</div>
+      <div id="dish-chips" class="chip-grid"></div>
+    </section>
+
+    <div class="section-title">
+      <span>คิวที่ต้องทำ (<span id="queued-count">0</span>)</span>
+      <span id="last-sync" style="font-size:0.82rem"></span>
+    </div>
+    <div id="queue-list"></div>
+
+    <details style="margin-top:18px">
+      <summary id="finished-summary">วันนี้ทำแล้ว 0 ออเดอร์ · 0 บาท</summary>
+      <div id="finished-list" style="margin-top:8px"></div>
+    </details>
+  </main>
+
+  <dialog id="cancel-dialog">
+    <h3 style="margin:0 0 8px">ยกเลิกออเดอร์ #<span id="cancel-qnum"></span></h3>
+    <p style="margin:0 0 10px;color:var(--muted);font-size:0.9rem">ระบบจะส่งข้อความแจ้งเหตุผลไปหาลูกค้าทาง LINE</p>
+    <button class="reason-btn" onclick="submitCancel('ของหมด')">ของหมด</button>
+    <button class="reason-btn" onclick="submitCancel('นอกพื้นที่ส่ง')">นอกพื้นที่ส่ง</button>
+    <button class="reason-btn" onclick="submitCancel('ปิดรับชั่วคราว')">ปิดรับชั่วคราว</button>
+    <input id="custom-reason" class="reason-input" placeholder="หรือพิมพ์เหตุผลเอง..." />
+    <div class="row space-between">
+      <button class="pill" onclick="closeCancelDialog()">ปิด</button>
+      <button class="btn btn-cancel" onclick="submitCancel(document.getElementById('custom-reason').value)">ยืนยันยกเลิก</button>
+    </div>
+  </dialog>
+
+  <script>
+    // Strip ?key= from URL after /kitchen has set the HttpOnly cookie so polls don't leak it in logs.
+    if (window.location.search.includes("key=")) {
+      const cleanUrl = new URL(window.location.href);
+      cleanUrl.searchParams.delete("key");
+      window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search);
+    }
+    let state = null;
+    let knownQueuedIds = new Set();
+    let initialized = false;
+    let audioCtx = null;
+    let wakeWanted = false;
+    let cancelOrderId = null;
+
+    function showWarn(msg) {
+      document.getElementById("warn-text").textContent = msg;
+      document.getElementById("warn-bar").hidden = false;
+    }
+
+    async function api(path, method = "GET", body = null) {
+      const opts = { method, credentials: "same-origin", headers: {} };
+      if (body !== null) {
+        opts.headers["Content-Type"] = "application/json";
+        opts.body = JSON.stringify(body);
+      }
+      const res = await fetch(path, opts);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+
+    async function requestWakeLock() {
+      if (!wakeWanted || !navigator.wakeLock) return;
+      try { await navigator.wakeLock.request("screen"); } catch (_) {}
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") requestWakeLock();
+    });
+
+    async function unlockAudio() {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!audioCtx && Ctx) audioCtx = new Ctx();
+        if (audioCtx && audioCtx.state === "suspended") await audioCtx.resume();
+        playBeep(880, 0.12);
+        wakeWanted = true;
+        await requestWakeLock();
+        document.getElementById("sound-bar").hidden = true;
+      } catch (_) {}
+    }
+
+    function playBeep(freq = 780, duration = 0.18) {
+      if (!audioCtx || audioCtx.state !== "running") return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.22, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function formatClock(iso) {
+      if (!iso) return "";
+      const m = String(iso).match(/T(\d{2}:\d{2})/);
+      return m ? m[1] : iso;
+    }
+
+    function render(newState) {
+      const newQueuedIds = new Set(newState.orders.queued.map((o) => o.id));
+      const added = new Set([...newQueuedIds].filter((id) => !knownQueuedIds.has(id)));
+      const customerCancelled = initialized && [...knownQueuedIds].some(
+        (id) => !newQueuedIds.has(id) && newState.orders.finished.some((o) => o.id === id && o.status === "cancelled" && o.cancel_reason === "ลูกค้ายกเลิกเอง")
+      );
+      if (initialized && added.size > 0) {
+        playBeep(880, 0.22);
+        setTimeout(() => playBeep(1046, 0.25), 220);
+      } else if (customerCancelled) {
+        playBeep(330, 0.35);
+      }
+      knownQueuedIds = newQueuedIds;
+      initialized = true;
+      state = newState;
+
+      const s = state.shop;
+      document.getElementById("shop-name").textContent = `${s.name} · หน้าจอครัว`;
+      const btnOpen = document.getElementById("btn-open");
+      btnOpen.textContent = s.is_open ? "เปิดรับออเดอร์" : "ปิดร้านอยู่";
+      btnOpen.className = `pill ${s.is_open ? "active-green" : "active-red"}`;
+
+      const btnNotify = document.getElementById("btn-notify");
+      btnNotify.textContent = `แจ้งเตือน LINE: ${s.notify_owner_on_order ? "เปิด" : "ปิด"}`;
+      btnNotify.className = `pill ${s.notify_owner_on_order ? "active-blue" : ""}`;
+
+      document.getElementById("mode-normal").className = `pill ${!s.busy_mode ? "active-green" : ""}`;
+      document.getElementById("mode-busy-15").className = `pill ${s.busy_mode && s.wait_minutes === 15 ? "active-amber" : ""}`;
+      document.getElementById("mode-busy-30").className = `pill ${s.busy_mode && s.wait_minutes !== 15 ? "active-amber" : ""}`;
+      document.getElementById("mode-busy-30").textContent = s.busy_mode && s.wait_minutes && s.wait_minutes !== 15 ? `ยุ่ง ${s.wait_minutes}น.` : "ยุ่ง 30น.";
+
+      const soldCount = state.sold_out.ingredients.filter((x) => !x.available).length + state.sold_out.dishes.filter((x) => !x.available).length;
+      document.getElementById("soldout-count").textContent = String(soldCount);
+      document.getElementById("btn-soldout").className = `pill ${soldCount > 0 ? "active-red" : ""}`;
+
+      document.getElementById("ing-chips").innerHTML = state.sold_out.ingredients
+        .map((x) => `<button class="chip ${x.available ? "" : "sold"}" onclick="toggleOverride('ingredient','${esc(x.key)}',${!x.available})">${esc(x.name_th)}</button>`)
+        .join("");
+      document.getElementById("dish-chips").innerHTML = state.sold_out.dishes
+        .map((x) => `<button class="chip ${x.available ? "" : "sold"}" onclick="toggleOverride('dish','${esc(x.key)}',${!x.available})">${esc(x.name_th)}</button>`)
+        .join("");
+
+      const queued = state.orders.queued;
+      document.getElementById("queued-count").textContent = String(queued.length);
+      document.getElementById("last-sync").textContent = `อัปเดต ${new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
+
+      const qList = document.getElementById("queue-list");
+      if (queued.length === 0) {
+        qList.innerHTML = `<div class="empty">ยังไม่มีออเดอร์ค้างอยู่</div>`;
+      } else {
+        qList.innerHTML = queued.map((o) => {
+          const isDelivery = o.fulfillment === "delivery";
+          const addrText = isDelivery ? `ส่ง: ${esc(o.address || "")}` : "รับเองที่ร้าน";
+          const mapHtml = o.location_url ? `<a class="map-link" href="${esc(o.location_url)}" target="_blank" rel="noopener">เปิดแผนที่</a>` : "";
+          const timeReq = o.requested_time ? `<div style="margin-top:4px;font-weight:700;color:var(--amber)">เวลาที่ขอ: ${esc(o.requested_time)}</div>` : "";
+          const itemsHtml = o.items.map((it) => {
+            const opts = (it.option_names_th || []).map((n) => `<span class="opt-tag">${esc(n)}</span>`).join("");
+            const note = it.note ? `<span class="note-tag">หมายเหตุ: ${esc(it.note)}</span>` : "";
+            return `<li><div class="dish-title">${esc(it.dish_name_th)} × ${it.qty}</div><div>${opts}${note}</div></li>`;
+          }).join("");
+          const feeNote = o.delivery_fee > 0 ? ` (รวมค่าส่ง ${o.delivery_fee}฿)` : "";
+          return `
+            <article class="card ${added.has(o.id) ? "flash-new" : ""}">
+              <div class="ticket-head">
+                <span class="queue-num">#${o.queue_number}</span>
+                <span class="time-label">สั่งเมื่อ ${formatClock(o.created_at)}</span>
+              </div>
+              <div>
+                <span class="badge ${isDelivery ? "badge-delivery" : "badge-pickup"}">${addrText}</span>
+                ${mapHtml}
+              </div>
+              ${timeReq}
+              <ul class="items">${itemsHtml}</ul>
+              <div class="total-row">
+                <span>รวมทั้งหมด${feeNote}</span>
+                <span>${o.total} บาท</span>
+              </div>
+              <div class="actions">
+                <button class="btn btn-done" onclick="markDone(${o.id}, false)">ทำเสร็จแล้ว</button>
+                <button class="btn btn-done-notify" onclick="markDone(${o.id}, true)">เสร็จ + แจ้งลูกค้า</button>
+                <button class="btn btn-cancel" onclick="openCancel(${o.id}, ${o.queue_number})">ยกเลิก</button>
+              </div>
+            </article>
+          `;
+        }).join("");
+      }
+
+      const stats = state.orders.stats;
+      document.getElementById("finished-summary").textContent =
+        `วันนี้ทำแล้ว ${stats.done_count} ออเดอร์ · ${stats.done_total} บาท` +
+        (stats.cancelled_count > 0 ? ` (ยกเลิก ${stats.cancelled_count})` : "");
+
+      document.getElementById("finished-list").innerHTML = state.orders.finished.map((o) => {
+        const label = o.status === "done" ? `เสร็จแล้ว · ${o.total}฿` : `ยกเลิก (${esc(o.cancel_reason || "")})`;
+        const color = o.status === "done" ? "var(--green)" : "var(--red)";
+        return `<div class="finished-item"><span>#${o.queue_number} (${formatClock(o.created_at)})</span><strong style="color:${color}">${label}</strong></div>`;
+      }).join("");
+    }
+
+    async function refresh() {
+      try {
+        const data = await api("/api/kitchen/state");
+        render(data);
+      } catch (_) {}
+    }
+
+    async function toggleOpen() {
+      if (!state) return;
+      await api("/api/kitchen/shop", "POST", { open_override: state.shop.is_open ? "closed" : "open" });
+      await refresh();
+    }
+
+    async function toggleOwnerAlert() {
+      if (!state) return;
+      await api("/api/kitchen/shop", "POST", { notify_owner_on_order: !state.shop.notify_owner_on_order });
+      await refresh();
+    }
+
+    async function setBusy(busy, mins) {
+      await api("/api/kitchen/shop", "POST", { busy_mode: busy, wait_minutes: mins });
+      await refresh();
+    }
+
+    function toggleSoldOutDrawer() {
+      const el = document.getElementById("soldout-drawer");
+      el.hidden = !el.hidden;
+    }
+
+    async function toggleOverride(kind, key, isAvailable) {
+      await api("/api/kitchen/overrides", "POST", { kind, key, is_available: isAvailable });
+      await refresh();
+    }
+
+    async function clearSoldOut() {
+      await api("/api/kitchen/overrides/clear", "POST", {});
+      await refresh();
+    }
+
+    async function markDone(orderId, notify) {
+      try {
+        const res = await api(`/api/kitchen/orders/${orderId}/done`, "POST", { notify });
+        if (notify && res.notified === false) {
+          showWarn("อัปเดตออเดอร์เสร็จแล้ว แต่ส่งแจ้งเตือน LINE ไม่สำเร็จ — กรุณาทักลูกค้าเอง");
+        }
+      } catch (_) {
+        showWarn("อัปเดตออเดอร์ไม่สำเร็จ กรุณาลองใหม่");
+      }
+      await refresh();
+    }
+
+    function openCancel(orderId, qnum) {
+      cancelOrderId = orderId;
+      document.getElementById("cancel-qnum").textContent = String(qnum);
+      document.getElementById("custom-reason").value = "";
+      document.getElementById("cancel-dialog").showModal();
+    }
+
+    function closeCancelDialog() {
+      cancelOrderId = null;
+      document.getElementById("cancel-dialog").close();
+    }
+
+    async function submitCancel(reason) {
+      if (!cancelOrderId) return;
+      const clean = (reason || "").trim();
+      if (!clean) return;
+      const id = cancelOrderId;
+      closeCancelDialog();
+      try {
+        const res = await api(`/api/kitchen/orders/${id}/cancel`, "POST", { reason: clean });
+        if (res.notified === false) {
+          showWarn("ยกเลิกออเดอร์แล้ว แต่ส่งแจ้งเตือน LINE ไม่สำเร็จ — กรุณาทักลูกค้าเอง");
+        }
+      } catch (_) {
+        showWarn("ยกเลิกออเดอร์ไม่สำเร็จ กรุณาลองใหม่");
+      }
+      await refresh();
+    }
+
+    refresh();
+    setInterval(refresh, 3000);
+  </script>
+</body>
+</html>
