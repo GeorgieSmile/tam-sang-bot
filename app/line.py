@@ -6,6 +6,7 @@ import base64
 import hashlib
 import hmac
 import logging
+from datetime import date
 from typing import Any, Protocol
 from urllib.parse import parse_qsl
 
@@ -18,12 +19,16 @@ log = logging.getLogger("app.line")
 LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply"
 LINE_PUSH_URL = "https://api.line.me/v2/bot/message/push"
 LINE_LOADING_URL = "https://api.line.me/v2/bot/chat/loading/start"
+LINE_PROFILE_URL = "https://api.line.me/v2/bot/profile/{user_id}"
+LINE_CONTENT_URL = "https://api-data.line.me/v2/bot/message/{message_id}/content"
 
 
 class LineClient(Protocol):
     def reply_messages(self, reply_token: str, messages: list[dict[str, Any]]) -> None: ...
     def push_text(self, user_id: str, text: str) -> None: ...
     def show_loading(self, user_id: str, seconds: int = 20) -> None: ...
+    def get_profile(self, user_id: str) -> str | None: ...
+    def get_message_content(self, message_id: str) -> bytes: ...
 
 
 class NoopLineClient:
@@ -35,6 +40,12 @@ class NoopLineClient:
 
     def show_loading(self, user_id: str, seconds: int = 20) -> None:
         return None
+
+    def get_profile(self, user_id: str) -> str | None:
+        return None
+
+    def get_message_content(self, message_id: str) -> bytes:
+        return b""
 
 
 class HttpLineClient:
@@ -70,6 +81,31 @@ class HttpLineClient:
             )
             resp.raise_for_status()
 
+    def get_profile(self, user_id: str) -> str | None:
+        """Customer display name from GET /v2/bot/profile/{userId}."""
+        if not self._token or not user_id:
+            return None
+        with httpx.Client(timeout=self._timeout_s) as client:
+            resp = client.get(
+                LINE_PROFILE_URL.format(user_id=user_id),
+                headers={"Authorization": f"Bearer {self._token}"},
+            )
+            resp.raise_for_status()
+            name = resp.json().get("displayName")
+        return str(name) if name else None
+
+    def get_message_content(self, message_id: str) -> bytes:
+        """Image bytes from GET api-data.line.me/v2/bot/message/{messageId}/content."""
+        if not self._token or not message_id:
+            return b""
+        with httpx.Client(timeout=self._timeout_s) as client:
+            resp = client.get(
+                LINE_CONTENT_URL.format(message_id=message_id),
+                headers={"Authorization": f"Bearer {self._token}"},
+            )
+            resp.raise_for_status()
+            return resp.content
+
     def show_loading(self, user_id: str, seconds: int = 20) -> None:
         if not self._token or not user_id:
             return
@@ -97,6 +133,48 @@ def parse_postback_data(data: str) -> dict[str, str]:
     return dict(parse_qsl(data, keep_blank_values=False))
 
 
+def image_message(url: str) -> dict[str, Any]:
+    return {"type": "image", "originalContentUrl": url, "previewImageUrl": url}
+
+
+def _unpaid_label(order: Order, this_shop_date: str) -> str:
+    if order.shop_date == this_shop_date:
+        return f"ออเดอร์ก่อนหน้า #{order.queue_number}"
+    days = (date.fromisoformat(this_shop_date) - date.fromisoformat(order.shop_date)).days
+    if days == 1:
+        return f"ค้างจากเมื่อวาน #{order.queue_number}"
+    d = date.fromisoformat(order.shop_date)
+    return f"ค้างจาก {d.day}/{d.month} #{order.queue_number}"
+
+
+def format_payment_lines(
+    unpaid: list[Order], this_order: Order | None, shop_date: str, *, cash: bool = False
+) -> str:
+    """Unpaid-balance block: one line when only this order is owed, else each order and a total.
+
+    `cash`: the customer said they'll pay cash, so no QR is offered.
+    """
+    total = sum(o.total for o in unpaid)
+    only_this = this_order is not None and [o.id for o in unpaid] == [this_order.id]
+    if only_this:
+        if cash:
+            return f"ชำระเงินสด {total}฿ ตอนรับอาหารได้เลยค่ะ"
+        return f"โอน {total}฿ ตาม QR ด้านล่างได้เลยค่ะ"
+    lines: list[str] = []
+    if this_order is not None and any(o.id == this_order.id for o in unpaid):
+        lines.append(f"ออเดอร์นี้ #{this_order.queue_number} {this_order.total}฿")
+    for o in unpaid:
+        if this_order is None or o.id != this_order.id:
+            lines.append(f"{_unpaid_label(o, shop_date)} {o.total}฿")
+    if cash:
+        lines.append(f"รวมที่ต้องจ่าย {total}฿")
+        lines.append("ชำระเงินสดตอนรับอาหารได้เลยค่ะ")
+    else:
+        lines.append(f"รวมที่ต้องโอน {total}฿")
+        lines.append("สแกน QR ด้านล่างเพื่อโอนได้เลยค่ะ")
+    return "\n".join(lines)
+
+
 def text_message(text: str) -> dict[str, Any]:
     return {"type": "text", "text": text}
 
@@ -105,7 +183,7 @@ def build_order_flex(
     card_snapshot: dict[str, Any],
     *,
     shop_name: str,
-    wait_minutes: int | None = None,
+    wait_text: str | None = None,
 ) -> dict[str, Any]:
     """Build a LINE Flex Message order summary with Confirm and Cancel postback buttons."""
     card_id = str(card_snapshot["card_id"])
@@ -121,11 +199,11 @@ def build_order_flex(
         {"type": "text", "text": f"สรุปออเดอร์ · {shop_name}", "weight": "bold", "size": "lg"},
     ]
 
-    if wait_minutes:
+    if wait_text:
         body_contents.append(
             {
                 "type": "text",
-                "text": f"ช่วงนี้คิวเยอะ รอประมาณ {wait_minutes} นาทีนะคะ",
+                "text": wait_text,
                 "size": "sm",
                 "color": "#B45309",
                 "weight": "bold",
@@ -285,7 +363,7 @@ def format_order_receipt(
     payment_info_text: str,
     *,
     already_confirmed: bool = False,
-    wait_minutes: int | None = None,
+    queue_line: str | None = None,
 ) -> str:
     header = (
         f"ออเดอร์ #{order.queue_number} ยืนยันไว้แล้วค่ะ"
@@ -308,8 +386,8 @@ def format_order_receipt(
     if order.requested_time:
         lines.append(f"เวลาที่ขอ: {order.requested_time}")
     lines.append(f"ยอดรวมทั้งหมด {order.total} บาท")
-    if wait_minutes and not already_confirmed:
-        lines.append(f"ช่วงนี้คิวเยอะ รอประมาณ {wait_minutes} นาทีนะคะ")
+    if queue_line:
+        lines.append(queue_line)
     if payment_info_text:
         lines.append("")
         lines.append(payment_info_text)

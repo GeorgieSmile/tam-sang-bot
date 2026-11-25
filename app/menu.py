@@ -35,6 +35,12 @@ class DeliveryRule:
 
 
 @dataclass(frozen=True)
+class WaitConfig:
+    minutes_per_box: int = 3
+    min_wait: int = 10
+
+
+@dataclass(frozen=True)
 class ShopConfig:
     name: str
     timezone: str
@@ -117,11 +123,22 @@ class Menu:
         shop: ShopConfig,
         ingredients: dict[str, str],
         items: tuple[MenuItem, ...],
+        wait: WaitConfig | None = None,
     ) -> None:
         self.shop = shop
+        self.wait = wait or WaitConfig()
         self.ingredients = ingredients
         self.items = items
         self.items_by_id: dict[str, MenuItem] = {item.id: item for item in items}
+
+    def meal_boxes(self, lines: list[dict[str, Any]]) -> int:
+        """Meal boxes in cart or order lines: the quantity of `category: meal` items."""
+        total = 0
+        for line in lines:
+            item = self.items_by_id.get(str(line.get("dish_id")))
+            if item is not None and item.category == "meal":
+                total += int(line.get("qty") or 0)
+        return total
 
     def is_scheduled_open(self, now: datetime) -> bool:
         local = now.astimezone(self.shop.tz)
@@ -242,6 +259,43 @@ class Menu:
         ]
         return {"ingredients": sold_ingredients, "dishes": sold_dishes}
 
+    def menu_text(self, overrides: OverrideMap) -> str:
+        """The customer-facing menu list, built in code so it is never cut off (SPEC §3.9).
+
+        Each dish shows the choices the customer must make (required groups with no default,
+        e.g. meat), with extra cost, leaving out sold-out options. Sold-out dishes, and dishes
+        whose required choice is fully sold out, are left out. Optional add-ons aren't listed.
+        """
+        titles = {"meal": "อาหารจานหลัก", "side": "เมนูเสริม", "drink": "เครื่องดื่ม"}
+        sections: dict[str, list[str]] = {}
+        for item in self.items:
+            if not self.is_dish_available(item.id, overrides):
+                continue
+            choices: list[str] = []
+            orderable = True
+            for group in item.groups:
+                if not group.required or group.default is not None:
+                    continue
+                names = [
+                    o.name_th + (f" +{o.price_delta}" if o.price_delta else "")
+                    for o in group.options
+                    if self.is_ingredient_available(o.ingredient_key, overrides)
+                ]
+                if not names:
+                    orderable = False
+                    break
+                choices.append("/".join(names))
+            if not orderable:
+                continue
+            line = f"• {item.name_th} {item.base_price}฿"
+            if choices:
+                line += f" ({'; '.join(choices)})"
+            sections.setdefault(item.category, []).append(line)
+        lines = ["วันนี้มีเมนูดังนี้ค่ะ"]
+        for category, bullets in sections.items():
+            lines += ["", titles.get(category, category), *bullets]
+        return "\n".join(lines)
+
     def to_prompt_dict(self, overrides: OverrideMap) -> list[dict[str, Any]]:
         result: list[dict[str, Any]] = []
         for item in self.items:
@@ -332,6 +386,16 @@ def load_menu(path: Path) -> Menu:
         str(k): str(v) for k, v in (raw.get("ingredients") or {}).items()
     }
 
+    wait_raw = raw.get("wait") or {}
+    if not isinstance(wait_raw, dict):
+        raise MenuError("menu.yaml: wait must be a mapping")
+    per_box, min_wait = wait_raw.get("minutes_per_box", 3), wait_raw.get("min_wait", 10)
+    if any(isinstance(v, bool) or not isinstance(v, int) for v in (per_box, min_wait)):
+        raise MenuError("menu.yaml: wait.minutes_per_box and wait.min_wait must be whole numbers")
+    wait = WaitConfig(minutes_per_box=per_box, min_wait=min_wait)
+    if wait.minutes_per_box <= 0 or wait.min_wait < 0:
+        raise MenuError("menu.yaml: wait.minutes_per_box must be > 0 and wait.min_wait >= 0")
+
     group_defs: dict[str, dict[str, Any]] = raw.get("option_groups") or {}
     items: list[MenuItem] = []
     for item_raw in raw["items"]:
@@ -373,4 +437,4 @@ def load_menu(path: Path) -> Menu:
                 groups=tuple(item_groups),
             )
         )
-    return Menu(shop=shop, ingredients=ingredients, items=tuple(items))
+    return Menu(shop=shop, ingredients=ingredients, items=tuple(items), wait=wait)

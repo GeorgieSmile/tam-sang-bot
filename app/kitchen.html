@@ -64,6 +64,8 @@
       align-items: center;
       cursor: pointer;
     }
+    /* `display: flex` on bars must not override the hidden attribute */
+    [hidden] { display: none !important; }
     .warn-bar {
       background: var(--red-bg);
       color: var(--red);
@@ -215,6 +217,63 @@
       margin: 8px 0;
     }
     details summary { cursor: pointer; font-weight: 700; color: var(--muted); padding: 8px 0; }
+    .pay-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 10px; }
+    .pay-badge { padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
+    .pay-unpaid { background: var(--amber-bg); color: var(--amber); }
+    .pay-paid { background: var(--green-bg); color: var(--green); }
+    .pay-legacy { background: #f3f0ea; color: var(--muted); }
+    .pay-intent { background: var(--blue-bg); color: var(--blue); }
+    .day-tag { background: var(--red-bg); color: var(--red); border-radius: 6px; padding: 1px 7px; font-weight: 800; }
+    .inbox-owed { color: var(--amber); font-weight: 700; margin-top: 4px; }
+    .card-summary { display: none; margin-top: 6px; font-weight: 600; }
+    .card.compact .card-body { display: none; }
+    .card.compact .card-summary { display: block; }
+    .card.compact .ticket-head::after { content: "แตะเพื่อดู ▾"; color: var(--muted); font-size: 0.82rem; }
+    .tappable { cursor: pointer; }
+    .btn-pay {
+      border: 1.5px solid var(--border);
+      background: #fff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .refund-warn {
+      background: var(--red-bg);
+      color: var(--red);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-weight: 700;
+      margin: 0 0 10px;
+    }
+    .unpaid-item {
+      background: var(--surface);
+      border: 1.5px solid var(--amber-bg);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .inbox-card {
+      background: var(--surface);
+      border: 2px solid var(--blue);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+    .inbox-card.back { border-color: var(--border); }
+    .inbox-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+    .inbox-name { font-weight: 800; font-size: 1.1rem; }
+    .inbox-reason { font-weight: 700; color: var(--blue); margin-top: 4px; }
+    .inbox-msg { color: var(--ink); margin-top: 4px; font-size: 0.98rem; }
+    .inbox-meta { color: var(--muted); font-size: 0.88rem; margin-top: 6px; }
+    .unseen { background: var(--red); color: #fff; border-radius: 999px; padding: 1px 8px; font-size: 0.85rem; font-weight: 800; }
+    .btn-resolve { background: var(--green); color: #fff; margin-top: 10px; width: 100%; }
     .finished-item {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -233,6 +292,7 @@
     <span>แตะเพื่อเปิดเสียงเตือนออเดอร์ใหม่ + กันหน้าจอดับ</span>
     <span>เปิดเสียง</span>
   </div>
+  <div id="quota-bar" class="warn-bar" hidden></div>
   <div id="warn-bar" class="warn-bar" hidden onclick="this.hidden = true">
     <span id="warn-text"></span>
     <span>ปิด</span>
@@ -243,7 +303,8 @@
       <h1 id="shop-name">หน้าจอครัว</h1>
       <div class="row">
         <button id="btn-open" class="pill" onclick="toggleOpen()">...</button>
-        <button id="btn-notify" class="pill" onclick="toggleOwnerAlert()">แจ้งเตือน LINE: ปิด</button>
+        <button id="btn-notify" class="pill" onclick="toggleOwnerAlert()">LINE ออเดอร์ใหม่: ปิด</button>
+        <button id="btn-notify-inbox" class="pill" onclick="toggleInboxAlert()">LINE ลูกค้ารอตอบ: เปิด</button>
       </div>
     </div>
     <div class="controls">
@@ -266,11 +327,26 @@
       <div id="dish-chips" class="chip-grid"></div>
     </section>
 
+    <div id="inbox-section" hidden>
+      <div class="section-title"><span>ลูกค้ารอร้านตอบ (<span id="inbox-count">0</span>)</span></div>
+      <div id="inbox-list"></div>
+    </div>
+
     <div class="section-title">
       <span>คิวที่ต้องทำ (<span id="queued-count">0</span>)</span>
       <span id="last-sync" style="font-size:0.82rem"></span>
     </div>
     <div id="queue-list"></div>
+
+    <details id="batch-section" style="margin-top:14px" hidden>
+      <summary>รวมจาน (<span id="batch-count">0</span>)</summary>
+      <div id="batch-list" style="margin-top:8px"></div>
+    </details>
+
+    <div id="unpaid-section" hidden>
+      <div class="section-title"><span>ค้างจ่าย (<span id="unpaid-count">0</span>)</span></div>
+      <div id="unpaid-list"></div>
+    </div>
 
     <details style="margin-top:18px">
       <summary id="finished-summary">วันนี้ทำแล้ว 0 ออเดอร์ · 0 บาท</summary>
@@ -281,6 +357,7 @@
   <dialog id="cancel-dialog">
     <h3 style="margin:0 0 8px">ยกเลิกออเดอร์ #<span id="cancel-qnum"></span></h3>
     <p style="margin:0 0 10px;color:var(--muted);font-size:0.9rem">ระบบจะส่งข้อความแจ้งเหตุผลไปหาลูกค้าทาง LINE</p>
+    <div id="cancel-refund-warn" class="refund-warn" hidden></div>
     <button class="reason-btn" onclick="submitCancel('ของหมด')">ของหมด</button>
     <button class="reason-btn" onclick="submitCancel('นอกพื้นที่ส่ง')">นอกพื้นที่ส่ง</button>
     <button class="reason-btn" onclick="submitCancel('ปิดรับชั่วคราว')">ปิดรับชั่วคราว</button>
@@ -288,6 +365,26 @@
     <div class="row space-between">
       <button class="pill" onclick="closeCancelDialog()">ปิด</button>
       <button class="btn btn-cancel" onclick="submitCancel(document.getElementById('custom-reason').value)">ยืนยันยกเลิก</button>
+    </div>
+  </dialog>
+
+  <dialog id="paid-dialog">
+    <h3 style="margin:0 0 8px">รับเงินแล้ว</h3>
+    <p style="margin:0 0 10px;color:var(--muted);font-size:0.9rem">ติ๊กออเดอร์ที่ร้านเช็คแล้วว่าได้รับเงินโอน</p>
+    <div id="paid-options"></div>
+    <div class="row space-between" style="margin-top:12px">
+      <button class="pill" onclick="document.getElementById('paid-dialog').close()">ปิด</button>
+      <button class="btn btn-done" onclick="submitPaidPicker()">ยืนยันรับโอนแล้ว</button>
+    </div>
+  </dialog>
+
+  <dialog id="done-dialog">
+    <h3 style="margin:0 0 8px">#<span id="done-qnum"></span> ยังไม่จ่าย <span id="done-total"></span>฿</h3>
+    <p id="done-intent" style="margin:0 0 10px;color:var(--blue);font-weight:700" hidden>ลูกค้าแจ้งว่าจะจ่ายเงินสด</p>
+    <button class="reason-btn" onclick="submitDone(true)">💵 รับเงินสดแล้ว</button>
+    <button class="reason-btn" onclick="submitDone(false)">ยังไม่จ่าย (ไปอยู่ในค้างจ่าย)</button>
+    <div class="row" style="margin-top:12px">
+      <button class="pill" onclick="document.getElementById('done-dialog').close()">ปิด</button>
     </div>
   </dialog>
 
@@ -300,6 +397,7 @@
     }
     let state = null;
     let knownQueuedIds = new Set();
+    let knownInbox = new Map();
     let initialized = false;
     let audioCtx = null;
     let wakeWanted = false;
@@ -383,6 +481,35 @@
       return m ? m[1] : iso;
     }
 
+    const PAY_LABELS = {
+      unpaid: "ยังไม่จ่าย",
+      slip: "โอนแล้ว (สลิป) ✅",
+      cash: "💵 เงินสด",
+      transfer_manual: "โอนแล้ว (ร้านเช็ค)",
+      legacy: "ก่อนระบบจ่ายเงิน",
+    };
+
+    const SYSTEM_PREVIEW = /^(\[(รูปภาพ|ข้อความเสียง|สลิป[^\]]*)\]|📍 )/;
+
+    function payControls(o) {
+      const ps = o.payment_status;
+      if (o.status === "cancelled") {
+        // Cancelled: only an owner-set payment can still be undone (refund due otherwise).
+        if (ps !== "cash" && ps !== "transfer_manual") return `<span class="pay-badge pay-legacy">${esc(PAY_LABELS[ps] || ps)}</span>`;
+        return `<span class="pay-badge pay-paid">${esc(PAY_LABELS[ps])}</span><button class="btn-pay" onclick="setPayment(${o.id}, 'unpaid')">ยกเลิกจ่าย</button>`;
+      }
+      const cls = ps === "unpaid" ? "pay-unpaid" : ps === "legacy" ? "pay-legacy" : "pay-paid";
+      let html = `<span class="pay-badge ${cls}">${esc(PAY_LABELS[ps] || ps)}</span>`;
+      if (ps === "unpaid" && o.pay_cash) html += `<span class="pay-badge pay-intent">จะจ่ายสด</span>`;
+      if (ps === "unpaid") {
+        html += `<button class="btn-pay" onclick="setPayment(${o.id}, 'cash')">รับเงินสดแล้ว</button>`;
+        html += `<button class="btn-pay" onclick="setPayment(${o.id}, 'transfer_manual')">รับโอนแล้ว</button>`;
+      } else if (ps === "cash" || ps === "transfer_manual") {
+        html += `<button class="btn-pay" onclick="setPayment(${o.id}, 'unpaid')">ยกเลิกจ่าย</button>`;
+      }
+      return html;
+    }
+
     function render(newState) {
       const newQueuedIds = new Set(newState.orders.queued.map((o) => o.id));
       const added = new Set([...newQueuedIds].filter((id) => !knownQueuedIds.has(id)));
@@ -395,6 +522,14 @@
       } else if (customerCancelled) {
         playBeep(330, 0.35);
       }
+      // Inbox: a new card or a new customer message plays a different (lower) beep
+      const newInbox = new Map((newState.inbox || []).map((c) => [c.id, `${c.unseen_count}|${c.updated_at}`]));
+      const inboxChanged = [...newInbox].some(([id, sig]) => knownInbox.get(id) !== sig);
+      if (initialized && inboxChanged) {
+        playBeep(523, 0.18);
+        setTimeout(() => playBeep(392, 0.3), 200);
+      }
+      knownInbox = newInbox;
       knownQueuedIds = newQueuedIds;
       initialized = true;
       state = newState;
@@ -406,8 +541,11 @@
       btnOpen.className = `pill ${s.is_open ? "active-green" : "active-red"}`;
 
       const btnNotify = document.getElementById("btn-notify");
-      btnNotify.textContent = `แจ้งเตือน LINE: ${s.notify_owner_on_order ? "เปิด" : "ปิด"}`;
+      btnNotify.textContent = `LINE ออเดอร์ใหม่: ${s.notify_owner_on_order ? "เปิด" : "ปิด"}`;
       btnNotify.className = `pill ${s.notify_owner_on_order ? "active-blue" : ""}`;
+      const btnInbox = document.getElementById("btn-notify-inbox");
+      btnInbox.textContent = `LINE ลูกค้ารอตอบ: ${s.notify_owner_on_inbox ? "เปิด" : "ปิด"}`;
+      btnInbox.className = `pill ${s.notify_owner_on_inbox ? "active-blue" : ""}`;
 
       document.getElementById("mode-normal").className = `pill ${!s.busy_mode ? "active-green" : ""}`;
       document.getElementById("mode-busy-15").className = `pill ${s.busy_mode && s.wait_minutes === 15 ? "active-amber" : ""}`;
@@ -425,11 +563,43 @@
         .map((x) => `<button class="chip ${x.available ? "" : "sold"}" onclick="toggleOverride('dish','${esc(x.key)}',${!x.available})">${esc(x.name_th)}</button>`)
         .join("");
 
+      const inbox = state.inbox || [];
+      document.getElementById("inbox-section").hidden = inbox.length === 0;
+      document.getElementById("inbox-count").textContent = String(inbox.length);
+      document.getElementById("inbox-list").innerHTML = inbox.map((c) => {
+        const reasons = c.reason_lines.map((r) => `<div class="inbox-reason">${esc(r)}</div>`).join("");
+        // Only what the customer typed: the system's own previews ([รูปภาพ], [สลิป …],
+        // [ข้อความเสียง], 📍 pins) already show as the reason or the pin row
+        const msgs = c.recent.filter((m) => !SYSTEM_PREVIEW.test(String(m.text).trim()))
+          .map((m) => `<div class="inbox-msg">“${esc(m.text)}”</div>`).join("");
+        const owed = c.has_slip_reason && c.unpaid_orders.length
+          ? `<div class="inbox-owed">ค้าง: ${c.unpaid_orders.map((o) => `${esc(o.ref)} ${o.total}฿`).join(", ")}</div>` : "";
+        const pins = c.details.filter((d) => d.kind === "pin").map((d) =>
+          `<div class="inbox-msg">📍 ส่งพิกัดแล้ว <a class="map-link" href="${esc(d.url)}" target="_blank" rel="noopener">เปิดแผนที่</a></div>`).join("");
+        const mins = Math.max(0, Math.round((Date.now() - new Date(c.created_at).getTime()) / 60000));
+        const bot = c.bot_quiet ? `บอทพัก ${c.quiet_minutes_left} น.` : "บอทกลับมาตอบแล้ว";
+        const unseen = c.unseen_count > 0 ? `<span class="unseen">ใหม่ ${c.unseen_count}</span>` : "";
+        return `
+          <article class="inbox-card ${c.bot_quiet ? "" : "back"}">
+            <div class="inbox-head"><span class="inbox-name">${esc(c.display_name)}</span>${unseen}</div>
+            ${reasons}${owed}${msgs}${pins}
+            <div class="inbox-meta">${mins} นาทีที่แล้ว · ${esc(bot)}</div>
+            ${c.has_slip_reason && c.unpaid_orders.length ? `<button class="btn btn-done-notify" style="margin-top:10px;width:100%" onclick="openPaidPicker(${c.id})">รับเงินแล้ว…</button>` : ""}
+            <button class="btn btn-resolve" onclick="resolveCard(${c.id})">${c.bot_quiet ? "ให้บอทตอบต่อ" : "ปิดการ์ด"}</button>
+          </article>`;
+      }).join("");
+
+      const quotaBar = document.getElementById("quota-bar");
+      const q = state.slip_quota;
+      quotaBar.hidden = !(q && q.warn);
+      if (q && q.warn) quotaBar.textContent = `เช็คสลิปเหลือ ${q.left} ครั้ง`;
+
       const queued = state.orders.queued;
       document.getElementById("queued-count").textContent = String(queued.length);
       document.getElementById("last-sync").textContent = `อัปเดต ${new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
 
       const qList = document.getElementById("queue-list");
+      const narrow = window.matchMedia("(max-width: 600px)").matches;
       if (queued.length === 0) {
         qList.innerHTML = `<div class="empty">ยังไม่มีออเดอร์ค้างอยู่</div>`;
       } else {
@@ -444,12 +614,17 @@
             return `<li><div class="dish-title">${esc(it.dish_name_th)} × ${it.qty}</div><div>${opts}${note}</div></li>`;
           }).join("");
           const feeNote = o.delivery_fee > 0 ? ` (รวมค่าส่ง ${o.delivery_fee}฿)` : "";
+          const dayTag = o.is_today === false ? `<span class="day-tag">${esc(o.day_label)}</span> ` : "";
+          const compact = narrow && !expanded.has(o.id);
+          const summary = o.items.map((it) => `${esc(it.dish_name_th)} ×${it.qty}`).join(" · ");
           return `
-            <article class="card ${added.has(o.id) ? "flash-new" : ""}">
-              <div class="ticket-head">
+            <article class="card ${added.has(o.id) ? "flash-new" : ""} ${compact ? "compact" : ""}">
+              <div class="ticket-head ${narrow ? "tappable" : ""}" ${narrow ? `role="button" tabindex="0" aria-expanded="${!compact}" onclick="toggleCard(${o.id})" onkeydown="cardKey(event, ${o.id})"` : ""}>
                 <span class="queue-num">#${o.queue_number}</span>
-                <span class="time-label">สั่งเมื่อ ${formatClock(o.created_at)}</span>
+                <span class="time-label">${dayTag}สั่งเมื่อ ${formatClock(o.created_at)}</span>
               </div>
+              <div class="card-summary tappable" onclick="toggleCard(${o.id})">${summary}<div class="pay-row" style="margin:6px 0 0">${payControls(o).replace(/<button[\s\S]*?<\/button>/g, "")}<span class="badge ${isDelivery ? "badge-delivery" : "badge-pickup"}" style="margin:0">${isDelivery ? "ส่ง" : "รับเอง"}</span></div></div>
+              <div class="card-body">
               <div>
                 <span class="badge ${isDelivery ? "badge-delivery" : "badge-pickup"}">${addrText}</span>
                 ${mapHtml}
@@ -460,15 +635,35 @@
                 <span>รวมทั้งหมด${feeNote}</span>
                 <span>${o.total} บาท</span>
               </div>
+              <div class="pay-row">${payControls(o)}<button class="btn-pay" onclick="takeOver(${o.id})">คุยเอง</button></div>
               <div class="actions">
                 <button class="btn btn-done" onclick="markDone(${o.id}, false)">ทำเสร็จแล้ว</button>
                 <button class="btn btn-done-notify" onclick="markDone(${o.id}, true)">เสร็จ + แจ้งลูกค้า</button>
-                <button class="btn btn-cancel" onclick="openCancel(${o.id}, ${o.queue_number})">ยกเลิก</button>
+                <button class="btn btn-cancel" onclick="openCancel(${o.id})">ยกเลิก</button>
+              </div>
               </div>
             </article>
           `;
         }).join("");
       }
+
+      const batch = state.orders.batch || [];
+      document.getElementById("batch-section").hidden = batch.length === 0;
+      document.getElementById("batch-count").textContent = String(batch.length);
+      document.getElementById("batch-list").innerHTML = batch.map((g) => {
+        const opts = g.option_names_th.map((n) => `<span class="opt-tag">${esc(n)}</span>`).join("");
+        const notes = g.notes.map((n) => `<div style="color:var(--amber);font-weight:700">└ ${esc(n.ref)}: ${esc(n.note)}</div>`).join("");
+        const nums = g.refs.map((r) => esc(r)).join(", ");
+        return `<div class="finished-item" style="display:block"><div class="dish-title">${esc(g.dish_name_th)} × ${g.qty}</div><div>${opts}</div><div style="color:var(--muted)">${nums}</div>${notes}</div>`;
+      }).join("");
+
+      const unpaid = state.orders.unpaid || [];
+      document.getElementById("unpaid-section").hidden = unpaid.length === 0;
+      document.getElementById("unpaid-count").textContent = String(unpaid.length);
+      document.getElementById("unpaid-list").innerHTML = unpaid.map((o) => {
+        const day = o.is_today ? formatClock(o.created_at) : esc(o.day_label);
+        return `<div class="unpaid-item"><span><strong>#${o.queue_number}</strong> (${day}) · ${o.total}฿</span><span class="pay-row" style="margin:0">${payControls(o)}<button class="btn-pay" onclick="takeOver(${o.id})">คุยเอง</button></span></div>`;
+      }).join("");
 
       const stats = state.orders.stats;
       document.getElementById("finished-summary").textContent =
@@ -478,8 +673,11 @@
       document.getElementById("finished-list").innerHTML = state.orders.finished.map((o) => {
         const label = o.status === "done" ? `เสร็จแล้ว · ${o.total}฿` : `ยกเลิก (${esc(o.cancel_reason || "")})`;
         const color = o.status === "done" ? "var(--green)" : "var(--red)";
-        return `<div class="finished-item"><span>#${o.queue_number} (${formatClock(o.created_at)})</span><strong style="color:${color}">${label}</strong></div>`;
+        const pay = o.payment_status === "unpaid" && o.status === "cancelled" ? "" : `<span class="pay-row" style="margin:0">${payControls(o)}</span>`;
+        const when = o.is_today === false ? esc(o.day_label) : formatClock(o.created_at);
+        return `<div class="finished-item"><span>#${o.queue_number} (${when})</span><span><strong style="color:${color}">${label}</strong> ${pay}</span></div>`;
       }).join("");
+      if (cancelOrderId !== null) updateRefundWarn();
     }
 
     async function refresh() {
@@ -507,6 +705,22 @@
       await refresh();
     }
 
+    async function toggleInboxAlert() {
+      if (!state) return;
+      await api("/api/kitchen/shop", "POST", { notify_owner_on_inbox: !state.shop.notify_owner_on_inbox });
+      await refresh();
+    }
+
+    const expanded = new Set();
+    function cardKey(ev, orderId) {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); toggleCard(orderId); }
+    }
+
+    function toggleCard(orderId) {
+      if (expanded.has(orderId)) expanded.delete(orderId); else expanded.add(orderId);
+      if (state) render(state);
+    }
+
     async function setBusy(busy, mins) {
       await api("/api/kitchen/shop", "POST", { busy_mode: busy, wait_minutes: mins });
       await refresh();
@@ -527,9 +741,33 @@
       await refresh();
     }
 
-    async function markDone(orderId, notify) {
+    let doneOrderId = null;
+    let doneNotify = false;
+
+    function markDone(orderId, notify) {
+      const o = state && state.orders.queued.find((x) => x.id === orderId);
+      if (o && o.payment_status === "unpaid") {
+        // Ask once, so cash handed over at pickup never stays in ค้างจ่าย by mistake
+        doneOrderId = orderId;
+        doneNotify = notify;
+        document.getElementById("done-qnum").textContent = String(o.queue_number);
+        document.getElementById("done-total").textContent = String(o.total);
+        document.getElementById("done-intent").hidden = !o.pay_cash;
+        document.getElementById("done-dialog").showModal();
+        return;
+      }
+      sendDone(orderId, notify, false);
+    }
+
+    function submitDone(paidCash) {
+      document.getElementById("done-dialog").close();
+      if (doneOrderId !== null) sendDone(doneOrderId, doneNotify, paidCash);
+      doneOrderId = null;
+    }
+
+    async function sendDone(orderId, notify, paidCash) {
       try {
-        const res = await api(`/api/kitchen/orders/${orderId}/done`, "POST", { notify });
+        const res = await api(`/api/kitchen/orders/${orderId}/done`, "POST", { notify, paid_cash: paidCash });
         if (notify && res.notified === false) {
           showWarn("อัปเดตออเดอร์เสร็จแล้ว แต่ส่งแจ้งเตือน LINE ไม่สำเร็จ — กรุณาทักลูกค้าเอง");
         }
@@ -539,11 +777,81 @@
       await refresh();
     }
 
-    function openCancel(orderId, qnum) {
+    async function resolveCard(cardId) {
+      try {
+        await api(`/api/kitchen/handovers/${cardId}/resolve`, "POST", {});
+      } catch (_) {
+        showWarn("อัปเดตไม่สำเร็จ กรุณาลองใหม่");
+      }
+      await refresh();
+    }
+
+    let paidCardId = null;
+
+    function openPaidPicker(cardId) {
+      const c = state && (state.inbox || []).find((x) => x.id === cardId);
+      if (!c) return;
+      paidCardId = cardId;
+      document.getElementById("paid-options").innerHTML = c.unpaid_orders.map((o) =>
+        `<label class="reason-btn"><input type="checkbox" class="paid-check" value="${o.id}" checked> ${esc(o.ref)} · ${o.total}฿</label>`).join("");
+      document.getElementById("paid-dialog").showModal();
+    }
+
+    async function submitPaidPicker() {
+      const ids = [...document.querySelectorAll(".paid-check")].filter((x) => x.checked).map((x) => Number(x.value));
+      document.getElementById("paid-dialog").close();
+      if (!paidCardId || ids.length === 0) return;
+      try {
+        const res = await api(`/api/kitchen/handovers/${paidCardId}/mark-paid`, "POST", { order_ids: ids });
+        if (res.skipped && res.skipped.length) showWarn("บางออเดอร์ถูกบันทึกการจ่ายไปแล้ว กรุณาตรวจสอบอีกครั้ง");
+      } catch (_) {
+        showWarn("อัปเดตการจ่ายเงินไม่สำเร็จ กรุณาลองใหม่");
+      }
+      await refresh();
+    }
+
+    async function takeOver(orderId) {
+      try {
+        await api(`/api/kitchen/orders/${orderId}/takeover`, "POST", {});
+      } catch (_) {
+        showWarn("เปิดโหมดคุยเองไม่สำเร็จ กรุณาลองใหม่");
+      }
+      await refresh();
+    }
+
+    async function setPayment(orderId, status) {
+      try {
+        await api(`/api/kitchen/orders/${orderId}/payment`, "POST", { status });
+      } catch (_) {
+        showWarn("อัปเดตการจ่ายเงินไม่สำเร็จ กรุณาลองใหม่");
+      }
+      await refresh();
+    }
+
+    function openCancel(orderId) {
+      const o = state && state.orders.queued.find((x) => x.id === orderId);
+      if (!o) return;
       cancelOrderId = orderId;
-      document.getElementById("cancel-qnum").textContent = String(qnum);
+      document.getElementById("cancel-qnum").textContent = String(o.queue_number);
+      updateRefundWarn();
       document.getElementById("custom-reason").value = "";
       document.getElementById("cancel-dialog").showModal();
+    }
+
+    function updateRefundWarn() {
+      const o = state && state.orders.queued.find((x) => x.id === cancelOrderId);
+      const warn = document.getElementById("cancel-refund-warn");
+      if (!o) { warn.hidden = true; return; }
+      const ps = o.payment_status;
+      if (ps === "slip" || ps === "transfer_manual") {
+        warn.textContent = `ลูกค้าโอนแล้ว ${o.total}฿ ต้องคืนเงิน`;
+        warn.hidden = false;
+      } else if (ps === "cash") {
+        warn.textContent = `จ่ายสดแล้ว ${o.total}฿ ต้องคืนเงิน`;
+        warn.hidden = false;
+      } else {
+        warn.hidden = true;
+      }
     }
 
     function closeCancelDialog() {

@@ -8,6 +8,11 @@ shop:
     fee: 10
     free_above: 100
 
+# Wait estimate: (meal boxes queued + this order's meal boxes) x minutes_per_box, never below min_wait
+wait:
+  minutes_per_box: 3
+  min_wait: 10
+
 ingredients:
   minced_pork: "หมูสับ"
   sliced_pork: "หมูชิ้น"

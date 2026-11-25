@@ -35,6 +35,10 @@ class Settings:
     llm_api_key: str
     llm_model: str
     llm_reasoning_effort: str
+    # v2 payments (all optional: unset means the feature is off and v1 behavior applies)
+    promptpay_id: str = ""
+    slipok_api_key: str = ""
+    slipok_branch_id: str = ""
 
 
 def load_settings() -> Settings:
@@ -57,4 +61,7 @@ def load_settings() -> Settings:
         llm_api_key=os.environ.get("LLM_API_KEY", "").strip(),
         llm_model=os.environ.get("LLM_MODEL", "anthropic/claude-haiku-5.5").strip(),
         llm_reasoning_effort=os.environ.get("LLM_REASONING_EFFORT", "low").strip(),
+        promptpay_id=os.environ.get("PROMPTPAY_ID", "").strip(),
+        slipok_api_key=os.environ.get("SLIPOK_API_KEY", "").strip(),
+        slipok_branch_id=os.environ.get("SLIPOK_BRANCH_ID", "").strip(),
     )

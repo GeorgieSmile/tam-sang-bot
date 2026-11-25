@@ -109,13 +109,14 @@ def test_agent_orders_with_default_spice_and_busy_wait_time_on_flex_card(tmp_pat
     assert turn.reason == "ok"
     assert turn.flex_card is not None
     assert "60 บาท" in turn.flex_card["altText"]
-    # Busy wait time banner appears on the Flex card
+    # Wait line appears on the Flex card. Busy mode is now a minimum wait (SPEC v2 §3.8
+    # item 6): empty queue + 1 meal box -> max(10 auto, 25 minimum) = 25 -> 25–30 range.
     body_texts = [
         c.get("text", "")
         for c in turn.flex_card["contents"]["body"]["contents"]
         if c.get("type") == "text"
     ]
-    assert any("25 นาที" in t for t in body_texts)
+    assert "ตอนนี้รอประมาณ 25–30 นาที" in body_texts
     # Default spice (เผ็ดปกติ) was applied by code
     conv = db.get_or_create_conversation("U_C1")
     assert conv.active_card is not None
@@ -180,29 +181,29 @@ def test_hand_over_silence_and_wake_up_on_order_status(tmp_path: Path) -> None:
     db = ShopDB(tmp_path / "shop.db", clock=lambda: now)
     cfg = _settings(tmp_path / "shop.db")
 
-    # 1. Bare greeting -> hand_over replies once
-    stub1 = StubLLM([_resp(tool_calls=[_tool_call("h1", "hand_over", {})])])
-    t1 = handle_customer_text(db, menu, "U_HO", "สวัสดีค่ะ", llm_client=stub1, settings=cfg)
+    # 1. Allergy question -> hand_over replies once (greetings and unknown dishes get a bot
+    #    reply since Ticket 7)
+    stub1 = StubLLM([_resp(tool_calls=[_tool_call("h1", "hand_over", {"reason": "off_menu"})])])
+    t1 = handle_customer_text(
+        db, menu, "U_HO", "แพ้กุ้ง กะเพราใส่กุ้งไหม", llm_client=stub1, settings=cfg
+    )
     assert t1.reason == "hand_over"
     assert t1.reply_text == HANDOVER_REPLY
 
-    # 2. Follow-up "ขอบคุณค่ะ" with no tool calls -> 100% silent
-    stub2 = StubLLM([_resp(content="ยินดีค่ะ")])
+    # 2. Follow-up "ขอบคุณค่ะ" -> 100% silent
+    stub2 = StubLLM([])
     t2 = handle_customer_text(db, menu, "U_HO", "ขอบคุณค่ะ", llm_client=stub2, settings=cfg)
     assert t2.reason == "silent"
     assert t2.reply_text is None
 
-    # 3. Clear status query calling get_my_orders -> wakes up and replies
-    stub3 = StubLLM(
-        [
-            _resp(tool_calls=[_tool_call("s1", "get_my_orders", {})]),
-            _resp(content="ยังไม่มีออเดอร์วันนี้ค่ะ"),
-        ]
-    )
+    # 3. An order-status question no longer wakes the bot while quiet (SPEC v2 §3.8 item 3):
+    #    0 LLM calls, and the bot stays quiet.
+    stub3 = StubLLM([])
     t3 = handle_customer_text(db, menu, "U_HO", "ถึงไหนแล้ว", llm_client=stub3, settings=cfg)
-    assert t3.reason == "ok"
-    assert t3.reply_text == "ยังไม่มีออเดอร์วันนี้ค่ะ"
-    assert db.is_handed_over(db.get_or_create_conversation("U_HO")) is False
+    assert t3.reason == "silent"
+    assert t3.reply_text is None
+    assert stub3.calls == []
+    assert db.is_handed_over(db.get_or_create_conversation("U_HO")) is True
 
 
 def test_bot_disabled_and_guardrails(tmp_path: Path) -> None:

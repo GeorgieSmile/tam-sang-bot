@@ -7,6 +7,7 @@ __pycache__/
 .ruff_cache/
 .env
 .dev.log
-shop.db
-shop.db-shm
-shop.db-wal
+# The live database and any copy or backup of it (e.g. shop.db.v1-backup)
+shop.db*
+# Real slip images and other private local files (never commit)
+local/

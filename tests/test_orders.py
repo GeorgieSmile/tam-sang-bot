@@ -35,6 +35,12 @@ class SpyLineClient:
     def show_loading(self, user_id: str, seconds: int = 20) -> None:
         self.loadings.append(user_id)
 
+    def get_profile(self, user_id: str) -> str | None:
+        return None
+
+    def get_message_content(self, message_id: str) -> bytes:
+        return b""
+
 
 def _make_settings(db_path: Path) -> Settings:
     return Settings(

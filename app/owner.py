@@ -61,7 +61,7 @@ def handle_owner_text(db: ShopDB, menu: Menu, settings: Settings, text: str) -> 
         mins = int(match.group(1)) if match else 20
         mins = max(5, min(mins, 180))
         db.set_busy_mode(True, mins)
-        return f"เปิดโหมดยุ่งแล้วค่ะ ระบบจะแจ้งลูกค้าว่ารอประมาณ {mins} นาที"
+        return f"เปิดโหมดยุ่งแล้วค่ะ เวลารอที่แจ้งลูกค้าจะไม่ต่ำกว่า {mins} นาที (ถ้าคิวยาวกว่านี้ระบบจะคำนวณตามคิวจริง)"
 
     # Queue count + kitchen link
     if compact in ("คิว", "ออเดอร์", "ดูคิว", "ดูออเดอร์"):
@@ -74,13 +74,26 @@ def handle_owner_text(db: ShopDB, menu: Menu, settings: Settings, text: str) -> 
     if compact in ("สรุปวันนี้", "ยอดวันนี้", "สรุปยอด", "ยอดขายวันนี้"):
         data = db.get_kitchen_orders_today()
         st = data["stats"]
-        return (
-            f"สรุปวันนี้ ({data['shop_date']})\n"
-            f"• ทำเสร็จแล้ว: {st['done_count']} ออเดอร์\n"
-            f"• ยอดขายรวม: {st['done_total']} บาท\n"
-            f"• ยกเลิก: {st['cancelled_count']} ออเดอร์\n"
-            f"• รอทำอยู่: {st['queued_count']} ออเดอร์"
-        )
+        pay = db.get_payment_summary_today()
+        lines = [
+            f"สรุปวันนี้ ({data['shop_date']})",
+            f"• ทำเสร็จแล้ว: {st['done_count']} ออเดอร์",
+            f"• ยอดขายรวม: {st['done_total']} บาท",
+            f"• ยกเลิก: {st['cancelled_count']} ออเดอร์",
+            f"• รอทำอยู่: {st['queued_count']} ออเดอร์",
+            f"• รับโอน (สลิป): {pay['slip_total']} บาท",
+            f"• รับเงินสด/ร้านยืนยันโอน: {pay['cash_total']} บาท",
+        ]
+        unpaid_today = ", ".join(f"#{o.queue_number} {o.total}฿" for o in pay["unpaid_today"])
+        lines.append(f"• ยังไม่จ่าย: {unpaid_today or 'ไม่มี'}")
+        if pay["unpaid_earlier_count"]:
+            lines.append(
+                f"• ค้างจ่ายจากวันก่อน {pay['unpaid_earlier_count']} ออเดอร์ "
+                f"{pay['unpaid_earlier_total']}฿"
+            )
+        for o in pay["refunds_due"]:
+            lines.append(f"• ต้องคืนเงิน #{o.queue_number} {o.total}฿")
+        return "\n".join(lines)
 
     # Sold-out toggle: "<name>หมด" or "ปิด<name>"
     sold_match = re.match(r"^(?:ปิดเมนู|ปิด)?(.+?)หมด(?:แล้ว)?$", compact) or re.match(

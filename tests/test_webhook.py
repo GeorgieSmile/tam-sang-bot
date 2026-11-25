@@ -42,6 +42,12 @@ class SpyLineClient:
     def show_loading(self, user_id: str, seconds: int = 20) -> None:
         self.loadings.append(user_id)
 
+    def get_profile(self, user_id: str) -> str | None:
+        return None
+
+    def get_message_content(self, message_id: str) -> bytes:
+        return b""
+
 
 class FailingLLM:
     def __init__(self) -> None:
@@ -203,7 +209,8 @@ def test_webhook_isolates_event_failures_and_respects_bot_pause_on_media(tmp_pat
 def test_media_routing_image_sticker_and_location_pin(tmp_path: Path) -> None:
     client, db, spy, llm = _setup(tmp_path)
 
-    # Sticker, audio, video -> ignored with 0 replies and 0 LLM calls
+    # Sticker, video -> ignored with 0 replies and 0 LLM calls.
+    # Audio now gets the voice reply (SPEC v2 §3.8 item 5).
     for idx, mtype in enumerate(("sticker", "audio", "video"), start=1):
         res = _post_webhook(
             client,
@@ -220,7 +227,8 @@ def test_media_routing_image_sticker_and_location_pin(tmp_path: Path) -> None:
             },
         )
         assert res.status_code == 200
-    assert spy.replies == []
+    assert spy.replies == [("rt-m-2", [{"type": "text", "text": "รบกวนพิมพ์เป็นข้อความนะคะ 🙏"}])]
+    spy.replies.clear()
     assert llm.called == 0
 
     # Image -> replies once + sets handed_over; second image stays silent

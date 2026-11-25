@@ -6,6 +6,7 @@ import asyncio
 import hmac
 import json
 import logging
+import re
 import time
 from pathlib import Path
 from typing import Any, Literal
@@ -17,25 +18,47 @@ from starlette.concurrency import run_in_threadpool
 from starlette.types import Receive, Scope, Send
 
 from app.agent import (
+    AgentTurn,
+    handle_audio_message,
     handle_customer_text,
     handle_image_message,
     handle_location_message,
     make_openai_client,
 )
+from app.batch import batch_groups
 from app.config import Settings, load_settings
-from app.db import Order, ShopDB
+from app.db import PAID_STATUSES, Order, ShopDB
+from app.handover import on_new_card, reason_label
 from app.line import (
     HttpLineClient,
     LineClient,
     NoopLineClient,
     format_order_receipt,
     format_owner_order_alert,
+    format_payment_lines,
+    image_message,
     parse_postback_data,
     text_message,
     verify_signature,
 )
 from app.menu import Menu, load_menu
 from app.owner import handle_owner_text
+from app.promptpay import (
+    build_payload,
+    parse_qr_name,
+    qr_image_url,
+    render_png,
+    validate_promptpay_settings,
+)
+from app.slip_intake import SlipTurn, handle_image
+from app.slips import (
+    QUOTA_WARN_BELOW,
+    HttpSlipOkClient,
+    QuotaCache,
+    SlipClient,
+    validate_slipok_settings,
+)
+from app.wait import receipt_queue_line
 
 log = logging.getLogger("app.main")
 
@@ -50,6 +73,7 @@ class ShopUpdateBody(BaseModel):
     wait_minutes: int | None = None
     bot_enabled: bool | None = None
     notify_owner_on_order: bool | None = None
+    notify_owner_on_inbox: bool | None = None
 
 
 class OverrideUpdateBody(BaseModel):
@@ -60,21 +84,62 @@ class OverrideUpdateBody(BaseModel):
 
 class DoneOrderBody(BaseModel):
     notify: bool = False
+    # The owner answered "รับเงินสดแล้ว" on the done prompt (unpaid orders only)
+    paid_cash: bool = False
 
 
 class CancelOrderBody(BaseModel):
     reason: str = Field(min_length=1)
 
 
-def format_done_push(order: Order) -> str:
+class PaymentBody(BaseModel):
+    status: Literal["cash", "transfer_manual", "unpaid"]
+
+
+class MarkPaidBody(BaseModel):
+    order_ids: list[int]
+
+
+REFUND_PUSH_LINE = "ร้านจะติดต่อคืนเงินค่ะ"
+# Receipt payment line for a cash customer when there's no PromptPay QR (never bank details)
+CASH_PAY_TEXT = "ชำระเงินสดตอนรับอาหารได้เลยค่ะ"
+
+
+_SECRET_QUERY_RE = re.compile(r"((?:^|[?&])key=)[^&\s]*")
+
+
+class _RedactKitchenKey(logging.Filter):
+    """Uvicorn's access log prints the full path; never let `?key=` (the kitchen login) in."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        args = record.args
+        if isinstance(args, tuple) and len(args) >= 3 and isinstance(args[2], str):
+            record.args = (*args[:2], _SECRET_QUERY_RE.sub(r"\1***", args[2]), *args[3:])
+        return True
+
+
+def _install_log_redaction() -> None:
+    access = logging.getLogger("uvicorn.access")
+    if not any(isinstance(f, _RedactKitchenKey) for f in access.filters):
+        access.addFilter(_RedactKitchenKey())
+
+
+def format_done_push(order: Order, unpaid_balance: int = 0) -> str:
     if order.fulfillment == "pickup":
-        return f"ออเดอร์ #{order.queue_number} เสร็จแล้ว มารับได้เลยค่ะ"
-    return f"ออเดอร์ #{order.queue_number} กำลังออกไปส่งแล้วค่ะ"
+        text = f"ออเดอร์ #{order.queue_number} เสร็จแล้ว มารับได้เลยค่ะ"
+    else:
+        text = f"ออเดอร์ #{order.queue_number} กำลังออกไปส่งแล้วค่ะ"
+    if unpaid_balance > 0:
+        text += f" · ยอดค้าง {unpaid_balance}฿"
+    return text
 
 
 def format_cancel_push(order: Order) -> str:
     reason = order.cancel_reason or "ร้านไม่สะดวกรับออเดอร์"
-    return f"ขออภัยค่ะ ออเดอร์ #{order.queue_number} ถูกยกเลิก ({reason})"
+    text = f"ขออภัยค่ะ ออเดอร์ #{order.queue_number} ถูกยกเลิก ({reason})"
+    if order.payment_status in PAID_STATUSES:
+        text += f" {REFUND_PUSH_LINE}"
+    return text
 
 
 def _check_kitchen_auth(request: Request, secret: str) -> bool:
@@ -91,8 +156,12 @@ def create_app(
     menu: Menu | None = None,
     line_client: LineClient | None = None,
     llm_client: Any = None,
+    slip_client: SlipClient | None = None,
 ) -> FastAPI:
     cfg = settings or load_settings()
+    _install_log_redaction()
+    validate_promptpay_settings(cfg)
+    validate_slipok_settings(cfg.slipok_api_key, cfg.slipok_branch_id)
     loaded_menu = menu or load_menu(cfg.menu_path)
     shop_db = db or ShopDB(cfg.db_path)
     line: LineClient = (
@@ -105,6 +174,10 @@ def create_app(
         )
     )
     llm = llm_client if llm_client is not None else make_openai_client(cfg)
+    slips: SlipClient | None = slip_client
+    if slips is None and cfg.slipok_api_key and cfg.slipok_branch_id:
+        slips = HttpSlipOkClient(cfg.slipok_api_key, cfg.slipok_branch_id)
+    quota = QuotaCache(slips, shop_db.now_bkk)
     user_locks: dict[str, asyncio.Lock] = {}
 
     def _lock_for(user_id: str) -> asyncio.Lock:
@@ -125,6 +198,17 @@ def create_app(
     def health() -> dict[str, bool]:
         return {"ok": True}
 
+    @app.get("/qr/{name}.png")
+    def promptpay_qr(name: str) -> Response:
+        """PromptPay QR image. The path holds only the amount and an HMAC signature."""
+        satang = parse_qr_name(cfg, name) if cfg.promptpay_id else None
+        if satang is None:
+            raise HTTPException(status_code=404, detail="Not found")
+        png = render_png(build_payload(cfg.promptpay_id, satang / 100))
+        return Response(
+            content=png, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"}
+        )
+
     @app.get("/kitchen", response_class=HTMLResponse)
     def kitchen_page(request: Request, response: Response) -> HTMLResponse:
         if not _check_kitchen_auth(request, cfg.kitchen_secret):
@@ -143,7 +227,35 @@ def create_app(
         status = shop_db.get_shop_status(loaded_menu)
         overrides = shop_db.get_overrides()
         orders = shop_db.get_kitchen_orders_today()
+        orders["unpaid"] = shop_db.get_unpaid_done_orders()
+        # รวมจาน: what to cook now; pre-v2 leftovers are shown but not batched
+        orders["batch"] = batch_groups(
+            [o for o in orders["queued"] if o["payment_status"] != "legacy"]
+        )
+        inbox = shop_db.get_open_handovers()
+        for card in inbox:
+            card["reason_lines"] = [
+                reason_label(str(d["reason"]), d.get("detail"))
+                for d in card["details"]
+                if d.get("kind") == "reason"
+            ]
+            card["has_slip_reason"] = any(str(r).startswith("slip_") for r in card["reasons"])
+            if card["has_slip_reason"]:
+                # Queue numbers repeat across days: label earlier days so the picker is unambiguous
+                card["unpaid_orders"] = [
+                    {
+                        "id": o.id,
+                        "queue_number": o.queue_number,
+                        "total": o.total,
+                        "ref": f"#{o.queue_number}"
+                        if o.shop_date == status.shop_date
+                        else f"#{o.queue_number} ({shop_db.day_label(o.shop_date)})",
+                    }
+                    for o in shop_db.get_unpaid_balance(card["line_user_id"]).orders
+                ]
+        quota_left = quota.get()
         payload = {
+            "inbox": inbox,
             "shop": {
                 "name": loaded_menu.shop.name,
                 "shop_date": status.shop_date,
@@ -154,6 +266,7 @@ def create_app(
                 "busy_mode": status.busy_mode,
                 "wait_minutes": status.wait_minutes,
                 "notify_owner_on_order": status.notify_owner_on_order,
+                "notify_owner_on_inbox": status.notify_owner_on_inbox,
                 "hours_text": status.hours_text,
             },
             "sold_out": {
@@ -175,6 +288,12 @@ def create_app(
                 ],
             },
             "orders": orders,
+            "slip_quota": None
+            if slips is None
+            else {
+                "left": quota_left,
+                "warn": quota_left is not None and quota_left < QUOTA_WARN_BELOW,
+            },
         }
         return JSONResponse(content=payload, headers={"Cache-Control": "no-store"})
 
@@ -192,6 +311,8 @@ def create_app(
             shop_db.set_bot_enabled(body.bot_enabled)
         if body.notify_owner_on_order is not None:
             shop_db.set_notify_owner(body.notify_owner_on_order)
+        if body.notify_owner_on_inbox is not None:
+            shop_db.set_notify_owner_on_inbox(body.notify_owner_on_inbox)
         return {"ok": True}
 
     @app.post("/api/kitchen/overrides")
@@ -212,14 +333,20 @@ def create_app(
     def kitchen_mark_done(order_id: int, request: Request, body: DoneOrderBody) -> dict[str, Any]:
         if not _check_kitchen_auth(request, cfg.kitchen_secret):
             raise HTTPException(status_code=403, detail="Invalid kitchen key")
-        order = shop_db.mark_order_done(order_id)
+        order = shop_db.mark_order_done(order_id, paid_cash=body.paid_cash)
         if order is None:
             raise HTTPException(status_code=404, detail="Order not found or not queued")
         notified: bool | None = None
         if body.notify:
             try:
-                line.push_text(order.line_user_id, format_done_push(order))
+                balance = shop_db.get_unpaid_balance(order.line_user_id).total
+                push = format_done_push(order, balance)
+                line.push_text(order.line_user_id, push)
                 notified = True
+                # The customer saw this push: the bot's history must too (AGENTS.md)
+                shop_db.append_conversation_event(
+                    order.line_user_id, f"[ร้านแจ้งว่าออเดอร์ #{order.queue_number} เสร็จแล้ว]", push
+                )
             except Exception as exc:
                 log.warning("Done push failed for order %s: %s", order_id, type(exc).__name__)
                 notified = False
@@ -239,19 +366,102 @@ def create_app(
             raise HTTPException(status_code=404, detail="Order not found or not queued")
         notified = True
         try:
-            line.push_text(order.line_user_id, format_cancel_push(order))
+            push = format_cancel_push(order)
+            line.push_text(order.line_user_id, push)
+            shop_db.append_conversation_event(
+                order.line_user_id, f"[ร้านยกเลิกออเดอร์ #{order.queue_number}]", push
+            )
         except Exception as exc:
             log.warning("Cancel push failed for order %s: %s", order_id, type(exc).__name__)
             notified = False
         return {"ok": True, "order": order.to_dict(), "notified": notified}
 
-    def _safe_reply(reply_token: str, messages: list[dict[str, Any]], event_id: str) -> None:
-        if not messages:
+    @app.post("/api/kitchen/orders/{order_id}/payment")
+    def kitchen_set_payment(order_id: int, request: Request, body: PaymentBody) -> dict[str, Any]:
+        if not _check_kitchen_auth(request, cfg.kitchen_secret):
+            raise HTTPException(status_code=403, detail="Invalid kitchen key")
+        order, err = shop_db.set_payment_status(order_id, body.status)
+        if err == "not_found":
+            raise HTTPException(status_code=404, detail="Order not found")
+        if order is None:
+            raise HTTPException(status_code=409, detail="Payment status cannot change")
+        return {"ok": True, "order": order.to_dict()}
+
+    @app.post("/api/kitchen/handovers/{card_id}/resolve")
+    def kitchen_resolve_handover(card_id: int, request: Request) -> dict[str, bool]:
+        if not _check_kitchen_auth(request, cfg.kitchen_secret):
+            raise HTTPException(status_code=403, detail="Invalid kitchen key")
+        if not shop_db.resolve_handover(card_id):
+            raise HTTPException(status_code=404, detail="Inbox card not found or resolved")
+        return {"ok": True}
+
+    @app.post("/api/kitchen/handovers/{card_id}/mark-paid")
+    def kitchen_mark_paid(card_id: int, request: Request, body: MarkPaidBody) -> dict[str, Any]:
+        """จ่ายแล้ว ✓ on a slip card: the ticked unpaid orders of that customer become
+        `transfer_manual` (the owner checked the transfer themselves)."""
+        if not _check_kitchen_auth(request, cfg.kitchen_secret):
+            raise HTTPException(status_code=403, detail="Invalid kitchen key")
+        result = shop_db.mark_transfer_manual(card_id, body.order_ids)
+        if result is None:
+            raise HTTPException(status_code=409, detail="Not an open slip card")
+        marked, skipped = result
+        return {"ok": True, "marked": [o.queue_number for o in marked], "skipped": skipped}
+
+    @app.post("/api/kitchen/orders/{order_id}/takeover")
+    def kitchen_takeover(order_id: int, request: Request) -> dict[str, Any]:
+        """คุยเอง: the owner takes over this customer's chat. Sends the customer nothing."""
+        if not _check_kitchen_auth(request, cfg.kitchen_secret):
+            raise HTTPException(status_code=403, detail="Invalid kitchen key")
+        order = shop_db.get_order(order_id)
+        if order is None:
+            raise HTTPException(status_code=404, detail="Order not found")
+        card_id, is_new = shop_db.open_handover(
+            order.line_user_id, "owner_takeover", f"#{order.queue_number}"
+        )
+        if is_new:
+            on_new_card(
+                shop_db,
+                line,
+                cfg,
+                order.line_user_id,
+                "owner_takeover",
+                f"#{order.queue_number}",
+                owner_alerts_on=shop_db.get_shop_status(loaded_menu).notify_owner_on_inbox,
+            )
+        return {"ok": True, "card_id": card_id}
+
+    def _alert_owner_new_order(order: Order) -> None:
+        if not shop_db.get_shop_status(loaded_menu).notify_owner_on_order:
+            return
+        if not cfg.owner_line_user_id:
             return
         try:
+            line.push_text(cfg.owner_line_user_id, format_owner_order_alert(order))
+        except Exception as exc:
+            log.warning("Owner alert push failed for order %s: %s", order.id, type(exc).__name__)
+
+    def _after_turn(user_id: str, turn: AgentTurn | SlipTurn) -> None:
+        if turn.new_card_reason is None:
+            return
+        on_new_card(
+            shop_db,
+            line,
+            cfg,
+            user_id,
+            turn.new_card_reason,
+            turn.new_card_detail,
+            owner_alerts_on=shop_db.get_shop_status(loaded_menu).notify_owner_on_inbox,
+        )
+
+    def _safe_reply(reply_token: str, messages: list[dict[str, Any]], event_id: str) -> bool:
+        if not messages:
+            return True
+        try:
             line.reply_messages(reply_token, messages)
+            return True
         except Exception as exc:
             log.warning("LINE reply failed for event %s: %s", event_id, type(exc).__name__)
+            return False
 
     def _process_event_sync(event: dict[str, Any], started_at: float, event_id: str) -> None:
         source = event.get("source")
@@ -262,26 +472,45 @@ def create_app(
 
         ev_type = event.get("type")
 
-        # Postback buttons (Confirm / Cancel order card) — tapping a button clears hand-over
+        # Postback buttons (Confirm / Cancel order card) — tapping a button ends bot quiet
         if ev_type == "postback":
-            conv_pb = shop_db.get_or_create_conversation(user_id)
-            if shop_db.is_handed_over(conv_pb):
-                shop_db.clear_handed_over(conv_pb.id)
             pb = event.get("postback")
             data_str = str(pb.get("data") or "") if isinstance(pb, dict) else ""
             parsed = parse_postback_data(data_str)
             action = parsed.get("action")
             card_id = parsed.get("card_id", "")
+            if action in ("confirm", "cancel") and card_id:
+                shop_db.end_quiet_on_button_tap(user_id)
             if action == "confirm" and card_id:
                 res = shop_db.confirm_card(user_id, card_id, loaded_menu)
                 if res.ok and res.order is not None:
                     st = shop_db.get_shop_status(loaded_menu)
+                    # Current intent and current unpaid orders, also for a replayed Confirm tap
+                    cash = shop_db.pays_cash(user_id)
+                    owed = shop_db.get_unpaid_balance(user_id).total
+                    pay_text = (
+                        ""
+                        if cfg.promptpay_id or owed <= 0  # nothing owed: no payment details
+                        else (CASH_PAY_TEXT if cash else cfg.payment_info_text)
+                    )
                     receipt = format_order_receipt(
                         res.order,
-                        cfg.payment_info_text,
+                        pay_text,
                         already_confirmed=res.already_confirmed,
-                        wait_minutes=st.wait_minutes if st.busy_mode else None,
+                        queue_line=receipt_queue_line(shop_db, loaded_menu, res.order),
                     )
+                    reply_msgs: list[dict[str, Any]] = []
+                    if cfg.promptpay_id:
+                        unpaid = shop_db.get_unpaid_balance(user_id)
+                        if unpaid.total > 0:
+                            today = shop_db.today_str()
+                            this_order = res.order if res.order.shop_date == today else None
+                            receipt += "\n\n" + format_payment_lines(
+                                unpaid.orders, this_order, today, cash=cash
+                            )
+                            if not cash:
+                                reply_msgs.append(image_message(qr_image_url(cfg, unpaid.total)))
+                    reply_msgs.insert(0, text_message(receipt))
                     if not res.already_confirmed:
                         confirm_note = (
                             f"[ลูกค้ากดยืนยันออเดอร์ #{res.order.queue_number} บนการ์ดแล้ว ตะกร้าใหม่ว่างแล้ว]"
@@ -292,7 +521,7 @@ def create_app(
                             receipt,
                             compact_for_confirmed_order=True,
                         )
-                    _safe_reply(reply_token, [text_message(receipt)], event_id)
+                    _safe_reply(reply_token, reply_msgs, event_id)
                     if (
                         not res.already_confirmed
                         and st.notify_owner_on_order
@@ -349,15 +578,44 @@ def create_app(
         if not st.bot_enabled:
             return
 
-        # Ignore stickers, audio, video silently
-        if msg_type in ("sticker", "audio", "video"):
+        # Ignore stickers and video silently
+        if msg_type in ("sticker", "video"):
             return
 
-        # Image (usually payment slip): skip LLM, reply once + hand over
-        if msg_type == "image":
-            turn = handle_image_message(shop_db, user_id)
+        # Voice: ask the customer to type (no LLM), silent while the bot is quiet
+        if msg_type == "audio":
+            turn = handle_audio_message(shop_db, user_id)
             if turn.reply_text:
                 _safe_reply(reply_token, [text_message(turn.reply_text)], event_id)
+            return
+
+        # Image: slip intake (SlipOK + slip match), otherwise reply once + hand over
+        if msg_type == "image":
+            try:
+                slip_turn = handle_image(
+                    shop_db,
+                    loaded_menu,
+                    cfg,
+                    line,
+                    slips,
+                    quota,
+                    user_id,
+                    str(message.get("id") or ""),
+                    started_at=started_at,
+                )
+            except Exception as exc:
+                # Never leave the customer without a reply: fall back to a plain image hand-over
+                log.warning("Slip intake failed: %s", type(exc).__name__)
+                fallback = handle_image_message(shop_db, user_id)
+                slip_turn = SlipTurn(
+                    texts=[fallback.reply_text] if fallback.reply_text else [],
+                    new_card_reason=fallback.new_card_reason,
+                    new_card_detail=fallback.new_card_detail,
+                )
+            _safe_reply(reply_token, [text_message(t) for t in slip_turn.texts], event_id)
+            _after_turn(user_id, slip_turn)
+            if slip_turn.confirmed_order is not None:
+                _alert_owner_new_order(slip_turn.confirmed_order)
             return
 
         # Location pin -> delivery address + Google Maps URL
@@ -389,11 +647,18 @@ def create_app(
                 started_at=started_at,
             )
             out_msgs: list[dict[str, Any]] = []
+            if turn.menu_text:
+                out_msgs.append(text_message(turn.menu_text))
             if turn.reply_text:
                 out_msgs.append(text_message(turn.reply_text))
             if turn.flex_card:
                 out_msgs.append(turn.flex_card)
-            _safe_reply(reply_token, out_msgs, event_id)
+            if turn.image_url:
+                out_msgs.append(image_message(turn.image_url))
+            if not _safe_reply(reply_token, out_msgs, event_id) and turn.card_id:
+                # The customer never got the order card: don't leave it confirmable by a slip
+                shop_db.cancel_active_card(user_id, turn.card_id)
+            _after_turn(user_id, turn)
 
     @app.post("/line/webhook")
     async def line_webhook(request: Request) -> dict[str, bool]:
