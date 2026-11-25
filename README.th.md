@@ -114,6 +114,8 @@
 ./scripts/dev.sh reset-db    # ล้างออเดอร์ แชท และสลิปทดสอบใน shop.db โดยไม่ต้องหยุด uvicorn
 ./scripts/dev.sh users       # ดูรายการ LINE userId ที่บันทึกอยู่ใน shop.db
 ./scripts/dev.sh slips [dir] # อ่าน QR จากรูปสลิปจริง (ค่าเริ่มต้น local/slips/) ไม่เรียก API
+./scripts/dev.sh demo        # รันแอปจริงบนฐานข้อมูลทดลองที่ใส่ข้อมูลตัวอย่างไว้ LINE/LLM/SlipOK เป็นของจำลอง (พอร์ต 8765)
+./scripts/dev.sh say U_DEMO slip 70  # ส่ง LINE event จำลองไปที่เดโม แล้วแสดงข้อความที่ LINE จะได้รับ
 ```
 
 *(หมายเหตุ: `reset-db` และ `users` ต้องมีคำสั่ง `sqlite3` และฐานข้อมูลที่ถูกสร้างหลังแอปได้รับ request แรกแล้ว ถ้าเปลี่ยน `DB_PATH` ใน `.env` ให้ export `DB_PATH` ใน shell ก่อนรันคำสั่งเหล่านี้ เก็บรูปสลิปจริงไว้ใน `local/` ซึ่ง git ไม่ติดตาม และห้าม commit)*

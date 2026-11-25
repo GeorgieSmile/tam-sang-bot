@@ -114,6 +114,8 @@ Edit [menu.yaml](menu.yaml) directly — no admin UI needed:
 ./scripts/dev.sh reset-db    # clear local test orders/chats/slips without stopping uvicorn
 ./scripts/dev.sh users       # list LINE userIds recorded in shop.db
 ./scripts/dev.sh slips [dir] # decode real slip images (default local/slips/); no API calls
+./scripts/dev.sh demo        # real app on a seeded throwaway DB, stub LINE/LLM/SlipOK, port 8765
+./scripts/dev.sh say U_DEMO slip 70  # send a fake LINE event to the demo, print what LINE got
 ```
 
 *(Note: `reset-db` and `users` require the `sqlite3` CLI and an existing DB created after the app handles its first request. If you changed `DB_PATH` in `.env`, export `DB_PATH` in your shell before running them. Keep real slips in git-ignored `local/` and never commit them.)*
