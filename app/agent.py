@@ -423,7 +423,9 @@ def handle_location_message(
             )
             reply = f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ ตรวจสอบรายการบนการ์ดแล้วกดยืนยันได้เลยนะคะ"
             db.append_conversation_event(line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply)
-            return AgentTurn(reply_text=reply, flex_card=flex, reason="ok")
+            return AgentTurn(
+                reply_text=reply, flex_card=flex, reason="ok", card_id=str(snapshot["card_id"])
+            )
         reply_err = err or f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ"
         db.append_conversation_event(line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply_err)
         return AgentTurn(reply_text=reply_err, reason="ok")

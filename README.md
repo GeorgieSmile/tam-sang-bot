@@ -118,7 +118,7 @@ Edit [menu.yaml](menu.yaml) directly — no admin UI needed:
 ./scripts/dev.sh say U_DEMO slip 70  # send a fake LINE event to the demo, print what LINE got
 ```
 
-*(Note: `reset-db` and `users` require the `sqlite3` CLI and an existing DB created after the app handles its first request. If you changed `DB_PATH` in `.env`, export `DB_PATH` in your shell before running them. Keep real slips in git-ignored `local/` and never commit them.)*
+*(Note: `reset-db` and `users` need an existing DB, created after the app handles its first request; `users` also needs the `sqlite3` CLI. If you changed `DB_PATH` in `.env`, export `DB_PATH` in your shell before running them. Keep real slips in git-ignored `local/` and never commit them.)*
 
 Upgrading from v1: the first v2 start adds the new tables and columns in place and marks existing orders `legacy` (ก่อนระบบจ่ายเงิน), so they never count as unpaid. Back up `shop.db` first.
 

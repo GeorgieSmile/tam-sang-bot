@@ -9,19 +9,8 @@ case "${1:-help}" in
     exec uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 2>&1 | tee -a .dev.log
     ;;
   reset-db)
-    sqlite3 "$DB" "BEGIN IMMEDIATE;
-      DELETE FROM conversations;
-      DELETE FROM orders;
-      DELETE FROM customers;
-      DELETE FROM menu_overrides;
-      DELETE FROM line_events;
-      DELETE FROM handovers;
-      DELETE FROM slip_checks;
-      UPDATE shop_state SET
-        override_date=NULL, open_override=NULL, bot_enabled=1,
-        busy_date=NULL, busy_mode=0, wait_minutes=NULL, notify_owner_on_order=0;
-      COMMIT;"
-    echo "Reset $DB cleanly."
+    # Clears every table and resets every shop_state setting, read from the schema
+    exec uv run python scripts/reset_db.py "$DB"
     ;;
   slips)
     # Decode real slip images locally (no API calls). Keep them in git-ignored local/slips/.
@@ -50,7 +39,7 @@ case "${1:-help}" in
     pkill -f "scripts/demo.py serve" && echo "Demo stopped." || echo "No demo running."
     ;;
   say)
-    # Send one fake LINE event to the running demo: say <user> <text|slip|photo|voice|confirm|cancel> [arg]
+    # Send one fake LINE event to the running demo: say <user> <text|slip|photo|voice|location|confirm|cancel> [arg]
     shift
     exec uv run python scripts/demo.py say "$@"
     ;;

@@ -629,7 +629,9 @@ def create_app(
                 out.append(text_message(turn.reply_text))
             if turn.flex_card:
                 out.append(turn.flex_card)
-            _safe_reply(reply_token, out, event_id)
+            if not _safe_reply(reply_token, out, event_id) and turn.card_id:
+                # The customer never got the order card: don't leave it confirmable by a slip
+                shop_db.cancel_active_card(user_id, turn.card_id)
             return
 
         # Customer text message -> LLM ordering agent

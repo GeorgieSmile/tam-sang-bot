@@ -260,7 +260,7 @@ class Menu:
         return {"ingredients": sold_ingredients, "dishes": sold_dishes}
 
     def menu_text(self, overrides: OverrideMap) -> str:
-        """The customer-facing menu list, built in code so it is never cut off (SPEC §3.9).
+        """The customer-facing menu list, built in code so it is never cut off (SPEC §3.5).
 
         Each dish shows the choices the customer must make (required groups with no default,
         e.g. meat), with extra cost, leaving out sold-out options. Sold-out dishes, and dishes

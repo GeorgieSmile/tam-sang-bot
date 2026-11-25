@@ -635,7 +635,7 @@ class ShopDB:
         return [_row_to_order(r) for r in rows]
 
     def pays_cash(self, line_user_id: str) -> bool:
-        """The one cash rule (SPEC §3.9): said cash today, or every unpaid order is a cash order.
+        """The one cash rule (SPEC §3.1.13): said cash today, or every unpaid order is cash.
 
         Receipts, payment info and the live state all use this, so they never disagree.
         """

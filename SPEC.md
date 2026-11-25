@@ -11,7 +11,7 @@
 - **Default Execution Mode**: AFK (Tickets 1–5, 7) · HITL (Ticket 6)
 - **Preferred Reviewer Model**: GPT-6.2 Sol (high), for all tickets
 - **Tickets**: [docs/specs/v2-tickets.md](docs/specs/v2-tickets.md)
-- **Previous version**: [docs/specs/v1.md](docs/specs/v1.md) (shipped 2026-11-23). Everything in v1 still holds unless §3.8 lists it as an intentional change. §3.9 overrides earlier v2 sections where they differ.
+- **Previous version**: [docs/specs/v1.md](docs/specs/v1.md) (shipped 2026-11-23). Everything in v1 still holds unless §3.8 lists it as an intentional change. §3.1–3.8 describe the final v2 behavior, including the Ticket 6 phone-test changes; §3.9 is the changelog of those changes and the decisions not to change things.
 
 ---
 
@@ -87,16 +87,19 @@
    - Changing payment status never sends a LINE message.
 3. **Unpaid balance** is the sum of a customer's orders that are `unpaid` and not cancelled (status `queued` or `done`), across all shop days. `legacy` orders are never included.
 4. **PromptPay QR**:
-   - It is sent with the receipt right after an order is confirmed, and when the customer asks for it (new agent tool `get_payment_info`: "ขอ QR", "จ่ายยังไง", "ค้างเท่าไหร่").
-   - The amount is the customer's whole unpaid balance including this order. The receipt lists unpaid orders from earlier shop days separately, then the total to pay:
+   - It is sent with the receipt right after an order is confirmed, and when the customer asks for it (agent tool `get_payment_info`: "ขอ QR", "จ่ายยังไง", "ค้างเท่าไหร่"). A customer who pays cash (item 13) gets no QR unless they ask for it.
+   - The amount is the customer's whole unpaid balance including this order.
+   - When only this order is owed, the receipt's payment block is one line: `โอน {total}฿ ตาม QR ด้านล่างได้เลยค่ะ`.
+   - When earlier orders are owed too, the receipt lists them separately, then the total to pay:
      ```
      ออเดอร์นี้ #2 60฿
      ค้างจากเมื่อวาน #5 70฿
      รวมที่ต้องโอน 130฿
      ```
    - It is a standard PromptPay QR built from `PROMPTPAY_ID` and the amount, with no expiry.
-   - When `PROMPTPAY_ID` is unset, there is no QR code and the receipt shows `PAYMENT_INFO_TEXT` as in v1.
-   - When the unpaid balance is 0, no QR is sent and `get_payment_info` replies that nothing is owed.
+   - When `PROMPTPAY_ID` is unset, there is no QR code and the receipt shows `PAYMENT_INFO_TEXT` as in v1. A cash customer never gets `PAYMENT_INFO_TEXT`.
+   - When the unpaid balance is 0, no QR is sent and `get_payment_info` replies that nothing is owed. A replayed Confirm with nothing owed shows no payment details.
+   - At the end of an LLM turn, the QR is sent only if the balance still equals the amount the bot quoted in that turn. (The Confirm reply has no such re-check; that millisecond window was rejected, §3.9 item 14.)
    - The image is served from `PUBLIC_BASE_URL` (HTTPS, as LINE requires) at a path that can't be guessed and contains no customer data.
    - The QR is **not** on the order card.
 5. **Slip intake** (runs when an image arrives; never when the bot is paused). Each step that ends in a hand-over makes **no SlipOK call**:
@@ -106,8 +109,9 @@
    4. Look up the transaction reference (`transRef`) in `slip_checks`. If it has been seen before, hand over with reason `slip_duplicate`.
    5. If the customer has no unpaid balance and no open order card, hand over with reason `slip_nothing_due`.
    6. If SlipOK isn't configured or its quota is known to be 0, hand over with reason `slip_unchecked`.
-   7. Call SlipOK with the QR string and `log: true`. A duplicate error (1012) means `slip_duplicate`. A receiver error (1014) means `slip_wrong_receiver`. Any other error or a timeout means `slip_unchecked`.
+   7. Call SlipOK with the QR string and `log: true`. A duplicate error (1012) means `slip_duplicate`. A receiver error (1014) means `slip_wrong_receiver`: the returned amount and time are kept for the card (never credited), and the check counts against the cached quota. Any other error or a timeout means `slip_unchecked`.
    8. Run the slip match with the amount from SlipOK. If it fails, hand over with reason `slip_amount_mismatch` or `slip_too_old`.
+      - Just before the SlipOK call, intake records what the slip can pay: the unpaid order IDs and the open card. If either has changed by payment time (e.g. the owner recorded the same transfer with **รับโอนแล้ว**), nothing is paid and the slip is handed over to the owner with reason `slip_balance_changed` (`ยอดค้างเปลี่ยนระหว่างตรวจสลิป`). One transfer is credited once.
 
    Every decoded slip is recorded in `slip_checks` with its result. A slip that has already been seen is never sent to SlipOK again.
 6. **Slip match**:
@@ -125,6 +129,7 @@
    - **Image that isn't a slip:** v1's `IMAGE_HANDOVER_REPLY`.
    - **Shop closed and there's a problem:** add `ตอนนี้ร้านปิดแล้ว ร้านจะตรวจสลิปให้ตอนเปิดร้านค่ะ`. A matched slip while closed is handled normally. A card can't be confirmed while closed, so that becomes `slip_card_confirm_failed`.
    - **While the bot is quiet:** a match sends only the "matched" line. Any problem sends nothing to the customer and is added to the open inbox card.
+   - Quiet is re-checked after the SlipOK call, since the owner may tap **คุยเอง** meanwhile. If the owner resolved the quiet card during the check, the problem is handed over normally, so it is never lost.
 8. **Paid orders that get cancelled**:
    - The bot's `cancel_order` refuses an order that isn't `unpaid` and hands over with reason `paid_cancel_request` (detail: `#N {total}฿`).
    - When the owner cancels a paid order on `/kitchen`:
@@ -133,33 +138,42 @@
      - the order becomes a **refund due**
    - The owner refunds by hand.
 9. **On `/kitchen`**:
-   - Each queued order shows its payment badge and **รับเงินสดแล้ว** / **รับโอนแล้ว** buttons while `unpaid`, or **ยกเลิกจ่าย** next to an owner-set paid badge.
+   - Each queued order shows its payment badge and **รับเงินสดแล้ว** / **รับโอนแล้ว** buttons while `unpaid`, or **ยกเลิกจ่าย** next to an owner-set paid badge. An unpaid order with `orders.pay_cash` set (item 13) also shows `จะจ่ายสด`.
+   - **ทำเสร็จแล้ว** or **เสร็จ + แจ้งลูกค้า** on an `unpaid` order asks `💵 รับเงินสดแล้ว` / `ยังไม่จ่าย`. Cash is recorded in the same transaction as done, never overwriting a payment recorded meanwhile, and before the push.
    - A new **ค้างจ่าย (N)** section lists every `unpaid`, non-cancelled order that is no longer queued, from any shop day, newest first. Earlier days are labelled `เมื่อวาน` or with the date. It has the same buttons. Paid orders leave the section.
+   - Queue numbers repeat across shop days, so these views label earlier days: the ค้างจ่าย list, the queued list and the finished list (§3.3 item 7), รวมจาน (§3.4), the **รับเงินแล้ว…** picker and the inbox card's `ค้าง:` line (`#1 (เมื่อวาน)`).
+   - At ≤600px wide, order cards show only the queue number, order time, items and badges, and expand on tap (the header is keyboard-operable).
    - When SlipOK reports fewer than 20 checks left, the board shows `เช็คสลิปเหลือ N ครั้ง`. The quota is read at most once an hour.
-10. **The `เสร็จ + แจ้งลูกค้า` push** adds `· ยอดค้าง {balance}฿` when the customer's unpaid balance is above 0.
+10. **The `เสร็จ + แจ้งลูกค้า` push** adds `· ยอดค้าง {balance}฿` when the customer's unpaid balance is above 0. When the owner records cash at done (item 9), this order is no longer in that balance; other unpaid orders still are.
 11. **`สรุปวันนี้`** adds:
     - today's slip-paid total
     - today's cash and owner-confirmed total
     - today's unpaid orders (`#N {total}฿`)
     - `ค้างจ่ายจากวันก่อน N ออเดอร์ X฿`
-    - refunds due (`ต้องคืนเงิน #N {total}฿`)
+    - refunds due (`ต้องคืนเงิน #N {total}฿`), shown on the day the order was cancelled
+    - Earlier-day orders still queued on `/kitchen` (§3.3 item 7) don't count in today's order count or sales; they appear only through the `ค้างจ่ายจากวันก่อน` line.
 12. **v1 orders**: the first v2 start marks every existing order `legacy`. They never appear in the unpaid balance, the ค้างจ่าย section, or slip matches.
+13. **Cash intent.** The QR is the default. When the customer says they'll pay cash, the tool `set_payment_method(method="cash")` sets `conversations.pay_cash` (today) and `orders.pay_cash` on their unpaid orders. New orders confirmed that day inherit it. `set_payment_method(method="transfer")` clears it.
+    - **The cash rule**: the customer **pays cash** when they said cash today, or when every one of their unpaid orders is a cash order. It is used by the receipt (also a replayed Confirm tap), `get_payment_info`, the end-of-turn QR decision and the live state.
+    - A cash customer's receipt says `ชำระเงินสด {total}฿ ตอนรับอาหารได้เลยค่ะ` (or lists the orders with `รวมที่ต้องจ่าย`) and sends no QR image. Without PromptPay it says `ชำระเงินสดตอนรับอาหารได้เลยค่ะ`.
+    - `get_payment_info` sends no QR for a cash customer unless called with `send_qr=true`. Asking for the QR counts as switching to transfer (kept on purpose, §3.9 item 13).
+    - The live-state system message adds ` | วิธีจ่าย=เงินสด (ไม่ต้องส่ง QR)` while cash intent is set.
 
 ### 3.2 Hand-over and bot control
 1. **Reasons** (stored as codes, shown in Thai on the card):
 
    | Code | Thai label |
    |---|---|
-   | `greeting` | ทักทาย/คุยเล่น (old cards only; greetings get a bot reply since §3.9) |
+   | `greeting` | ทักทาย/คุยเล่น (old cards only: greetings get a bot reply, §3.5) |
    | `edit_confirmed` | ขอแก้ออเดอร์ #N |
-   | `off_menu` | ถามส่วนผสม/แพ้อาหาร (since §3.9 item 12; was ถามเมนูนอกระบบ/แพ้อาหาร) |
+   | `off_menu` | ถามส่วนผสม/แพ้อาหาร |
    | `image` | ส่งรูป |
    | `turn_limit` | คุยเกิน 30 ข้อความวันนี้ |
    | `paid_cancel_request` | ขอยกเลิกออเดอร์ที่จ่ายแล้ว |
    | `owner_takeover` | ร้านคุยเอง |
-   | the `slip_*` codes from §3.1 | — |
+   | the `slip_*` codes from §3.1, including `slip_balance_changed` | ยอดค้างเปลี่ยนระหว่างตรวจสลิป, … |
 
-   The LLM's `hand_over` tool gets a required `reason` argument limited to `edit_confirmed` and `off_menu` (§3.9 removed `greeting`).
+   The LLM's `hand_over` tool gets a required `reason` argument limited to `edit_confirmed` and `off_menu`. If the LLM still calls `hand_over(reason="greeting")`, the tool refuses and the LLM replies itself (§3.5).
 2. **The owner starts a hand-over**: a **คุยเอง** button on every queued order and every ค้างจ่าย row creates the reason `owner_takeover`. It sends the customer nothing.
 3. **Starting a hand-over** (bot-started): the bot sends v1's one-time `HANDOVER_REPLY`, or the slip/image reply from §3.1. It opens an inbox card and makes the bot quiet for that customer.
 4. **While the bot is quiet**, for that customer:
@@ -169,15 +183,15 @@
    - **Voice:** no reply. Sticker and video are ignored, as in v1.
    - **Confirm or Cancel button tap:** wakes the bot (as in v1) and is handled normally.
 5. **The bot comes back** at the first of:
-   - the owner taps **เรียบร้อย**
+   - the owner taps **ให้บอทตอบต่อ**
    - **15 minutes** with no customer message. The timer starts when the hand-over begins and restarts with every customer message.
    - a Confirm/Cancel button tap
    - a new shop day
 
-   Exception: a `turn_limit` hand-over comes back only with **เรียบร้อย** (which also resets that customer's message count for the shop day) or on a new shop day.
+   Exception: a `turn_limit` hand-over comes back only with **ให้บอทตอบต่อ** (which also resets that customer's message count for the shop day) or on a new shop day.
 
    Coming back sends the customer nothing.
-6. **Note after coming back**: the first LLM call after a hand-over ends must include this exact system message in the messages passed to the LLM:
+6. **Note after coming back**: the first LLM call after a hand-over ends must include this exact system message in the messages passed to the LLM (except when the hand-over crossed midnight: the shop is closed then, and the new day starts with empty history):
    `ร้านคุยกับลูกค้าเรื่องก่อนหน้านี้แล้ว บอทไม่เห็นข้อความของร้าน อย่าตอบคำถามเดิมซ้ำ ให้ช่วยเฉพาะเรื่องใหม่`
    This follows the `AGENTS.md` rule for changes made outside the chat flow.
 7. **Inbox card**:
@@ -190,16 +204,21 @@
      - bot state: `บอทพัก {minutes left} น.` or `บอทกลับมาแล้ว`
      - pins and slips (amount plus problem)
    - **Buttons:**
-     - **ให้บอทตอบต่อ** (shown as **ปิดการ์ด** once the bot is already back) resolves the card and ends bot quiet. Earlier sections call it **เรียบร้อย**.
-     - **รับเงินแล้ว…** (on cards with a `slip_*` reason; earlier sections call it **จ่ายแล้ว ✓**) opens the customer's unpaid orders as checkboxes, all ticked, and sets the confirmed ones to `transfer_manual`.
+     - **ให้บอทตอบต่อ** (shown as **ปิดการ์ด** once the bot is already back) resolves the card and ends bot quiet.
+     - **รับเงินแล้ว…** (on cards with a `slip_*` reason) opens the customer's unpaid orders as checkboxes, all ticked, and sets the confirmed ones to `transfer_manual`.
    - The card stays after the bot comes back on its own, labelled `บอทกลับมาตอบแล้ว`, until **ปิดการ์ด**. Resolved cards are hidden.
    - A new card, or a new message on an open card, plays a beep that sounds different from the new-order beep.
-   - With `notify_owner_on_inbox = 1` (its own switch since §3.9, on by default), each **new** card (not each new message) sends one LINE push to the owner.
+   - **Card text:** placeholder quotes such as `[สลิป]` or `[รูปภาพ]` are hidden; only text the customer typed is quoted. Slip cards show `ค้าง: #3 50฿, …`. `slip_duplicate` shows `เคยใช้แล้วกับ #N เมื่อ HH:MM` (or `เคยส่งมาแล้วเมื่อ HH:MM`, prefixed `ลูกค้าคนอื่น` for another customer); a SlipOK 1012 shows `SlipOK แจ้งว่าสลิปนี้เคยใช้แล้ว`. `slip_unchecked` always shows `ดูรูปสลิปใน LINE OA` (after the amount, when SlipOK returned one).
+   - With `notify_owner_on_inbox = 1` (on by default; the `/kitchen` switch `LINE ลูกค้ารอตอบ`, separate from `notify_owner_on_order`), each **new** card (not each new message) sends one LINE push to the owner.
 8. **Bot paused** (`หยุดบอท`):
    - Everything automatic stops for customers: no replies, no slip intake, no bot-started hand-overs.
    - Confirm/Cancel buttons still work (as in v1).
    - **คุยเอง** still works.
 9. The owner replies in the LINE OA app. The app can't see those replies.
+10. **Never talk over the owner.** Bot quiet is re-checked right after every LLM response, before any tool runs, and on every reply path: normal reply, error, deadline, tool limit and hand-over (slip intake: §3.1 item 7). If the owner tapped **คุยเอง** meanwhile, no reply is sent, history keeps only the customer's message, and the message lands on the card.
+    - An order card built in a turn that wasn't delivered (silenced by takeover, error, deadline, tool limit, hand-over, or a failed LINE reply, on the text or location path) is cancelled, so a slip can't confirm a card the customer never saw.
+    - Consuming the "bot came back" note (item 6) clears only a quiet window that has already ended, so a takeover started meanwhile survives.
+11. **History matches what was sent.** Bot replies, the done and cancel pushes, and slip results are added to `messages_json`. History writes (`append_conversation_messages`, `append_conversation_event`) append to the stored history in one transaction, so owner pushes written during an LLM turn are never overwritten. (A replayed Confirm tap re-sends the receipt without a new history entry.) A slip that confirms a card records exactly the messages sent (only the "matched" line while quiet). Compaction on Confirm keeps done/cancel push events.
 
 ### 3.3 Wait estimate and queue position
 1. `menu.yaml` gets:
@@ -213,23 +232,37 @@
    - Sides and drinks count 0.
 3. **Minimum wait**: busy mode (`ยุ่ง N นาที`, `ยุ่ง` = 20, the `/kitchen` chips) now sets the owner's minimum wait for the shop day. `โหมดปกติ` clears it. It still expires at midnight. The **wait estimate** is `max(automatic estimate, minimum wait if busy mode is on today)`.
 4. **Display** is a range: lower = estimate rounded down to a multiple of 5, upper = lower + 5. Examples: 10 → `10–15`, 24 → `20–25`, 39 → `35–40`.
-5. **Queue position** = the number of queued orders created before this one + 1, never counting `legacy` orders (§3.9). It is different from the queue number `#N`.
+5. **Queue position** = the number of queued orders created before this one + 1, never counting `legacy` orders. It is different from the queue number `#N`. A `legacy` order gets no queue position or estimate.
 6. **Where it's shown**, always and not only in busy mode:
    - the order card: `ตอนนี้รอประมาณ X–Y นาที`
    - the receipt: `คิวที่ N · ประมาณ X–Y นาที`
-   - `get_my_orders`, for each queued order: queue position, orders ahead, and the estimate range. A "เสร็จยัง" reply reads like `ยังไม่เสร็จค่ะ ก่อนหน้าอีก 2 คิว ประมาณ 10–15 นาที`.
+   - `get_my_orders`, for each queued order except `legacy` ones (item 5): queue position, orders ahead, and the estimate range. A "เสร็จยัง" reply reads like `ยังไม่เสร็จค่ะ ก่อนหน้าอีก 2 คิว ประมาณ 10–15 นาที`.
    - Delivery orders add `(ไม่รวมเวลาส่ง)`.
    - Never pushed.
+7. **Earlier shop days.** `legacy` orders never count in queue position, the wait estimate, or รวมจาน.
+   - `/kitchen` lists queued orders from earlier shop days first, labelled `เมื่อวาน` or with the date, so the owner can mark them done.
+   - An earlier-day order finished or paid today stays in the finished list with its day label, so **ยกเลิกจ่าย** stays reachable.
+   - `get_my_orders` also lists this customer's earlier-day orders still waiting, `legacy` included.
 
 ### 3.4 Batch view
 - A **รวมจาน** section on `/kitchen` groups queued orders' meal and side items by dish plus the same set of options.
 - Each group shows the total quantity and the queue numbers.
 - Free-text notes are listed under the group per order (`└ #4: ไม่ใส่ผัก`).
-- Done and cancelled orders are not included. Drinks are included like any other item.
+- Done and cancelled orders are not included. Drinks are included like any other item. `legacy` orders are not included.
+- Orders are listed oldest first, and earlier days are labelled (`#5 (เมื่อวาน)`), since queue numbers repeat across days.
 
-### 3.5 Voice messages
+### 3.5 Voice messages and chat replies
 - A customer `audio` message gets `รบกวนพิมพ์เป็นข้อความนะคะ 🙏`, every time, with no LLM call.
 - No reply while bot quiet or bot paused.
+- **Greeting.** A greeting or small talk gets a short bot reply that asks what the customer wants. It never hands over (§3.2 item 1).
+- **Dishes the shop doesn't sell.** When the customer asks for a dish, noodle or meat that isn't on the menu, the bot says so and suggests similar dishes. It doesn't hand over.
+- **Ingredients and allergies.** Ingredient, allergy or MSG questions, and requests the bot can't handle, hand over with reason `off_menu`. The bot never vouches for allergy safety. (These three are prompt rules.)
+- **Menu list.** "มีเมนูอะไรบ้าง" calls the tool `show_menu`. The list is built in code from `menu.yaml` and sent as its own message, followed by the LLM's one-line reply, so it is never cut off at the token limit.
+  - It leaves out sold-out dishes, and a dish whose required choice is entirely sold out.
+  - Each dish lists the choices the customer must make (required groups with no default, such as meat or ไข่ดาว สุก/ไม่สุก), with any extra cost, e.g. `• ข้าวกะเพรา 50฿ (หมูสับ/หมูชิ้น/ไก่/หมูกรอบ +10/กุ้ง +10/ปลาหมึก +10)`. Sold-out choices are dropped.
+  - Optional add-ons (เพิ่มข้าว, พิเศษ), spice and sweetness aren't listed.
+- **Saved address.** The bot says `ส่งที่เดิม` without repeating the full address; the order card shows it.
+- **Daily message limit.** Only messages the customer typed count toward the 30-message limit (system notes start with `[`). Compaction on Confirm lowers `turn_offset` by the customer turns it drops, so the count keeps working after the owner resets it; the offset may go below 0.
 
 ### 3.6 Data model changes (additive only)
 - `orders`:
@@ -243,6 +276,9 @@
 - Settings (`.env.example`): `SLIPOK_API_KEY`, `SLIPOK_BRANCH_ID`, `PROMPTPAY_ID` (phone number or 13-digit national ID). All optional: when unset, the feature is off and v1 behavior applies.
 - `create_app(...)` gets a `slip_client` injection point (`SlipClient` Protocol plus an `HttpSlipOkClient`). `LineClient` gains `get_message_content(message_id) -> bytes` and `get_profile(user_id) -> str | None`, with matching no-op/spy versions.
 - Dependencies: `zxing-cpp`, `Pillow`, `segno` (added with `uv add`).
+- Later additive columns (Ticket 7): `orders.pay_cash`, `conversations.pay_cash` (INTEGER NOT NULL DEFAULT 0), `shop_state.notify_owner_on_inbox` (INTEGER NOT NULL DEFAULT 1), added at startup when missing.
+- `?key=` is redacted from uvicorn access logs.
+- `shop.db*` is git-ignored, including backups such as `shop.db.v1-backup`.
 
 ### 3.7 External formats to verify (not to assume)
 - **SlipOK**:
@@ -278,80 +314,40 @@ These v1 behaviors change on purpose. A v1 test that asserts the old behavior ma
 6. The wait estimate is always shown. Busy mode now sets a minimum wait rather than a fixed wait.
 7. The bot can't cancel an order that isn't `unpaid`.
 8. Receipt, order card, done push, cancel push and `สรุปวันนี้` texts gain the additions in §3.1–3.3.
+9. Greetings, small talk and dishes the shop doesn't sell get a bot reply instead of a hand-over (§3.5).
 
-### 3.9 Changes after the Ticket 6 phone test (Ticket 7, approved 2026-11-25)
-The owner tested on a real phone and approved these changes. They override the earlier v2 sections where they differ.
-1. **Queue.** `legacy` (pre-v2) orders never count in queue position, the wait estimate, or รวมจาน. `/kitchen` lists queued orders from earlier shop days first, labelled `เมื่อวาน` or with the date, so the owner can mark them done. `สรุปวันนี้` still counts today only. รวมจาน lists orders oldest first and labels earlier days (`#5 (เมื่อวาน)`), since queue numbers repeat across days.
-2. **Greeting.** A greeting or small talk gets a short bot reply that asks what the customer wants. It never hands over. If the LLM still calls `hand_over(reason="greeting")`, the tool refuses and the LLM replies itself.
-3. **Cash intent.** The QR stays the default. When the customer says they'll pay cash, the new tool `set_payment_method(method="cash")` sets `conversations.pay_cash` (today) and `orders.pay_cash` on their unpaid orders. New orders confirmed that day inherit it.
-   - **The cash rule**, used by the receipt (also a replayed Confirm tap), `get_payment_info`, the end-of-turn QR decision and the live state: the customer **pays cash** when they said cash today, or when every one of their unpaid orders is a cash order. A cash customer never gets a QR or `PAYMENT_INFO_TEXT` unless they ask for the QR (`send_qr=true`); without PromptPay the receipt says `ชำระเงินสดตอนรับอาหารได้เลยค่ะ`.
-   - The receipt then says `ชำระเงินสด {total}฿ ตอนรับอาหารได้เลยค่ะ` (or lists the orders with `รวมที่ต้องจ่าย`) and sends no QR image.
-   - `get_payment_info` sends no QR for a cash customer unless called with `send_qr=true`. `set_payment_method(method="transfer")` clears cash intent.
-   - The live-state system message adds ` | วิธีจ่าย=เงินสด (ไม่ต้องส่ง QR)` while cash intent is set.
-   - `/kitchen` shows a `จะจ่ายสด` badge on such unpaid orders.
-4. **Done prompt.** **ทำเสร็จแล้ว** or **เสร็จ + แจ้งลูกค้า** on an `unpaid` order asks `💵 รับเงินสดแล้ว` / `ยังไม่จ่าย`. Cash is recorded in the same transaction as done (never overwriting a payment recorded meanwhile), before the push. The push's `ยอดค้าง` then no longer includes this order; other unpaid orders still show, as in §3.1 item 10.
-5. **Labels.** Order payment buttons are **รับเงินสดแล้ว** / **รับโอนแล้ว**. Badges are `💵 เงินสด`, `โอนแล้ว (ร้านเช็ค)`, `โอนแล้ว (สลิป) ✅`. Inbox buttons are **รับเงินแล้ว…** and **ให้บอทตอบต่อ**.
-6. **Inbox card detail.**
-   - Placeholder quotes such as `[สลิป]` or `[รูปภาพ]` are hidden. Only text the customer typed is quoted.
-   - Slip cards show `ค้าง: #3 50฿, …`.
-   - `slip_duplicate` shows `เคยใช้แล้วกับ #N เมื่อ HH:MM` (or `เคยส่งมาแล้วเมื่อ HH:MM`, prefixed `ลูกค้าคนอื่น` for another customer). A SlipOK 1012 shows `SlipOK แจ้งว่าสลิปนี้เคยใช้แล้ว`.
-   - `slip_unchecked` always shows `ดูรูปสลิปใน LINE OA` (after the amount, when SlipOK returned one).
-7. **Shorter messages.** When only this order is owed, the receipt's payment block is one line: `โอน {total}฿ ตาม QR ด้านล่างได้เลยค่ะ`. The prompt tells the LLM to say `ส่งที่เดิม` without the full address (the card shows it).
-8. **Menu list.** "มีเมนูอะไรบ้าง" calls the tool `show_menu`. The full list is built in code from `menu.yaml` and sent as its own message, followed by the LLM's one-line reply. This came from the phone retest, where an LLM-written list was cut off mid-list at the token limit.
-   - The list leaves out sold-out dishes.
-   - Each dish lists the choices the customer must make, meaning required groups with no default such as meat or ไข่ดาว สุก/ไม่สุก. Each choice shows its extra cost, e.g. `• ข้าวกะเพรา 50฿ (หมูสับ/หมูชิ้น/ไก่/หมูกรอบ +10/กุ้ง +10/ปลาหมึก +10)`.
-   - Sold-out choices are dropped. A dish whose required choice is entirely sold out is left out.
-   - Optional add-ons (เพิ่มข้าว, พิเศษ), spice and sweetness aren't listed.
-9. **Inbox alerts.** `shop_state.notify_owner_on_inbox` (default 1) controls the owner push for new inbox cards, separate from `notify_owner_on_order`. `/kitchen` has a second switch `LINE ลูกค้ารอตอบ`.
-10. **Phone layout.** At ≤600px wide, `/kitchen` order cards show only the queue number, order time, items and badges, and expand on tap (the header is keyboard-operable).
-11. **Schema (additive):** `orders.pay_cash`, `conversations.pay_cash` (INTEGER NOT NULL DEFAULT 0), `shop_state.notify_owner_on_inbox` (INTEGER NOT NULL DEFAULT 1), added at startup when missing.
-12. **Dishes we don't sell (Ticket 6 retest, owner decision 2026-11-25).**
-   - When the customer asks for a dish, noodle or meat that isn't on the menu, the bot says so itself and suggests similar dishes. It doesn't hand over.
-   - Ingredient, allergy or MSG questions, and requests the bot can't handle, still hand over with reason `off_menu`, now labelled `ถามส่วนผสม/แพ้อาหาร`. The bot never vouches for allergy safety.
-   - This is a prompt rule. The code `off_menu` is unchanged, so old cards still read correctly.
-13. **Full v2 review fixes (GPT-6.2 Sol, 2026-11-25).**
-   - **One transfer, one credit.** Before calling SlipOK, slip intake records what the slip can pay: the unpaid order IDs and the open card. If that changes before payment (e.g. the owner records the same transfer with **รับโอนแล้ว**), nothing is paid and the slip goes to the owner as `slip_balance_changed` (`ยอดค้างเปลี่ยนระหว่างตรวจสลิป`).
-   - **Never talk over the owner.** Right before the bot replies, it re-checks bot quiet. If the owner tapped **คุยเอง** during the LLM call, no reply is sent, history keeps only the customer's message, and the message lands on the card.
-   - **Slip problems are never lost.** If the quiet card was resolved during the SlipOK check, the problem is handed over normally.
-   - **History matches what was sent.** The done and cancel pushes are added to the bot's history. A slip that confirms a card records the exact messages sent (only the "matched" line while quiet).
-   - **QR and payment text.**
-     - The QR is sent only if the balance still equals the amount the bot quoted.
-     - A cash customer never gets `PAYMENT_INFO_TEXT`.
-     - A replayed Confirm with nothing owed shows no payment details.
-     - **Asking for the QR counts as switching to transfer.** That's the reviewer's finding #6, which we kept on purpose: the owner confirmed this flow on the phone.
-   - **Daily limit.** Compaction on Confirm lowers `turn_offset` by the user turns it drops, so the 30-message limit keeps counting after the owner resets it.
-   - **SlipOK 1014.** The amount and time are kept (still never paid), and the check counts against the cached quota.
-   - **/kitchen.** Picker rows and `ค้าง:` lines label earlier days (`#1 (เมื่อวาน)`).
-   - **Customer status.** `get_my_orders` also returns this customer's earlier-day orders still in the queue.
-   - **Logs.** `?key=` is redacted from uvicorn access logs.
-   - **Git.** `shop.db*` is git-ignored, including backups.
-   - **Not changed, logged:**
-     - No resume note when a hand-over crosses midnight. The shop is closed then, and the new day starts with empty history.
-     - The v1 → v2 migration ended v1 hand-overs still running. That decision was made in Ticket 2, and it has already run on the real database.
-     - A refund due shows in `สรุปวันนี้` only on the day the order was cancelled.
-14. **Tier 3 re-review fixes** (spec auditor GPT-6.2 Sol and risk hunter Gemini 4 Neon, 2026-11-25; the one re-review the tiered-review rules allow).
-   - **คุยเอง during a bot turn.** Bot quiet is re-checked right after every LLM response, before any tool runs, and on every reply path: normal reply, error, deadline, tool limit and hand-over. Slip intake re-checks it before replying.
-   - **The "bot came back" note.** Consuming it clears only a quiet window that has already ended, so a takeover started meanwhile survives.
-   - **An order card is cancelled if the customer never saw it.** That covers a turn silenced by takeover, an error, the deadline, the tool limit or a hand-over, and a LINE reply that fails. A slip can't confirm a card that was never shown.
-   - **History writes are single transactions** (`append_conversation_messages`, and `append_conversation_event` read-modify-write in one transaction). They add to the history as stored, so owner pushes written during an LLM turn are never overwritten. Compaction on Confirm keeps done/cancel push events.
-   - **Daily message count.** Only messages the customer typed count (system notes start with `[`). Compaction lowers `turn_offset` by the customer turns it drops, and the offset may go below 0.
-   - **Earlier-day orders.**
-     - A pre-v2 order gets no queue position or estimate.
-     - `get_my_orders` lists this customer's earlier-day orders still waiting, `legacy` included.
-     - On `/kitchen`, an earlier-day order finished or paid today stays in the finished list with its day label, so **ยกเลิกจ่าย** stays reachable.
-   - **Rejected:** the stale QR between building and sending the Confirm reply. The window is milliseconds, and the owner can only mark orders that existed before the tap.
-   - **Wording:** the compact phone card also shows the order time.
+### 3.9 Changelog: the Ticket 6 phone test and the reviews (Ticket 7, approved 2026-11-25)
+The owner tested on a real phone and approved these changes. They are already written into §3.1–3.8; this list records what changed, why, and where it now lives. Item numbers are stable because code comments cite them.
+1. **Queue.** `legacy` orders left the queue maths, and earlier-day orders stay reachable → §3.3 items 5 and 7, §3.4. Why: a pre-v2 leftover inflated every queue position.
+2. **Greeting.** Greetings get a bot reply instead of a hand-over → §3.2 item 1, §3.5. Why: a greeting hand-over silenced the bot for 15 minutes.
+3. **Cash intent.** Customers can say they'll pay cash → §3.1 item 13. Why: cash customers still got a QR. The QR stays the default.
+4. **Done prompt.** Finishing an unpaid order asks about cash → §3.1 items 9 and 10.
+5. **Labels.** Buttons became **รับเงินสดแล้ว** / **รับโอนแล้ว** / **ยกเลิกจ่าย**, **รับเงินแล้ว…** and **ให้บอทตอบต่อ** (were จ่ายสด, จ่ายแล้ว ✓, เรียบร้อย); badges `💵 เงินสด`, `โอนแล้ว (ร้านเช็ค)`, `โอนแล้ว (สลิป) ✅`. Why: the owner found the old words ambiguous.
+6. **Inbox card detail** → §3.2 item 7 (card text). Why: cards said only "สลิป" with nothing to act on.
+7. **Shorter messages.** One-line payment block and `ส่งที่เดิม` → §3.1 item 4, §3.5.
+8. **Menu list in code** (`show_menu`) → §3.5. Why: an LLM-written list was cut off mid-list at the token limit.
+9. **Inbox alerts** got their own switch → §3.2 item 7.
+10. **Phone layout** of `/kitchen` → §3.1 item 9.
+11. **Schema (additive)** → §3.6.
+12. **Dishes we don't sell** get a bot reply; allergy questions still hand over (`off_menu` relabelled `ถามส่วนผสม/แพ้อาหาร`) → §3.5. Owner decision 2026-11-25.
+13. **Full v2 review fixes** (GPT-6.2 Sol): one transfer one credit (§3.1 item 5), never talk over the owner and history matches what was sent (§3.2 items 10–11), QR and payment-text rules (§3.1 item 4), daily limit (§3.5), SlipOK 1014 keeps amount and time and counts against the quota, earlier-day labels (§3.1 item 9), `get_my_orders` earlier-day orders (§3.3 item 7), log redaction (§3.6).
+    - **Kept on purpose:** asking for the QR counts as switching to transfer (reviewer finding #6; the owner confirmed the flow on the phone).
+    - **Not changed:** no resume note when a hand-over crosses midnight (the shop is closed then, and the new day starts with empty history); the v1 → v2 migration ended v1 hand-overs still running (decided in Ticket 2, already run on the real database); a refund due shows in `สรุปวันนี้` only on the day the order was cancelled.
+14. **Tier 3 re-review fixes** (GPT-6.2 Sol and Gemini 4 Neon; the one re-review the tiered-review rules allow): takeover re-check on every reply path, the resume-note guard, cancelling undelivered cards, single-transaction history writes (§3.2 items 10–11), counting only customer-typed messages (§3.5), earlier-day order handling (§3.3 items 5 and 7), the order time on compact phone cards (§3.1 item 9).
+    - **Rejected:** the stale QR between building and sending the Confirm reply. The window is milliseconds, and the owner can only mark orders that existed before the tap.
 15. **Deferred / dropped:** a slip problem still makes the bot quiet (deferred until real data shows how often it happens). Rechecking a never-verified slip on resend was dropped.
+16. **Later fix (2026-11-25):** the location-pin path also cancels its order card when the LINE reply fails (§3.2 item 10), found while drafting `CODING_STANDARDS.md`.
 
 ---
 
 ## 4. Acceptance Criteria (Observable Behavior)
+The criteria for the Ticket 7 changes (cash intent, done prompt, labels, inbox detail, menu list, earlier-day orders) are in [docs/specs/v2-tickets.md](docs/specs/v2-tickets.md) under Ticket 7.
 
 ### Payment status, ค้างจ่าย and summaries
 - [x] Given a v1-schema `shop.db` with 3 orders, when v2 starts, then the 3 orders have `payment_status = 'legacy'`, the row counts in every v1 table are unchanged, and a new confirmed order has `payment_status = 'unpaid'`.
 - [x] Given a customer with unpaid `#3` 60฿ from yesterday, unpaid `#5` 70฿ today, a cancelled unpaid order, and a `legacy` order, then their unpaid balance is 130฿.
-- [x] Given queued `#5` unpaid, when the owner taps **จ่ายสด**, then it becomes `cash` with `paid_at` set and 0 LINE pushes; when they tap **ยกเลิกจ่าย**, it returns to `unpaid`. Given a `slip` order, then the undo endpoint refuses with HTTP 409.
-- [x] Given done `#2` unpaid from today and done `#9` unpaid from yesterday, then `/api/kitchen/state` lists both under ค้างจ่าย, newest first, with `#9` labelled as an earlier day. After **จ่ายสด** on `#2`, it is no longer listed.
+- [x] Given queued `#5` unpaid, when the owner taps **รับเงินสดแล้ว**, then it becomes `cash` with `paid_at` set and 0 LINE pushes; when they tap **ยกเลิกจ่าย**, it returns to `unpaid`. Given a `slip` order, then the undo endpoint refuses with HTTP 409.
+- [x] Given done `#2` unpaid from today and done `#9` unpaid from yesterday, then `/api/kitchen/state` lists both under ค้างจ่าย, newest first, with `#9` labelled as an earlier day. After **รับเงินสดแล้ว** on `#2`, it is no longer listed.
 - [x] Given queued `#5` with `payment_status = 'slip'`, when the owner cancels it with a reason, then the cancel push contains the reason and `ร้านจะติดต่อคืนเงินค่ะ`, and `สรุปวันนี้` contains `ต้องคืนเงิน #5`.
 - [x] Given unpaid `#5` (70฿), when the customer asks the bot to cancel `#5`, then it is still cancelled. Given `#5` is `cash`, then the bot does not cancel it, replies with the hand-over message, and an inbox card with reason `paid_cancel_request` exists.
 - [x] Given done `#5` unpaid (70฿) and the owner taps **เสร็จ + แจ้งลูกค้า**, then the push contains `ยอดค้าง 70฿`. Given it is paid, then the push has no `ยอดค้าง`.
@@ -375,19 +371,19 @@ The owner tested on a real phone and approved these changes. They override the e
 - [x] Given the bot is quiet for the customer, then a matching slip replies only `ได้รับยอด …✅`, and a mismatching slip sends 0 replies and adds the slip to the open card.
 - [x] Given `bot_enabled = 0`, then an image gets 0 replies and 0 SlipOK calls.
 - [x] Given the SlipOK stub reports 15 checks left, then `/api/kitchen/state` includes a quota warning of 15. Given it reports 0, then the next slip makes 0 check calls and is handed over as `slip_unchecked`.
-- [x] Given a `slip_*` card for a customer with unpaid `#3` and `#5`, when the owner confirms **จ่ายแล้ว ✓** with only `#5` ticked, then `#5` is `transfer_manual` and `#3` stays `unpaid`.
+- [x] Given a `slip_*` card for a customer with unpaid `#3` and `#5`, when the owner confirms **รับเงินแล้ว…** with only `#5` ticked, then `#5` is `transfer_manual` and `#3` stays `unpaid`.
 
 ### Hand-over inbox and bot quiet
-- [x] Given the customer asks an allergy/ingredient question and the LLM stub calls `hand_over(reason="off_menu")`, then 1 reply with `HANDOVER_REPLY` is sent, an inbox card with reason `off_menu` exists, and `handed_over_until` is 15 minutes ahead. (Was a greeting before §3.9.)
+- [x] Given the customer asks an allergy/ingredient question and the LLM stub calls `hand_over(reason="off_menu")`, then 1 reply with `HANDOVER_REPLY` is sent, an inbox card with reason `off_menu` exists, and `handed_over_until` is 15 minutes ahead.
 - [x] Given the bot is quiet, when the customer sends `กะเพราหมูกรอบ 1 กล่อง`, then 0 replies are sent, 0 LLM calls are made, the message is in `messages_json`, the card's unseen count is 1, and `handed_over_until` moves to 15 minutes after this message.
 - [x] Given the bot is quiet and the clock is advanced 15 minutes past the last customer message, when the customer sends `กะเพราหมูกรอบ 1 กล่อง`, then the LLM stub is called, the messages passed to it contain the exact note from §3.2.6, a reply is sent, and the card is still listed as `บอทกลับมาแล้ว`.
-- [x] Given an open card, when the owner taps **เรียบร้อย**, then the card is gone from `/api/kitchen/state`, bot quiet has ended, and the next customer text reaches the LLM with the §3.2.6 note.
-- [x] Given a `turn_limit` hand-over and the clock advanced 60 minutes, then customer text still gets 0 replies and 0 LLM calls. After **เรียบร้อย**, the next text reaches the LLM and doesn't trigger the turn limit.
+- [x] Given an open card, when the owner taps **ให้บอทตอบต่อ**, then the card is gone from `/api/kitchen/state`, bot quiet has ended, and the next customer text reaches the LLM with the §3.2.6 note.
+- [x] Given a `turn_limit` hand-over and the clock advanced 60 minutes, then customer text still gets 0 replies and 0 LLM calls. After **ให้บอทตอบต่อ**, the next text reaches the LLM and doesn't trigger the turn limit.
 - [x] Given the bot is quiet, when the customer sends a location pin, then the draft holds the address and `https://maps.google.com/?q={lat},{lng}`, 0 replies are sent, and the card shows the pin.
 - [x] Given the bot is quiet, when the customer taps Confirm on a valid card, then the order is created (as in v1) and bot quiet has ended.
 - [x] Given queued `#5`, when the owner taps **คุยเอง**, then 0 messages go to the customer, a card with reason `owner_takeover` exists, and the customer's next text gets 0 replies.
 - [x] Given an open card for a customer, when a second hand-over reason happens, then there is still exactly one open card for that customer and it lists both reasons.
-- [x] Given `notify_owner_on_inbox = 1` (the default), then a new card sends 1 push to `OWNER_LINE_USER_ID`, and later messages on the same card send 0 pushes. Given it is 0, then no pushes are sent, whatever `notify_owner_on_order` is. (Was `notify_owner_on_order` before §3.9.)
+- [x] Given `notify_owner_on_inbox = 1` (the default), then a new card sends 1 push to `OWNER_LINE_USER_ID`, and later messages on the same card send 0 pushes. Given it is 0, then no pushes are sent, whatever `notify_owner_on_order` is.
 - [x] Given a customer with no stored display name, when a card is created, then the LINE profile stub is called once and the card shows the profile name. If it returns nothing, the card shows `ลูกค้า …{last 4}`.
 
 ### Wait estimate, queue position, batch view and voice
@@ -402,7 +398,7 @@ The owner tested on a real phone and approved these changes. They override the e
 
 ## 5. Verification Contract
 The executing agent must run and pass all of the below after its last edit:
-- **Static and tests (gate)**: `./scripts/check.sh` (`ruff format --check`, `ruff check`, `mypy app tests`, `pytest -q`).
+- **Static and tests (gate)**: `./scripts/check.sh` (`ruff format --check`, `ruff check`, `mypy app tests scripts`, `pytest -q`).
 - **Behavioral**: `uv run pytest -q`, with new test files as needed (e.g. `tests/test_payments.py`, `tests/test_slips.py`, `tests/test_handover.py`, `tests/test_wait.py`).
   - SlipOK, LINE (reply, push, content, profile) and the LLM are always injected stubs or spies through `create_app(...)` / `ShopDB(clock=...)`.
   - Time-based rules use the injected clock, never `sleep`.

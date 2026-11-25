@@ -271,7 +271,10 @@ def build_app(db_path: Path, log_path: Path, *, real_llm: bool = False) -> FastA
 
 
 def make_event(user: str, kind: str, arg: str, db_path: Path) -> dict[str, Any]:
-    """One LINE webhook event. kind: text, slip <baht> [ref], photo, voice, confirm, cancel."""
+    """One LINE webhook event.
+
+    kind: text, slip <baht> [ref], photo, voice, location [address], confirm, cancel.
+    """
     eid = uuid.uuid4().hex
     event: dict[str, Any] = {
         "type": "message",
@@ -292,6 +295,15 @@ def make_event(user: str, kind: str, arg: str, db_path: Path) -> dict[str, Any]:
         event["message"] = {"type": "image", "id": f"photo-{eid}"}
     elif kind == "voice":
         event["message"] = {"type": "audio", "id": eid}
+    elif kind == "location":
+        address = arg or "บ้านเดโม ซอย 1"
+        event["message"] = {
+            "type": "location",
+            "id": eid,
+            "address": address,
+            "latitude": 13.7563,
+            "longitude": 100.5018,
+        }
     elif kind in ("confirm", "cancel"):
         with sqlite3.connect(db_path) as conn:
             row = conn.execute(
@@ -301,7 +313,7 @@ def make_event(user: str, kind: str, arg: str, db_path: Path) -> dict[str, Any]:
         event["type"] = "postback"
         event["postback"] = {"data": f"action={kind}&card_id={card}"}
     else:
-        raise SystemExit(f"Unknown kind {kind!r}: use text, slip, photo, voice, confirm, cancel")
+        raise SystemExit(f"Unknown kind {kind!r}: see `say --help`")
     return event
 
 
@@ -343,7 +355,9 @@ def main() -> int:
     sub.add_parser("serve", help="start the seeded demo server")
     say = sub.add_parser("say", help="send one fake LINE event to the running demo server")
     say.add_argument("user", help="LINE user id, e.g. U_DEMO")
-    say.add_argument("kind", choices=["text", "slip", "photo", "voice", "confirm", "cancel"])
+    say.add_argument(
+        "kind", choices=["text", "slip", "photo", "voice", "location", "confirm", "cancel"]
+    )
     say.add_argument("arg", nargs="*", help="text, or slip amount in baht plus optional ref")
     args = parser.parse_args()
     if args.cmd == "say":

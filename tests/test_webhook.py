@@ -409,3 +409,26 @@ def test_confirm_and_cancel_postbacks_and_owner_alert_toggle(tmp_path: Path) -> 
         },
     )
     assert db.get_or_create_conversation("U_CANCEL").active_card_id is None
+
+
+def test_location_card_is_cancelled_when_its_reply_fails(tmp_path: Path) -> None:
+    """A card the customer never received must not stay confirmable (e.g. by a slip)."""
+    client, db, spy, _ = _setup(tmp_path)
+    conv = db.get_or_create_conversation("U_LOC_FAIL")
+    db.save_draft(
+        conv.id,
+        {"items": [{"dish_id": "kaphrao", "qty": 1, "option_ids": ["crispy_pork"]}]},
+    )
+    spy.fail_reply_token = "rt-loc-fail"
+    event = {
+        "webhookEventId": "evt-loc-fail",
+        "type": "message",
+        "replyToken": "rt-loc-fail",
+        "source": {"type": "user", "userId": "U_LOC_FAIL"},
+        "message": {"type": "location", "address": "บ้าน 9", "latitude": 13.7, "longitude": 100.5},
+    }
+    assert _post_webhook(client, {"events": [event]}).status_code == 200
+    assert spy.replies == []
+    after = db.get_or_create_conversation("U_LOC_FAIL")
+    assert after.active_card_id is None
+    assert after.draft["address"] == "บ้าน 9"  # the pin itself is still saved

@@ -6,6 +6,7 @@ Repo instructions for `tam-sang-bot`. Global `AGENTS.md` applies unless overridd
 - [SPEC.md](SPEC.md) — current spec (v2: payments, hand-over inbox, wait estimate); tickets in [docs/specs/v2-tickets.md](docs/specs/v2-tickets.md).
 - [docs/specs/v1.md](docs/specs/v1.md) — archived v1 spec: base SQLite schema and shipped behavior.
 - [GLOSSARY.md](GLOSSARY.md) — canonical domain terms; [docs/adr/](docs/adr/) — decision records.
+- [CODING_STANDARDS.md](CODING_STANDARDS.md) — review-only rules: reviewers check every diff against it.
 - [menu.yaml](menu.yaml) — 24-item menu, prices, option groups, schedule (`Asia/Bangkok`), and delivery fee rule.
 - `app/` — `config.py`, `menu.py`, `db.py`, `line.py`, `agent.py`, `owner.py`, `main.py`, `kitchen.html`; v2: `handover.py` (inbox labels), `promptpay.py` (QR), `slips.py` + `slip_intake.py` (SlipOK, slip match), `wait.py` (wait estimate), `batch.py` (รวมจาน).
 - `tests/` — behavioral tests (`test_menu.py`, `test_orders.py`, `test_webhook.py`, `test_agent.py`, `test_owner.py`; v2: `test_payments.py`, `test_handover.py`, `test_promptpay.py`, `test_slips.py`, `test_wait.py`).

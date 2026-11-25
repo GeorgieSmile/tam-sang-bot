@@ -67,7 +67,7 @@ class QueueInfo:
 def queue_info(db: ShopDB, menu: Menu, order: Order) -> QueueInfo | None:
     """Queue position (orders ahead + 1) and wait estimate for a queued order.
 
-    None for pre-v2 (`legacy`) orders: they are not part of the queue (SPEC §3.9 item 1).
+    None for pre-v2 (`legacy`) orders: they are not part of the queue (SPEC §3.3 item 7).
     """
     if order.status != "queued" or order.payment_status == "legacy":
         return None
