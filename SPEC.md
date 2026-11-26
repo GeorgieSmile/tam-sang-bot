@@ -338,6 +338,8 @@ The owner tested on a real phone and approved these changes. They are already wr
 15. **Deferred / dropped:** a slip problem still makes the bot quiet (deferred until real data shows how often it happens). Rechecking a never-verified slip on resend was dropped.
 16. **Later fix (2026-11-25):** the location-pin path also cancels its order card when the LINE reply fails (§3.2 item 10), found while drafting `CODING_STANDARDS.md`.
 17. **Cancel tap clears the cart (2026-11-26, owner-approved Option A):** tapping **ยกเลิก** on an order card also empties the draft's items and keeps fulfillment, address, pin and time; internal card cleanup still keeps the items (`docs/specs/2026-11-26-agent-polish.md` §3.2).
+18. **Order-card fast path (2026-11-26, owner-approved):** a one-message order whose first tool batch is only `update_cart` + `set_fulfillment` + `build_order_card`, all ok, with no LLM text and no question word, gets a fixed card line (pickup / saved address / new address) instead of a second LLM call; every other turn is unchanged. The `webhook_event` log line records `card_path` (`docs/specs/2026-11-26-card-fast-path.md` §3.1–3.3).
+19. **Shop address (2026-11-26, owner-approved):** `menu.yaml` `shop.address` (fictional, no map link) is told to the LLM in the prompt and returned by `get_shop_status` as `shop_address`, so the bot answers "ร้านอยู่ตรงไหน"; with no address set, the prompt is unchanged and `shop_address` is `null`; a non-text address fails menu loading (`docs/specs/2026-11-26-card-fast-path.md` §3.4).
 
 ---
 

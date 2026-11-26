@@ -200,6 +200,7 @@ def test_each_llm_call_and_webhook_event_logs_one_pii_free_line(
         "lock_wait_ms": "0",
         "total_ms": "0",
         "reply_ok": "true",
+        "card_path": "-",
     }
     for value in (calls[0]["latency_ms"], events[0]["lock_wait_ms"], events[0]["total_ms"]):
         assert value.isdigit()

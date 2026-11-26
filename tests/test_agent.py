@@ -10,6 +10,8 @@ from types import SimpleNamespace
 from typing import Any
 from zoneinfo import ZoneInfo
 
+import pytest
+
 from app.agent import (
     CARD_AFTER_FAILED_EDIT,
     HANDOVER_REPLY,
@@ -510,3 +512,56 @@ def test_card_is_not_built_after_a_failed_edit_in_the_same_batch(tmp_path: Path)
     }
     assert results["c1"]["ok"] is False and results["c2"]["ok"] is True
     assert results["c3"] == {"ok": False, "error": CARD_AFTER_FAILED_EDIT}
+
+
+SHOP_ADDRESS = "เลขที่ 88 ซอยตามสั่ง 7 ถนนอร่อยดี"  # fictional (card fast-path spec §3.4)
+
+
+def _shop_status_result(tmp_path: Path, menu: Any) -> dict[str, Any]:
+    """Run one turn whose LLM calls get_shop_status; return that tool's result."""
+    db = ShopDB(tmp_path / "shop.db", clock=lambda: datetime(2026, 11, 23, 12, 0, tzinfo=BKK))
+    stub = StubLLM(
+        [_resp(tool_calls=[_tool_call("s1", "get_shop_status", {})]), _resp(content="ค่ะ")]
+    )
+    handle_customer_text(
+        db, menu, "U_B", "ร้านอยู่ตรงไหนคะ", llm_client=stub, settings=_settings(tmp_path / "s.db")
+    )
+    msg = next(m for m in stub.calls[1]["messages"] if m.get("tool_call_id") == "s1")
+    result: dict[str, Any] = json.loads(msg["content"])
+    return result
+
+
+def test_shop_address_is_loaded_and_told_to_the_llm(tmp_path: Path) -> None:
+    from app.agent import _system_prompt
+
+    menu = load_menu(MENU_PATH)
+    assert menu.shop.address == SHOP_ADDRESS
+    text = _system_prompt(menu, {})["content"][0]["text"]
+    assert f"12. ที่อยู่ร้านคือ {SHOP_ADDRESS} " in text
+    assert _shop_status_result(tmp_path, menu)["shop_address"] == SHOP_ADDRESS
+
+
+def test_without_a_shop_address_the_prompt_and_tool_say_nothing(tmp_path: Path) -> None:
+    from app.agent import _system_prompt
+
+    raw = MENU_PATH.read_text(encoding="utf-8")
+    assert f'  address: "{SHOP_ADDRESS}"\n' in raw
+    for i, line in enumerate(["", '  address: "   "\n']):  # missing, then blank
+        path = tmp_path / f"menu{i}.yaml"
+        path.write_text(raw.replace(f'  address: "{SHOP_ADDRESS}"\n', line), encoding="utf-8")
+        menu = load_menu(path)
+        assert menu.shop.address is None
+        text = _system_prompt(menu, {})["content"][0]["text"]
+        assert "ที่อยู่ร้าน" not in text and "\n12. " not in text
+        assert _shop_status_result(tmp_path / str(i), menu)["shop_address"] is None
+
+
+@pytest.mark.parametrize("value", ["88", "true", "[a, b]"])
+def test_a_non_text_shop_address_fails_menu_loading(tmp_path: Path, value: str) -> None:
+    from app.menu import MenuError
+
+    raw = MENU_PATH.read_text(encoding="utf-8")
+    path = tmp_path / "menu.yaml"
+    path.write_text(raw.replace(f'"{SHOP_ADDRESS}"', value, 1), encoding="utf-8")
+    with pytest.raises(MenuError, match="shop.address must be text"):
+        load_menu(path)

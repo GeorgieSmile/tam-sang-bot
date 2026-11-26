@@ -794,7 +794,7 @@ def create_app(
             finally:
                 log.info(
                     "webhook_event turn_id=%s event_type=%s reason=%s llm_calls=%d "
-                    "lock_wait_ms=%d total_ms=%d reply_ok=%s",
+                    "lock_wait_ms=%d total_ms=%d reply_ok=%s card_path=%s",
                     stats.turn_id,
                     _event_label(event),
                     stats.reason,
@@ -802,6 +802,7 @@ def create_app(
                     lock_wait_ms,
                     round((time.monotonic() - started_at) * 1000),
                     "-" if stats.reply_ok is None else str(stats.reply_ok).lower(),
+                    stats.card_path,
                 )
 
         return {"ok": True}

@@ -6,12 +6,15 @@ import base64
 import hashlib
 import hmac
 import json
+import logging
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 from zoneinfo import ZoneInfo
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.agent import (
@@ -889,6 +892,8 @@ BUILD_PICKUP_CARD = [
     _tool_call("c2", "set_fulfillment", {"fulfillment": "pickup"}),
     _tool_call("c3", "build_order_card", {}),
 ]
+# A question word keeps the second LLM call that these tests are about (card fast path §3.1)
+ORDER_ASKING = "กะเพราหมูกรอบ 1 รับเองได้ไหมคะ"
 
 
 def _raw_call(call_id: str, name: str, arguments: str) -> Any:
@@ -907,7 +912,7 @@ def test_llm_response_without_a_message_cancels_the_card_built_earlier(tmp_path:
     ):
         h = Harness(tmp_path / str(i))
         h.llm.responses += [_resp(tool_calls=BUILD_PICKUP_CARD), broken]
-        h.text("U_A", "กะเพราหมูกรอบ 1 รับเอง")
+        h.text("U_A", ORDER_ASKING)
         assert h.line.replies == [("rt-1", [{"type": "text", "text": ERROR_REPLY}])]
         conv = h.db.get_or_create_conversation("U_A")
         assert conv.active_card_id is None
@@ -939,7 +944,7 @@ def test_card_edited_after_it_was_built_in_the_same_turn_is_never_sent(tmp_path:
             _resp(tool_calls=[edit]),
             _resp(content="แก้ไขแล้วค่ะ"),
         ]
-        h.text("U_A", "กะเพราหมูกรอบ 1 รับเอง")
+        h.text("U_A", ORDER_ASKING)
         assert _tool_result(h.llm.calls[2], "e1")["ok"] is True
         sent = h.line.replies[-1][1]
         assert sent == [{"type": "text", "text": "แก้ไขแล้วค่ะ"}]  # no stale Flex card
@@ -1126,11 +1131,11 @@ def test_pause_during_the_llm_call_sends_nothing_and_cancels_the_card(tmp_path: 
         return next(replies)
 
     h.llm.chat = SimpleNamespace(completions=SimpleNamespace(create=pause_on_second_call))
-    h.text("U_A", "กะเพราหมูกรอบ 1 รับเอง")
+    h.text("U_A", ORDER_ASKING)
     assert h.line.replies == []
     conv = h.db.get_or_create_conversation("U_A")
     assert conv.active_card_id is None
-    assert conv.messages == [{"role": "user", "content": "กะเพราหมูกรอบ 1 รับเอง"}]
+    assert conv.messages == [{"role": "user", "content": ORDER_ASKING}]
     assert h.state()["inbox"] == []
 
 
@@ -1171,7 +1176,7 @@ def test_non_text_llm_content_after_a_card_does_not_crash_the_turn(tmp_path: Pat
             choices=[SimpleNamespace(message=SimpleNamespace(content=[{"x": 1}], tool_calls=None))]
         ),
     ]
-    h.text("U_A", "กะเพราหมูกรอบ 1 รับเอง")
+    h.text("U_A", ORDER_ASKING)
     sent = h.line.replies[-1][1]
     assert [m["type"] for m in sent] == ["flex"]  # the card goes out, with no crash
     assert h.db.get_or_create_conversation("U_A").active_card_id is not None
@@ -1232,7 +1237,7 @@ def test_failed_reply_tells_the_next_llm_turn_the_customer_never_saw_it(tmp_path
         raise ConnectionError("LINE down")
 
     h.line.reply_messages = broken_reply  # type: ignore[method-assign]
-    h.text("U_A", "กะเพราหมูกรอบ 1 รับเอง")
+    h.text("U_A", ORDER_ASKING)
     conv = h.db.get_or_create_conversation("U_A")
     assert conv.active_card_id is None
     assert conv.messages[-2:] == [
@@ -1469,7 +1474,7 @@ def test_fresh_review_batch_order_and_cleared_cards(tmp_path: Path) -> None:
         ),
         _resp(content="ตรวจสอบการ์ดได้เลยค่ะ"),
     ]
-    h.text("U_A", "เพิ่มน้ำเปล่า รับเอง")
+    h.text("U_A", "เพิ่มน้ำเปล่า รับเองได้ไหม")  # a question word keeps the 2nd call
     sent = h.line.replies[-1][1]
     assert [m["type"] for m in sent] == ["text", "flex"]
     assert "น้ำเปล่า" in json.dumps(sent[1], ensure_ascii=False)  # the edited cart
@@ -1544,3 +1549,199 @@ def test_fix_review_resume_note_and_card_note_on_failed_fulfillment(tmp_path: Pa
     assert result["ok"] is False and result["card_note"] == CARD_CLEARED_NOTE
     assert [m["type"] for m in h.line.replies[-1][1]] == ["text"]
     assert h.db.get_or_create_conversation("U_A").active_card_id is None
+
+
+# --- Card fast path (docs/specs/2026-11-26-card-fast-path.md, Ticket 1) ---
+
+
+# The owner-approved lines (spec §3.2), written out so a wording change fails the tests
+LINE_PICKUP = "ตรวจสอบรายการบนการ์ดแล้วกดยืนยันได้เลยนะคะ"
+LINE_SAVED = "ส่งที่เดิมนะคะ ถ้าเปลี่ยนที่อยู่บอกได้เลยค่ะ\nตรวจสอบรายการบนการ์ดแล้วกดยืนยันได้เลยนะคะ"
+LINE_NEW = "ตรวจสอบรายการและที่อยู่บนการ์ดแล้วกดยืนยันได้เลยนะคะ"
+
+
+def _card_paths(caplog: pytest.LogCaptureFixture) -> list[tuple[str, str]]:
+    """(card_path, llm_calls) from each webhook_event log line."""
+    out = []
+    for r in caplog.records:
+        if r.name == "app.main" and r.getMessage().startswith("webhook_event "):
+            f = dict(re.findall(r"(\w+)=(\S+)", r.getMessage()))
+            out.append((f["card_path"], f["llm_calls"]))
+    return out
+
+
+def test_fast_path_pickup_order_sends_the_fixed_line_after_one_llm_call(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO)
+    h = Harness(tmp_path)
+    h.llm.responses.append(_resp(tool_calls=BUILD_PICKUP_CARD))
+    h.text("U_A", "กะเพราหมูกรอบ 1 รับเองค่ะ")
+    assert len(h.llm.calls) == 1
+    ((_, sent),) = h.line.replies
+    assert [m["type"] for m in sent] == ["text", "flex"]
+    assert sent[0] == {"type": "text", "text": LINE_PICKUP}
+    conv = h.db.get_or_create_conversation("U_A")
+    assert conv.active_card_id is not None  # the card the customer got stays confirmable
+    # History: the tool batch and its results, then exactly the line that was sent
+    assert conv.messages[-1] == {"role": "assistant", "content": LINE_PICKUP}
+    assert [m["role"] for m in conv.messages[-5:-1]] == ["assistant", "tool", "tool", "tool"]
+    assert _card_paths(caplog) == [("fast", "1")]
+
+
+@pytest.mark.parametrize("case", ["saved", "new"])
+def test_fast_path_delivery_line_depends_on_the_address(tmp_path: Path, case: str) -> None:
+    h = Harness(tmp_path)
+    if case == "saved":
+        h.db.upsert_customer("U_A", last_address="บ้าน 45/2", update_address=True)
+        ff = {"fulfillment": "delivery", "use_saved_address": True}
+    else:
+        ff = {"fulfillment": "delivery", "address": "บ้าน 9 ซอย 2"}
+    h.llm.responses.append(
+        _resp(
+            tool_calls=[
+                _tool_call("c1", "update_cart", {"action": "add", "items": [KAPHRAO]}),
+                _tool_call("c2", "set_fulfillment", ff),
+                _tool_call("c3", "build_order_card", {}),
+            ]
+        )
+    )
+    h.text("U_A", "กะเพราหมูกรอบ 1 ส่งค่ะ")
+    assert len(h.llm.calls) == 1
+    expected = LINE_SAVED if case == "saved" else LINE_NEW
+    sent = h.line.replies[-1][1]
+    assert sent[0] == {"type": "text", "text": expected}
+    assert sent[1]["type"] == "flex"
+
+
+@pytest.mark.parametrize(
+    "case", ["extra_tool", "edit_fails", "llm_text", "no_fulfillment_tool", "build_fails"]
+)
+def test_fast_path_keeps_the_llm_reply_when_any_condition_fails(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, case: str
+) -> None:
+    caplog.set_level(logging.INFO)
+    h = Harness(tmp_path)
+    first = _resp(tool_calls=BUILD_PICKUP_CARD)
+    if case == "extra_tool":
+        first = _resp(tool_calls=[*BUILD_PICKUP_CARD, _tool_call("s1", "get_shop_status", {})])
+    elif case == "edit_fails":
+        h.db.set_override("dish", "kaphrao", False)  # sold out: update_cart is refused
+    elif case == "llm_text":
+        first = _resp(content="รับทราบค่ะ", tool_calls=BUILD_PICKUP_CARD)
+    elif case == "no_fulfillment_tool":
+        _draft_ready(h, "U_A")  # pickup is already set, so the build succeeds
+        first = _resp(
+            tool_calls=[
+                _tool_call("c1", "update_cart", {"action": "add", "items": [WATER]}),
+                _tool_call("c3", "build_order_card", {}),
+            ]
+        )
+    elif case == "build_fails":
+        # Both edits succeed; the card builder itself refuses the empty cart
+        first = _resp(
+            tool_calls=[
+                _tool_call("c1", "update_cart", {"action": "clear"}),
+                _tool_call("c2", "set_fulfillment", {"fulfillment": "pickup"}),
+                _tool_call("c3", "build_order_card", {}),
+            ]
+        )
+    h.llm.responses += [first, _resp(content="ข้อความจาก LLM")]
+    h.text("U_A", "กะเพราหมูกรอบ 1 รับเองค่ะ")
+    if case == "build_fails":
+        oks = [_tool_result(h.llm.calls[1], c)["ok"] for c in ("c1", "c2", "c3")]
+        assert oks == [True, True, False]
+    assert len(h.llm.calls) == 2
+    assert h.line.replies[-1][1][0] == {"type": "text", "text": "ข้อความจาก LLM"}
+    assert _card_paths(caplog) == [("-", "2")]
+
+
+@pytest.mark.parametrize(
+    ("second", "path"),
+    [
+        ("line", "qword_same"),
+        ("", "qword_same"),
+        ("text", "qword_diff"),
+        ("hand_over", "qword_diff"),
+    ],
+)
+def test_a_question_word_keeps_the_llm_reply_and_logs_what_it_said(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, second: str, path: str
+) -> None:
+    caplog.set_level(logging.INFO)
+    h = Harness(tmp_path)
+    reply = {"line": LINE_PICKUP, "": "", "text": "ได้ค่ะ เผ็ดน้อยนะคะ"}.get(second, "")
+    if second == "hand_over":
+        follow = _resp(tool_calls=[_tool_call("h1", "hand_over", {"reason": "off_menu"})])
+    else:
+        follow = _resp(content=reply)
+    h.llm.responses += [_resp(tool_calls=BUILD_PICKUP_CARD), follow]
+    h.text("U_A", "กะเพราหมูกรอบ 1 เผ็ดน้อยได้ไหมคะ รับเอง")
+    assert len(h.llm.calls) == 2
+    sent = h.line.replies[-1][1]
+    if second in ("line", "text"):
+        assert sent[0] == {"type": "text", "text": reply}
+    if second == "":
+        assert [m["type"] for m in sent] == ["flex"]  # the card alone: nothing more was said
+    assert _card_paths(caplog) == [(path, "2")]
+
+
+def test_fast_path_falls_back_when_the_turn_ran_out_of_time(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import time
+
+    import app.agent as agent_mod
+    from app.agent import LIMIT_REPLY
+
+    monkeypatch.setattr(agent_mod, "TURN_DEADLINE_S", 0.2)
+    h = Harness(tmp_path)
+
+    def slow_first_call(**kwargs: Any) -> Any:
+        h.llm.calls.append(kwargs)
+        time.sleep(0.3)  # the first call returns after the turn's deadline
+        return _resp(tool_calls=BUILD_PICKUP_CARD)
+
+    h.llm.chat = SimpleNamespace(completions=SimpleNamespace(create=slow_first_call))
+    h.text("U_A", "กะเพราหมูกรอบ 1 รับเองค่ะ")
+    assert len(h.llm.calls) == 1
+    assert h.line.replies[-1][1] == [{"type": "text", "text": LIMIT_REPLY}]  # deadline path
+    assert h.db.get_or_create_conversation("U_A").active_card_id is None
+
+
+def test_fast_path_falls_back_when_the_card_changed_before_the_reply(tmp_path: Path) -> None:
+    h = Harness(tmp_path)
+    real_is_handed_over = h.db.is_handed_over
+
+    def card_changes_meanwhile(conv: Any) -> bool:
+        if conv.active_card_id:  # only once a card exists: drop it, as a concurrent edit would
+            h.db.cancel_active_card("U_A", conv.active_card_id)
+        return real_is_handed_over(conv)
+
+    h.db.is_handed_over = card_changes_meanwhile  # type: ignore[method-assign]
+    h.llm.responses += [_resp(tool_calls=BUILD_PICKUP_CARD), _resp(content="ข้อความจาก LLM")]
+    h.text("U_A", "กะเพราหมูกรอบ 1 รับเองค่ะ")
+    assert len(h.llm.calls) == 2  # the LLM writes the reply; no fixed line without the card
+    assert h.line.replies[-1][1] == [{"type": "text", "text": "ข้อความจาก LLM"}]
+
+
+def test_takeover_during_the_fast_path_batch_sends_nothing_and_cancels_the_card(
+    tmp_path: Path,
+) -> None:
+    """CODING_STANDARDS Rule 1: the fast reply is a reply path, so คุยเอง is re-checked."""
+    h = Harness(tmp_path)
+    real_set_active_card = h.db.set_active_card
+
+    def save_card_then_owner_takes_over(*args: Any, **kwargs: Any) -> None:
+        real_set_active_card(*args, **kwargs)
+        h.db.open_handover("U_A", "owner_takeover", "#1")  # the owner taps คุยเอง meanwhile
+
+    h.db.set_active_card = save_card_then_owner_takes_over  # type: ignore[method-assign]
+    h.llm.responses.append(_resp(tool_calls=BUILD_PICKUP_CARD))
+    h.text("U_A", "กะเพราหมูกรอบ 1 รับเองค่ะ")
+    assert len(h.llm.calls) == 1
+    assert h.line.replies == []
+    conv = h.db.get_or_create_conversation("U_A")
+    assert conv.active_card_id is None
+    assert conv.messages == [{"role": "user", "content": "กะเพราหมูกรอบ 1 รับเองค่ะ"}]
+    assert h.cards("U_A")[0]["reasons"] == ["owner_takeover"]

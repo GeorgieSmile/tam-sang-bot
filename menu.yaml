@@ -1,5 +1,7 @@
 shop:
   name: "ครัวอิ่มจัง"
+  # Fictional: this is an imaginary shop (no map link on purpose)
+  address: "เลขที่ 88 ซอยตามสั่ง 7 ถนนอร่อยดี"
   timezone: "Asia/Bangkok"
   hours:
     open: "09:00"

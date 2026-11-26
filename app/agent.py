@@ -37,6 +37,17 @@ BAD_ARGS_ERROR = "รูปแบบคำสั่งไม่ถูกต้�
 CARD_CLEARED_NOTE = "การ์ดที่สร้างไว้ก่อนหน้าถูกยกเลิกแล้วเพราะตะกร้าเปลี่ยน ต้องเรียก build_order_card ใหม่"
 CARD_AFTER_FAILED_EDIT = "ยังไม่สร้างการ์ด เพราะคำสั่งแก้ตะกร้าหรือวิธีรับก่อนหน้านี้ไม่สำเร็จ แก้ให้ครบก่อนค่ะ"
 
+# Card fast path (docs/specs/2026-11-26-card-fast-path.md): a one-message order that builds its
+# card cleanly gets one of these lines instead of a second LLM call
+CARD_LINE_PICKUP = "ตรวจสอบรายการบนการ์ดแล้วกดยืนยันได้เลยนะคะ"
+CARD_LINE_SAVED_ADDRESS = "ส่งที่เดิมนะคะ ถ้าเปลี่ยนที่อยู่บอกได้เลยค่ะ\n" + CARD_LINE_PICKUP
+CARD_LINE_NEW_ADDRESS = "ตรวจสอบรายการและที่อยู่บนการ์ดแล้วกดยืนยันได้เลยนะคะ"
+_CARD_TOOLS = frozenset({"update_cart", "set_fulfillment", "build_order_card"})
+# A side question the LLM could answer without a tool: keep the LLM reply for it
+_QUESTION_RE = re.compile(
+    r"ไหม|มั้ย|มั๊ย|ไม๊|กี่|อะไร|ยังไง|อย่างไร|เท่าไหร่|เท่าไร|ไหน|เมื่อไหร่|ทำไม|รึเปล่า|หรือเปล่า|\?"
+)
+
 STATUS_TH = {
     "queued": "กำลังรอทำ",
     "done": "ทำเสร็จแล้ว",
@@ -245,6 +256,8 @@ class TurnStats:
     unlogged_call: tuple[str, int, Any] | None = None
     # Order card saved this turn and not yet handed back: cancelled if the turn crashes
     card_id: str | None = None
+    # Card fast path: fast | qword_same | qword_diff (only the question word kept the LLM) | -
+    card_path: str = "-"
 
 
 _TOOL_NAMES = frozenset(t["function"]["name"] for t in TOOLS)
@@ -388,6 +401,11 @@ def _system_prompt(menu: Menu, overrides: dict[tuple[str, str], bool]) -> dict[s
         "11. ถ้าลูกค้าถามว่ามีเมนูอะไรบ้างหรือขอดูเมนู ให้เรียก show_menu (ระบบส่งรายการเมนูให้เอง) "
         "แล้วตอบสั้นๆ 1 บรรทัดชวนสั่ง ห้ามพิมพ์รายการเมนูเอง"
     )
+    if menu.shop.address:
+        rules += (
+            f"\n12. ที่อยู่ร้านคือ {menu.shop.address} "
+            "ถ้าลูกค้าถามว่าร้านอยู่ที่ไหนหรือจะมารับที่ร้านยังไง ให้ตอบด้วยที่อยู่นี้ (ไม่ต้องเรียก hand_over)"
+        )
     menu_json = json.dumps(
         menu.to_prompt_dict(overrides), ensure_ascii=False, separators=(",", ":")
     )
@@ -770,6 +788,7 @@ def handle_customer_text(
                 "sold_out_dishes": st.sold_out_dishes,
                 "saved_address": cust.last_address if cust else None,
                 "has_saved_location_pin": bool(cust and cust.last_location_url),
+                "shop_address": menu.shop.address,
             }, None
 
         if name == "update_cart":
@@ -1040,6 +1059,69 @@ def handle_customer_text(
 
         return {"ok": False, "error": f"unknown tool: {name}"}, None
 
+    def finish(reply_content: str, llm_call: tuple[int, Any] | None = None) -> AgentTurn:
+        """The turn's reply: an LLM reply (`llm_call` is its unlogged call), or a fast-path
+        line. No more DB writes after it."""
+        nonlocal built_flex, built_card_id, qr_url
+        if built_card_id is not None and (
+            built_flex is None
+            or db.get_or_create_conversation(line_user_id).active_card_id != built_card_id
+        ):
+            # The card changed or failed to render after it was built: never send it
+            drop_unsent_card()
+            built_flex = None
+            built_card_id = None
+        if not reply_content and built_flex is None:
+            reply_content = LIMIT_REPLY
+        if llm_call is not None:
+            log_llm_call(stats, settings.llm_model, *llm_call)
+        if qr_url is not None:
+            # The QR must show the amount the reply text quotes. If the balance changed
+            # during the turn (a later tool, or the owner recording a payment), or the
+            # customer switched to cash, send no QR; they can ask again.
+            balance_now = db.get_unpaid_balance(line_user_id).total
+            if balance_now != qr_amount or (db.pays_cash(line_user_id) and not qr_explicit):
+                qr_url = None
+        save_turn({"role": "assistant", "content": reply_content})  # last DB read done
+        return AgentTurn(
+            reply_text=reply_content or None,
+            flex_card=built_flex,
+            reason="ok",
+            image_url=qr_url,
+            menu_text=menu_text,
+            card_id=built_card_id if built_flex is not None else None,
+        )
+
+    def fast_card_line(
+        batch: list[tuple[Any, dict[str, Any]]], content: str
+    ) -> tuple[str | None, str | None]:
+        """(line to send now, line the question word held back) for the first tool batch.
+
+        Spec §3.1: only update_cart / set_fulfillment / build_order_card, each at least once,
+        all ok, a card built, and no text from the LLM alongside the tools. The caller checks
+        that the card is still active right before replying.
+        """
+        names = {name if isinstance(name, str) else "invalid" for name, _ in batch}
+        if names != _CARD_TOOLS or content.strip():
+            return None, None
+        if not all(isinstance(r, dict) and r.get("ok") is True for _, r in batch):
+            return None, None
+        if built_flex is None or built_card_id is None:
+            return None, None
+        ff = [r for name, r in batch if name == "set_fulfillment"][-1]
+        if ff.get("fulfillment") == "pickup":
+            line = CARD_LINE_PICKUP
+        elif ff.get("used_saved_address") is True:
+            line = CARD_LINE_SAVED_ADDRESS
+        else:
+            line = CARD_LINE_NEW_ADDRESS
+        if _QUESTION_RE.search(text):
+            return None, line
+        return line, None
+
+    first_batch = True
+    qword_line: str | None = None  # the fast-path line a question word held back
+
     while True:
         remaining = TURN_DEADLINE_S - (time.monotonic() - t_start)
         if remaining <= 0:
@@ -1092,33 +1174,11 @@ def handle_customer_text(
 
         if not tool_calls:
             reply_content = _strip_bold(content).strip()
-            if built_card_id is not None and (
-                built_flex is None
-                or db.get_or_create_conversation(line_user_id).active_card_id != built_card_id
-            ):
-                # The card changed or failed to render after it was built: never send it
-                drop_unsent_card()
-                built_flex = None
-                built_card_id = None
-            if not reply_content and built_flex is None:
-                reply_content = LIMIT_REPLY
-            log_llm_call(stats, settings.llm_model, latency_ms, resp)
-            if qr_url is not None:
-                # The QR must show the amount the reply text quotes. If the balance changed
-                # during the turn (a later tool, or the owner recording a payment), or the
-                # customer switched to cash, send no QR; they can ask again.
-                balance_now = db.get_unpaid_balance(line_user_id).total
-                if balance_now != qr_amount or (db.pays_cash(line_user_id) and not qr_explicit):
-                    qr_url = None
-            save_turn({"role": "assistant", "content": reply_content})  # last DB read done
-            return AgentTurn(
-                reply_text=reply_content or None,
-                flex_card=built_flex,
-                reason="ok",
-                image_url=qr_url,
-                menu_text=menu_text,
-                card_id=built_card_id if built_flex is not None else None,
-            )
+            if qword_line is not None:
+                # Only the question word kept this LLM reply: did it say more than the line?
+                said_more = bool(reply_content) and reply_content != qword_line
+                stats.card_path = "qword_diff" if said_more else "qword_same"
+            return finish(reply_content, llm_call=(latency_ms, resp))
 
         if tool_calls_made + len(tool_calls) > MAX_TOOL_CALLS:
             log_llm_call(stats, settings.llm_model, latency_ms, resp, error="max_tool_calls")
@@ -1172,6 +1232,7 @@ def handle_customer_text(
             range(len(tool_calls)), key=lambda i: tool_calls[i].function.name == "build_order_card"
         )
         results_by_index: dict[int, dict[str, Any]] = {}
+        batch_out: list[tuple[Any, dict[str, Any]]] = []  # (tool name, result) as run
         if handover_now is None:
             for idx in run_order:
                 tc, args = tool_calls[idx], parsed[idx]
@@ -1200,6 +1261,7 @@ def handle_customer_text(
                     # cancelled a card built earlier in the turn: say so, or the LLM would
                     # tell the customer to tap a card that is never sent
                     result = {**result, "card_note": CARD_CLEARED_NOTE}
+                batch_out.append((tc.function.name, result))
                 marks.append(f"{_tool_label(tc.function.name)}:{'ok' if ok else 'err'}")
                 if trigger_handover is not None:
                     handover_now = trigger_handover  # e.g. a paid cancel: stop the batch here
@@ -1224,6 +1286,8 @@ def handle_customer_text(
                     tool_results[i] = {**res, "content": json.dumps(refused, ensure_ascii=False)}
         log_llm_call(stats, settings.llm_model, latency_ms, resp, tools=",".join(marks))
         if handover_now is not None:
+            if qword_line is not None:
+                stats.card_path = "qword_diff"  # the kept LLM call handed over instead
             drop_unsent_card()
             db.append_conversation_messages(
                 conv.id, [user_msg, {"role": "assistant", "content": HANDOVER_REPLY}]
@@ -1240,3 +1304,15 @@ def handle_customer_text(
 
         messages.append(assistant_tool_msg)
         messages.extend(tool_results)
+        if first_batch:
+            first_batch = False
+            fast_line, qword_line = fast_card_line(batch_out, content)
+            if fast_line is not None:
+                # No second LLM call, but still a reply path: re-check pause and คุยเอง
+                if (stop := control_stop()) is not None:
+                    return stop
+                card_now = db.get_or_create_conversation(line_user_id).active_card_id
+                if card_now == built_card_id and time.monotonic() - t_start < TURN_DEADLINE_S:
+                    stats.card_path = "fast"
+                    return finish(fast_line)
+                # The card changed, or the turn ran out of time: the normal path handles it

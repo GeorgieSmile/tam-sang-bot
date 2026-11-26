@@ -47,6 +47,7 @@ class ShopConfig:
     open_time: str
     close_time: str
     delivery: DeliveryRule
+    address: str | None = None  # told to customers who ask where the shop is
 
     @property
     def tz(self) -> ZoneInfo:
@@ -371,6 +372,10 @@ def load_menu(path: Path) -> Menu:
         fee_val = int(shop_raw["delivery_fee"])
     else:
         fee_val = int(delivery_raw.get("fee", 0))
+    raw_address = shop_raw.get("address")
+    if raw_address is not None and not isinstance(raw_address, str):
+        # Customers read this text: never turn a YAML number/list/bool into an address
+        raise MenuError("shop.address must be text")
     shop = ShopConfig(
         name=str(shop_raw["name"]),
         timezone=str(shop_raw.get("timezone", "Asia/Bangkok")),
@@ -380,6 +385,7 @@ def load_menu(path: Path) -> Menu:
             fee=fee_val,
             free_above=int(delivery_raw.get("free_above", 0)),
         ),
+        address=(raw_address or "").strip() or None,
     )
 
     ingredients: dict[str, str] = {
