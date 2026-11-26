@@ -43,7 +43,8 @@ CARD_LINE_PICKUP = "ตรวจสอบรายการบนการ์ด
 CARD_LINE_SAVED_ADDRESS = "ส่งที่เดิมนะคะ ถ้าเปลี่ยนที่อยู่บอกได้เลยค่ะ\n" + CARD_LINE_PICKUP
 CARD_LINE_NEW_ADDRESS = "ตรวจสอบรายการและที่อยู่บนการ์ดแล้วกดยืนยันได้เลยนะคะ"
 _CARD_TOOLS = frozenset({"update_cart", "set_fulfillment", "build_order_card"})
-# A side question the LLM could answer without a tool: keep the LLM reply for it
+# A side question the LLM could answer without a tool: keep the LLM reply for it.
+# Kept until real traffic shows it never catches anything (docs/adr/0002, revisit rule)
 _QUESTION_RE = re.compile(
     r"ไหม|มั้ย|มั๊ย|ไม๊|กี่|อะไร|ยังไง|อย่างไร|เท่าไหร่|เท่าไร|ไหน|เมื่อไหร่|ทำไม|รึเปล่า|หรือเปล่า|\?"
 )
@@ -256,7 +257,8 @@ class TurnStats:
     unlogged_call: tuple[str, int, Any] | None = None
     # Order card saved this turn and not yet handed back: cancelled if the turn crashes
     card_id: str | None = None
-    # Card fast path: fast | qword_same | qword_diff (only the question word kept the LLM) | -
+    # Card fast path: fast | qword_same | qword_diff (only the question word kept the LLM) | -.
+    # The qword counts decide whether to keep the question-word check (docs/adr/0002)
     card_path: str = "-"
 
 

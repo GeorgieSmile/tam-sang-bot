@@ -32,7 +32,7 @@
 **Goal**
 - A one-message order that passes the §3.1 gate is answered with 1 LLM call instead of 2. In the A/B run this was about 1.1 s faster (4.35 s → 3.23 s average), with the same reply text.
 - Every customer message containing a side question still gets an LLM-written answer.
-- Telemetry shows how often the fast path runs, and whether the question-word check ever catches a real question. That data decides later whether to keep the check.
+- Telemetry shows how often the fast path runs, and whether the question-word check ever catches a real question. That data decides later whether to keep the check (revisit rule: `docs/adr/0002-card-fast-path-question-word-check.md`).
 - The bot can tell customers where the shop is.
 
 **Out of Scope (Do Not Build)**
