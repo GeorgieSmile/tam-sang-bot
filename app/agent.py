@@ -262,6 +262,9 @@ class TurnStats:
     card_path: str = "-"
 
 
+# A tool's request to hand over now: (reason, inbox card detail), or None
+type HandOver = tuple[str, str | None] | None
+
 _TOOL_NAMES = frozenset(t["function"]["name"] for t in TOOLS)
 
 
@@ -748,8 +751,6 @@ def handle_customer_text(
     extra_body: dict[str, Any] = {}
     if settings.llm_reasoning_effort:
         extra_body["reasoning"] = {"effort": settings.llm_reasoning_effort}
-
-    HandOver = tuple[str, str | None] | None
 
     def save_draft(draft: dict[str, Any]) -> None:
         """Any draft write invalidates the order card (SQLite clears it): never send it."""

@@ -36,5 +36,10 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 no_implicit_optional = true
 
+[tool.pyright]
+# Editor diagnostics only (mypy is the gate): resolve imports from the uv venv
+venvPath = "."
+venv = ".venv"
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
