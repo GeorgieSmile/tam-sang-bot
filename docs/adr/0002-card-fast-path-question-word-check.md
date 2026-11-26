@@ -36,4 +36,7 @@ After the first **50** real-traffic turns logged `qword_same` or `qword_diff`:
 - if `qword_diff` is **0**, drop the check;
 - otherwise keep it.
 
+To count them, run this on the log the bot writes. Locally that's `.dev.log` from `./scripts/dev.sh run`; on a server it's the service's kept log:
+`grep -o 'card_path=\S*' .dev.log | sort | uniq -c`
+
 A single `qword_diff` is a customer question that would otherwise go unanswered. That is worth more than the delay on 49 false alarms.
