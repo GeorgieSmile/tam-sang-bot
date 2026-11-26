@@ -770,6 +770,31 @@ class ShopDB:
             )
             return cur.rowcount > 0
 
+    def cancel_card_and_clear_items(self, line_user_id: str, card_id: str) -> bool:
+        """The customer tapped ยกเลิก on this card: drop the card and its items, keep how they
+        receive the food (fulfillment, address, pin, time). A stale card ID changes nothing."""
+        today = self.today_str()
+        with self._tx(immediate=True) as conn:
+            row = conn.execute(
+                "SELECT id, draft_json FROM conversations "
+                "WHERE line_user_id = ? AND shop_date = ? AND active_card_id = ?",
+                (line_user_id, today, card_id),
+            ).fetchone()
+            if row is None:
+                return False
+            draft = json.loads(str(row["draft_json"]))
+            draft["items"] = []
+            conn.execute(
+                """
+                UPDATE conversations
+                SET active_card_id = NULL, active_card_json = NULL, draft_json = ?,
+                    draft_revision = draft_revision + 1, updated_at = ?
+                WHERE id = ?
+                """,
+                (json.dumps(draft, ensure_ascii=False), self.now_iso(), int(row["id"])),
+            )
+            return True
+
     def set_handed_over(self, conv_id: int, until_iso: str | None = None) -> None:
         until = until_iso or self.end_of_today_iso()
         with self._tx(immediate=True) as conn:
@@ -1054,12 +1079,12 @@ class ShopDB:
             return False
         now_iso = self.now_iso()
         with self._tx(immediate=True) as conn:
-            # Only clear a quiet window that is still over: an owner takeover (คุยเอง) started
-            # meanwhile must survive
+            # Only clear the marker this caller saw, while it is still over: an owner takeover
+            # (คุยเอง) started meanwhile, even one already resolved, must survive
             cur = conn.execute(
                 "UPDATE conversations SET handed_over_until = NULL, updated_at = ? "
-                "WHERE id = ? AND handed_over_until IS NOT NULL AND handed_over_until <= ?",
-                (now_iso, conv.id, now_iso),
+                "WHERE id = ? AND handed_over_until = ? AND handed_over_until <= ?",
+                (now_iso, conv.id, conv.handed_over_until, now_iso),
             )
         return cur.rowcount > 0
 

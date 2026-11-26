@@ -6,7 +6,8 @@
 Kitchen board: http://127.0.0.1:8765/kitchen?key=demo-kitchen-key
 Every LINE reply and push is appended to local/demo-line.log. The demo DB is local/demo.db.
 
-The LLM is a stub that echoes the customer's text, so text never creates an order card.
+The LLM is a stub that echoes the customer's text; `!tools <json>` scripts a tool batch
+(see EchoLLM), e.g. to build an order card with no LLM.
 `DEMO_REAL_LLM=1` uses the LLM_* settings from the env or .env instead (paid calls).
 U_DEMO starts with an open order card (70฿), so `confirm`, `cancel` and `slip` work without it.
 """
@@ -132,16 +133,32 @@ class StubSlipOk:
 
 
 class EchoLLM:
-    """LLM stub: replies with the customer's last message, never calls a tool."""
+    """LLM stub: replies with the customer's last message.
+
+    `!tools [["update_cart", {...}], ["build_order_card", {}]]` scripts one tool-call batch
+    instead, so a stub turn can build an order card; the call after it replies "ทำแล้ว".
+    """
 
     def __init__(self) -> None:
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))
 
     def _create(self, **kwargs: Any) -> Any:
-        last = next(
-            (m["content"] for m in reversed(kwargs["messages"]) if m.get("role") == "user"), ""
-        )
-        message = SimpleNamespace(content=f"[demo LLM] ได้รับ: {last}", tool_calls=None)
+        messages = kwargs["messages"]
+        last = next((m["content"] for m in reversed(messages) if m.get("role") == "user"), "")
+        tool_calls = None
+        content = f"[demo LLM] ได้รับ: {last}"
+        if messages[-1].get("role") == "tool":
+            content = "[demo LLM] ทำแล้ว"
+        elif last.startswith("!tools "):
+            tool_calls = [
+                SimpleNamespace(
+                    id=f"demo{i}",
+                    function=SimpleNamespace(name=name, arguments=json.dumps(args)),
+                )
+                for i, (name, args) in enumerate(json.loads(last.removeprefix("!tools ")))
+            ]
+            content = ""
+        message = SimpleNamespace(content=content, tool_calls=tool_calls)
         return SimpleNamespace(choices=[SimpleNamespace(message=message)])
 
 

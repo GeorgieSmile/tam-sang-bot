@@ -8,6 +8,8 @@ import json
 import logging
 import re
 import time
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Literal
 
@@ -19,6 +21,8 @@ from starlette.types import Receive, Scope, Send
 
 from app.agent import (
     AgentTurn,
+    TurnStats,
+    flush_llm_call,
     handle_audio_message,
     handle_customer_text,
     handle_image_message,
@@ -100,6 +104,14 @@ class MarkPaidBody(BaseModel):
     order_ids: list[int]
 
 
+def undelivered_note(reply_text: str | None) -> str:
+    """History note after a reply that never reached the customer (a `[` note, so it is not
+    a customer message). Quotes that reply, since an owner push may come after it."""
+    start = " ".join((reply_text or "").split())[:30]
+    which = f'ข้อความตอบกลับของบอท "{start}…"' if start else "การ์ดสรุปออเดอร์ของบอท"
+    return f"[ระบบ: {which} ส่งไม่ถึงลูกค้า ลูกค้าไม่เห็นข้อความและการ์ดนั้น]"
+
+
 REFUND_PUSH_LINE = "ร้านจะติดต่อคืนเงินค่ะ"
 # Receipt payment line for a cash customer when there's no PromptPay QR (never bank details)
 CASH_PAY_TEXT = "ชำระเงินสดตอนรับอาหารได้เลยค่ะ"
@@ -122,6 +134,38 @@ def _install_log_redaction() -> None:
     access = logging.getLogger("uvicorn.access")
     if not any(isinstance(f, _RedactKitchenKey) for f in access.filters):
         access.addFilter(_RedactKitchenKey())
+
+
+_EVENT_TYPES = frozenset({"message", "postback", "follow", "unfollow", "join", "leave"})
+_MESSAGE_TYPES = frozenset({"text", "image", "video", "audio", "file", "location", "sticker"})
+
+
+def _event_label(event: dict[str, Any]) -> str:
+    """LINE event type for the log, from fixed lists only (no free text in logs)."""
+    ev = event.get("type")
+    label = ev if isinstance(ev, str) and ev in _EVENT_TYPES else "other"
+    message = event.get("message")
+    if isinstance(message, dict):
+        mt = message.get("type")
+        label += "." + (mt if isinstance(mt, str) and mt in _MESSAGE_TYPES else "other")
+    return label
+
+
+def _install_app_logging() -> None:
+    """Uvicorn configures only its own loggers: show `app.*` INFO telemetry too (§3.4).
+
+    Skipped when the root logger already has a handler, so no line is printed twice."""
+    app_log = logging.getLogger("app")
+    if app_log.level == logging.NOTSET:
+        app_log.setLevel(logging.INFO)  # telemetry is INFO, whatever the root level
+    httpx_log = logging.getLogger("httpx")
+    if httpx_log.level == logging.NOTSET:
+        httpx_log.setLevel(logging.WARNING)  # its INFO lines print URLs with LINE user IDs
+    if not app_log.handlers and not logging.getLogger().handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+        app_log.addHandler(handler)
+        app_log.propagate = False  # one printer, even if a root handler is added later
 
 
 def format_done_push(order: Order, unpaid_balance: int = 0) -> str:
@@ -160,19 +204,18 @@ def create_app(
 ) -> FastAPI:
     cfg = settings or load_settings()
     _install_log_redaction()
+    _install_app_logging()
     validate_promptpay_settings(cfg)
     validate_slipok_settings(cfg.slipok_api_key, cfg.slipok_branch_id)
     loaded_menu = menu or load_menu(cfg.menu_path)
     shop_db = db or ShopDB(cfg.db_path)
-    line: LineClient = (
-        line_client
-        if line_client is not None
-        else (
-            HttpLineClient(cfg.line_channel_access_token)
-            if cfg.line_channel_access_token
-            else NoopLineClient()
-        )
+    # A LINE client created here is closed here, on shutdown; an injected one is the caller's
+    own_line = (
+        HttpLineClient(cfg.line_channel_access_token)
+        if line_client is None and cfg.line_channel_access_token
+        else None
     )
+    line: LineClient = line_client if line_client is not None else own_line or NoopLineClient()
     llm = llm_client if llm_client is not None else make_openai_client(cfg)
     slips: SlipClient | None = slip_client
     if slips is None and cfg.slipok_api_key and cfg.slipok_branch_id:
@@ -187,7 +230,13 @@ def create_app(
             user_locks[user_id] = lock
         return lock
 
-    app = FastAPI(title="tam-sang-bot")
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        yield
+        if own_line is not None:
+            own_line.close()
+
+    app = FastAPI(title="tam-sang-bot", lifespan=lifespan)
     app.state.settings = cfg
     app.state.menu = loaded_menu
     app.state.db = shop_db
@@ -453,17 +502,33 @@ def create_app(
             owner_alerts_on=shop_db.get_shop_status(loaded_menu).notify_owner_on_inbox,
         )
 
-    def _safe_reply(reply_token: str, messages: list[dict[str, Any]], event_id: str) -> bool:
+    def _safe_reply(reply_token: str, messages: list[dict[str, Any]], stats: TurnStats) -> bool:
         if not messages:
-            return True
+            return True  # nothing to send: reply_ok stays unset
+        if not reply_token or isinstance(line, NoopLineClient):
+            # Can't reply (no token, or no LINE access token configured): nothing is sent
+            return False
         try:
             line.reply_messages(reply_token, messages)
+            stats.reply_ok = stats.reply_ok is not False
             return True
         except Exception as exc:
-            log.warning("LINE reply failed for event %s: %s", event_id, type(exc).__name__)
+            log.warning("LINE reply failed turn_id=%s: %s", stats.turn_id, type(exc).__name__)
+            stats.reply_ok = False
             return False
 
-    def _process_event_sync(event: dict[str, Any], started_at: float, event_id: str) -> None:
+    def _reply_not_delivered(user_id: str, card_id: str | None, reply_text: str | None) -> None:
+        """The reply never reached the customer. Its text is already in history, so tell the
+        next LLM turn which reply they never saw (AGENTS.md), and cancel any card it carried."""
+        if card_id:
+            # The customer never got the order card: don't leave it confirmable by a slip
+            shop_db.cancel_active_card(user_id, card_id)
+        conv = shop_db.get_or_create_conversation(user_id)
+        shop_db.append_conversation_messages(
+            conv.id, [{"role": "user", "content": undelivered_note(reply_text)}]
+        )
+
+    def _process_event_sync(event: dict[str, Any], started_at: float, stats: TurnStats) -> None:
         source = event.get("source")
         user_id = str(source.get("userId") or "") if isinstance(source, dict) else ""
         reply_token = str(event.get("replyToken") or "")
@@ -479,6 +544,7 @@ def create_app(
             parsed = parse_postback_data(data_str)
             action = parsed.get("action")
             card_id = parsed.get("card_id", "")
+            stats.reason = f"postback_{action}" if action in ("confirm", "cancel") else "ignored"
             if action in ("confirm", "cancel") and card_id:
                 shop_db.end_quiet_on_button_tap(user_id)
             if action == "confirm" and card_id:
@@ -521,7 +587,7 @@ def create_app(
                             receipt,
                             compact_for_confirmed_order=True,
                         )
-                    _safe_reply(reply_token, reply_msgs, event_id)
+                    _safe_reply(reply_token, reply_msgs, stats)
                     if (
                         not res.already_confirmed
                         and st.notify_owner_on_order
@@ -542,18 +608,21 @@ def create_app(
                     _safe_reply(
                         reply_token,
                         [text_message(res.error or "ไม่สามารถยืนยันออเดอร์ได้ค่ะ")],
-                        event_id,
+                        stats,
                     )
             elif action == "cancel" and card_id:
-                cancelled = shop_db.cancel_active_card(user_id, card_id)
+                cancelled = shop_db.cancel_card_and_clear_items(user_id, card_id)
                 msg = (
                     "ยกเลิกสรุปออเดอร์นี้แล้วค่ะ พิมพ์สั่งใหม่ได้เลยนะคะ"
                     if cancelled
                     else "การ์ดนี้ถูกยกเลิกหรือยืนยันไปแล้วค่ะ"
                 )
                 if cancelled:
-                    shop_db.append_conversation_event(user_id, "[ลูกค้ากดปุ่มยกเลิกการ์ดออเดอร์]", msg)
-                _safe_reply(reply_token, [text_message(msg)], event_id)
+                    shop_db.append_conversation_event(
+                        user_id, "[ลูกค้ากดปุ่มยกเลิกการ์ดออเดอร์ ตะกร้าว่างแล้ว]", msg
+                    )
+                if not _safe_reply(reply_token, [text_message(msg)], stats) and cancelled:
+                    _reply_not_delivered(user_id, None, msg)  # the cart is still cleared
             return
 
         if ev_type != "message":
@@ -566,16 +635,18 @@ def create_app(
 
         # Owner LINE text commands (always active, even when bot_enabled=0)
         if cfg.owner_line_user_id and user_id == cfg.owner_line_user_id:
+            stats.reason = "owner"
             if msg_type == "text":
                 reply_text = handle_owner_text(
                     shop_db, loaded_menu, cfg, str(message.get("text") or "")
                 )
-                _safe_reply(reply_token, [text_message(reply_text)], event_id)
+                _safe_reply(reply_token, [text_message(reply_text)], stats)
             return
 
         # Global bot pause stops all automated customer replies (text, image, location)
         st = shop_db.get_shop_status(loaded_menu)
         if not st.bot_enabled:
+            stats.reason = "bot_disabled"
             return
 
         # Ignore stickers and video silently
@@ -585,12 +656,14 @@ def create_app(
         # Voice: ask the customer to type (no LLM), silent while the bot is quiet
         if msg_type == "audio":
             turn = handle_audio_message(shop_db, user_id)
+            stats.reason = turn.reason
             if turn.reply_text:
-                _safe_reply(reply_token, [text_message(turn.reply_text)], event_id)
+                _safe_reply(reply_token, [text_message(turn.reply_text)], stats)
             return
 
         # Image: slip intake (SlipOK + slip match), otherwise reply once + hand over
         if msg_type == "image":
+            stats.reason = "image"
             try:
                 slip_turn = handle_image(
                     shop_db,
@@ -612,7 +685,7 @@ def create_app(
                     new_card_reason=fallback.new_card_reason,
                     new_card_detail=fallback.new_card_detail,
                 )
-            _safe_reply(reply_token, [text_message(t) for t in slip_turn.texts], event_id)
+            _safe_reply(reply_token, [text_message(t) for t in slip_turn.texts], stats)
             _after_turn(user_id, slip_turn)
             if slip_turn.confirmed_order is not None:
                 _alert_owner_new_order(slip_turn.confirmed_order)
@@ -624,14 +697,14 @@ def create_app(
             lng = float(message.get("longitude", 0.0))
             addr = str(message.get("address") or message.get("title") or "")
             turn = handle_location_message(shop_db, loaded_menu, user_id, addr, lat, lng)
+            stats.reason = turn.reason
             out: list[dict[str, Any]] = []
             if turn.reply_text:
                 out.append(text_message(turn.reply_text))
             if turn.flex_card:
                 out.append(turn.flex_card)
-            if not _safe_reply(reply_token, out, event_id) and turn.card_id:
-                # The customer never got the order card: don't leave it confirmable by a slip
-                shop_db.cancel_active_card(user_id, turn.card_id)
+            if not _safe_reply(reply_token, out, stats):
+                _reply_not_delivered(user_id, turn.card_id, turn.reply_text)
             return
 
         # Customer text message -> LLM ordering agent
@@ -647,7 +720,10 @@ def create_app(
                 llm_client=llm,
                 settings=cfg,
                 started_at=started_at,
+                stats=stats,
             )
+            stats.card_id = None  # handed back: the reply path below owns the card now
+            stats.reason = turn.reason
             out_msgs: list[dict[str, Any]] = []
             if turn.menu_text:
                 out_msgs.append(text_message(turn.menu_text))
@@ -657,13 +733,14 @@ def create_app(
                 out_msgs.append(turn.flex_card)
             if turn.image_url:
                 out_msgs.append(image_message(turn.image_url))
-            if not _safe_reply(reply_token, out_msgs, event_id) and turn.card_id:
-                # The customer never got the order card: don't leave it confirmable by a slip
-                shop_db.cancel_active_card(user_id, turn.card_id)
+            if not _safe_reply(reply_token, out_msgs, stats):
+                _reply_not_delivered(user_id, turn.card_id, turn.reply_text)
             _after_turn(user_id, turn)
 
     @app.post("/line/webhook")
     async def line_webhook(request: Request) -> dict[str, bool]:
+        # Deadlines count from receipt: earlier events and lock waits use up the reply window
+        started_at = time.monotonic()
         if not cfg.line_channel_secret:
             raise HTTPException(status_code=503, detail="LINE_CHANNEL_SECRET is not configured")
         body = await request.body()
@@ -682,26 +759,50 @@ def create_app(
         for event in events:
             if not isinstance(event, dict):
                 continue
-            raw_eid = event.get("webhookEventId")
-            event_id = str(raw_eid) if isinstance(raw_eid, str) and raw_eid else ""
-            if event_id:
-                is_new = await run_in_threadpool(shop_db.record_line_event, event_id)
-                if not is_new:
+            stats = TurnStats()
+            lock_wait_ms = 0
+            try:
+                raw_eid = event.get("webhookEventId")
+                event_id = str(raw_eid) if isinstance(raw_eid, str) and raw_eid else ""
+                if event_id:
+                    is_new = await run_in_threadpool(shop_db.record_line_event, event_id)
+                    if not is_new:
+                        stats.reason = "duplicate"
+                        continue
+                source = event.get("source")
+                user_id = str(source.get("userId") or "") if isinstance(source, dict) else ""
+                if not user_id:
+                    stats.reason = "no_user"
                     continue
-            source = event.get("source")
-            user_id = str(source.get("userId") or "") if isinstance(source, dict) else ""
-            if not user_id:
-                continue
-            started_at = time.monotonic()
-            async with _lock_for(user_id):
-                try:
-                    await run_in_threadpool(_process_event_sync, event, started_at, event_id)
-                except Exception as exc:
-                    log.warning(
-                        "Webhook event %s failed: %s",
-                        event_id or "no-id",
-                        type(exc).__name__,
-                    )
+                t_lock = time.monotonic()
+                async with _lock_for(user_id):
+                    lock_wait_ms = round((time.monotonic() - t_lock) * 1000)
+                    try:
+                        await run_in_threadpool(_process_event_sync, event, started_at, stats)
+                    except Exception as exc:
+                        stats.reason = "exception"
+                        flush_llm_call(stats, type(exc).__name__)
+                        if stats.card_id:  # the turn crashed after saving a card: unsent
+                            await run_in_threadpool(
+                                shop_db.cancel_active_card, user_id, stats.card_id
+                            )
+                        log.warning(
+                            "Webhook event failed turn_id=%s: %s",
+                            stats.turn_id,
+                            type(exc).__name__,
+                        )
+            finally:
+                log.info(
+                    "webhook_event turn_id=%s event_type=%s reason=%s llm_calls=%d "
+                    "lock_wait_ms=%d total_ms=%d reply_ok=%s",
+                    stats.turn_id,
+                    _event_label(event),
+                    stats.reason,
+                    stats.llm_calls,
+                    lock_wait_ms,
+                    round((time.monotonic() - started_at) * 1000),
+                    "-" if stats.reply_ok is None else str(stats.reply_ok).lower(),
+                )
 
         return {"ok": True}
 

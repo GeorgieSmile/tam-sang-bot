@@ -57,3 +57,23 @@ def test_demo_seeds_board_and_runs_customer_flows(tmp_path: Path) -> None:
     state = client.get(f"/api/kitchen/state?key={demo.KITCHEN_KEY}").json()
     demo_card = next(c for c in state["inbox"] if c["line_user_id"] == demo.DEMO_USER)
     assert demo_card["reasons"] == ["slip_duplicate"]
+
+
+def test_demo_cancel_then_scripted_order_shows_only_the_new_item(tmp_path: Path) -> None:
+    db, log = tmp_path / "demo.db", tmp_path / "line.log"
+    client = TestClient(demo.build_app(db, log))
+    assert "ยกเลิกสรุปออเดอร์นี้แล้วค่ะ" in _send(client, log, db, demo.DEMO_USER, "cancel")
+    order = json.dumps(
+        [
+            ["update_cart", {"action": "add", "items": [{"dish_id": "water", "qty": 1}]}],
+            ["build_order_card", {}],
+        ]
+    )
+    sent = [
+        json.loads(ln)
+        for ln in _send(client, log, db, demo.DEMO_USER, "text", f"!tools {order}").splitlines()
+    ]
+    msgs = sent[-1]["messages"]
+    assert msgs[0] == {"type": "text", "text": "[demo LLM] ทำแล้ว"}
+    card = json.dumps(msgs[1], ensure_ascii=False)
+    assert "น้ำเปล่า" in card and "กะเพรา" not in card

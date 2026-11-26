@@ -10,6 +10,7 @@ import json
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -810,4 +811,90 @@ def test_slip_confirmation_is_in_the_next_llm_call(tmp_path: Path) -> None:
         {"role": "assistant", "content": "\n\n".join(texts)},
         {"role": "user", "content": "ขอบคุณ"},
     ]
-    assert calls[0]["messages"][1]["content"].endswith("| ยอดค้างชำระ=0 บาท")
+    assert calls[0]["messages"][1]["content"].endswith("| ยอดค้างชำระ=0 บาท | ที่อยู่เดิม=ไม่มี")
+
+
+def test_pause_during_the_check_pays_nothing_and_says_nothing(tmp_path: Path) -> None:
+    """Agent polish Ticket 1: the bot paused while SlipOK checked the slip."""
+    h = Harness(tmp_path)
+    o1 = h.place("U_A", CART_60)
+    card_id = h.stage("U_A", CART_70)
+    _check_with(
+        h,
+        lambda: h.db.set_bot_enabled(False),
+        SlipCheck(ok=True, amount_satang=13000, transfer_at=T0, trans_ref="REFPAUSE"),
+    )
+    assert h.send_image("U_A", slip_png("REFPAUSE")) == []
+    assert h.line.replies == [] and h.line.pushes == []
+    assert h.payment(o1.id) == "unpaid"
+    assert h.db.get_or_create_conversation("U_A").active_card_id == card_id  # not confirmed
+    assert [o.id for o in h.db.get_customer_orders_today("U_A")] == [o1.id]
+    assert h.client.get(f"/api/kitchen/state{KEY}").json()["inbox"] == []
+    check = h.db.get_slip_check("REFPAUSE")
+    assert check is not None
+    assert (check["result"], check["amount_satang"]) == ("slip_unchecked", 13000)
+    assert check["transfer_at"] == T0.isoformat(timespec="seconds")
+
+
+def test_pause_during_the_quota_lookup_sends_nothing(tmp_path: Path) -> None:
+    """Review fix: every slip reply path re-checks the pause, not only after SlipOK."""
+    h = Harness(tmp_path)
+    h.place("U_A", CART_60)
+
+    def quota_pausing() -> int | None:
+        h.db.set_bot_enabled(False)
+        return 0
+
+    h.slipok.quota = quota_pausing  # type: ignore[method-assign]
+    assert h.send_image("U_A", slip_png("REFQUOTA")) == []
+    assert h.line.replies == [] and h.line.pushes == []
+    assert h.client.get(f"/api/kitchen/state{KEY}").json()["inbox"] == []
+    assert h.db.get_slip_check("REFQUOTA")["result"] == "slip_unchecked"  # type: ignore[index]
+
+
+def test_pause_during_a_slow_quota_lookup_skips_the_paid_check(tmp_path: Path) -> None:
+    """Fresh review: no paid SlipOK call after the bot was paused during the quota lookup."""
+    h = Harness(tmp_path)
+    h.place("U_A", CART_60)
+
+    def quota_pausing() -> int | None:
+        h.db.set_bot_enabled(False)
+        return 50  # quota left: only the pause stops the check
+
+    h.slipok.quota = quota_pausing  # type: ignore[method-assign]
+    assert h.send_image("U_A", slip_png("REFSLOW")) == []
+    assert h.slipok.calls == []  # SlipOK was never called
+    assert h.line.replies == []
+    assert h.db.get_slip_check("REFSLOW")["result"] == "slip_unchecked"  # type: ignore[index]
+
+
+@pytest.mark.parametrize("case", ["pause", "deadline"])
+def test_pause_or_deadline_during_the_snapshot_skips_the_paid_check(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, case: str
+) -> None:
+    """Fix review: the last pause/deadline checks sit right before the paid SlipOK call."""
+    import app.slip_intake as slip_mod
+
+    h = Harness(tmp_path)
+    h.place("U_A", CART_60)
+    real_snapshot = h.db.slip_snapshot
+    real_monotonic = time.monotonic
+    late = {"on": False}
+
+    def snapshot(uid: str) -> Any:
+        if case == "pause":
+            h.db.set_bot_enabled(False)
+        else:
+            late["on"] = True  # the SQLite snapshot waited past the start deadline
+        return real_snapshot(uid)
+
+    h.db.slip_snapshot = snapshot  # type: ignore[method-assign,assignment]
+    monkeypatch.setattr(
+        slip_mod,
+        "time",
+        SimpleNamespace(monotonic=lambda: real_monotonic() + (99 if late["on"] else 0)),
+    )
+    h.send_image("U_A", slip_png("REFSNAP"))
+    assert h.slipok.calls == []  # SlipOK was never called
+    assert h.db.get_slip_check("REFSNAP")["result"] == "slip_unchecked"  # type: ignore[index]
+    assert (h.line.replies == []) is (case == "pause")  # a late slip still hands over

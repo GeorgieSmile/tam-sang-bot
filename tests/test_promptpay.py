@@ -359,7 +359,7 @@ def test_payment_lookup_never_sends_a_stale_qr_and_live_state_has_balance(tmp_pa
             "message": {"id": "m2", "type": "text", "text": "จ่ายแล้วนะ"},
         },
     )
-    assert llm.calls[-1]["messages"][1]["content"].endswith("| ยอดค้างชำระ=0 บาท")
+    assert llm.calls[-1]["messages"][1]["content"].endswith("| ยอดค้างชำระ=0 บาท | ที่อยู่เดิม=ไม่มี")
 
 
 def test_qr_is_dropped_when_a_later_tool_clears_the_balance(tmp_path: Path) -> None:
@@ -469,7 +469,7 @@ def test_cash_customer_gets_no_qr_until_they_ask_for_one(tmp_path: Path) -> None
     ]
     _say(client, "U_A", "ค้างเท่าไหร่", 2)
     assert llm.calls[-2]["messages"][1]["content"].endswith(
-        "| ยอดค้างชำระ=120 บาท | วิธีจ่าย=เงินสด (ไม่ต้องส่ง QR)"
+        "| ยอดค้างชำระ=120 บาท | ที่อยู่เดิม=ไม่มี | วิธีจ่าย=เงินสด (ไม่ต้องส่ง QR)"
     )
     info = json.loads(llm.calls[-1]["messages"][-1]["content"])
     assert (info["unpaid_balance"], info["qr_sent"]) == (120, False)

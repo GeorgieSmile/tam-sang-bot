@@ -15,6 +15,8 @@ from zoneinfo import ZoneInfo
 from fastapi.testclient import TestClient
 
 from app.agent import (
+    BAD_ARGS_ERROR,
+    CARD_AFTER_FAILED_EDIT,
     ERROR_REPLY,
     HANDOVER_REPLY,
     IMAGE_HANDOVER_REPLY,
@@ -41,7 +43,7 @@ LIVE_STATE = (
     "สถานะระบบล่าสุดตอนนี้ (ยึดข้อมูลนี้เหนือข้อความเก่าในแชท): "
     "ร้าน=เปิดรับออเดอร์ | สั่ง 1 กล่องตอนนี้รอประมาณ 10–15 นาที "
     "| ของหมดตอนนี้=ไม่มี (ทุกเมนูและวัตถุดิบพร้อมขาย) "
-    "| ตะกร้าปัจจุบัน=ว่าง (0 รายการ) | ยอดค้างชำระ=0 บาท"
+    "| ตะกร้าปัจจุบัน=ว่าง (0 รายการ) | ยอดค้างชำระ=0 บาท | ที่อยู่เดิม=ไม่มี"
 )
 
 
@@ -779,7 +781,9 @@ def test_owner_payment_and_quiet_pin_reach_the_next_llm_call(tmp_path: Path) -> 
     h.llm.responses.append(_resp(content="ได้ค่ะ"))
     h.text("U_A", "ขอบคุณค่ะ")
     sent = h.llm.calls[-1]["messages"]
-    assert sent[1]["content"].endswith("| ยอดค้างชำระ=0 บาท")  # the picker's payment
+    assert sent[1]["content"].endswith(  # the picker's payment (+ the quiet pin, polish §3.5)
+        "| ยอดค้างชำระ=0 บาท | ที่อยู่เดิม=ไม่มี | วิธีรับ=ส่ง (มีที่อยู่+พิกัดแล้ว)"
+    )
     assert sent[-2:] == [
         {"role": "user", "content": "[ลูกค้าส่งพิกัดจัดส่ง: 45/2 หมู่ 3]"},
         {"role": "user", "content": "ขอบคุณค่ะ"},
@@ -874,3 +878,669 @@ def test_resume_note_never_clears_a_takeover_started_meanwhile(tmp_path: Path) -
     h.db.open_handover("U_A", "owner_takeover", "#1")  # the owner taps คุยเอง meanwhile
     assert h.db.consume_resume_note(stale) is False
     assert h.db.is_handed_over(h.db.get_or_create_conversation("U_A")) is True
+
+
+# --- Agent polish Ticket 1 (docs/specs/2026-11-26-agent-polish.md §4) ---
+
+KAPHRAO = {"dish_id": "kaphrao", "qty": 1, "option_ids": ["crispy_pork"]}
+WATER = {"dish_id": "water", "qty": 1, "option_ids": []}
+BUILD_PICKUP_CARD = [
+    _tool_call("c1", "update_cart", {"action": "add", "items": [KAPHRAO]}),
+    _tool_call("c2", "set_fulfillment", {"fulfillment": "pickup"}),
+    _tool_call("c3", "build_order_card", {}),
+]
+
+
+def _raw_call(call_id: str, name: str, arguments: str) -> Any:
+    return SimpleNamespace(id=call_id, function=SimpleNamespace(name=name, arguments=arguments))
+
+
+def _tool_result(call: dict[str, Any], call_id: str) -> dict[str, Any]:
+    msg = next(m for m in reversed(call["messages"]) if m.get("tool_call_id") == call_id)
+    result: dict[str, Any] = json.loads(msg["content"])
+    return result
+
+
+def test_llm_response_without_a_message_cancels_the_card_built_earlier(tmp_path: Path) -> None:
+    for i, broken in enumerate(
+        [SimpleNamespace(choices=[]), SimpleNamespace(choices=[SimpleNamespace(message=None)])]
+    ):
+        h = Harness(tmp_path / str(i))
+        h.llm.responses += [_resp(tool_calls=BUILD_PICKUP_CARD), broken]
+        h.text("U_A", "กะเพราหมูกรอบ 1 รับเอง")
+        assert h.line.replies == [("rt-1", [{"type": "text", "text": ERROR_REPLY}])]
+        conv = h.db.get_or_create_conversation("U_A")
+        assert conv.active_card_id is None
+        assert conv.messages[-1] == {"role": "assistant", "content": ERROR_REPLY}
+
+
+def test_malformed_hand_over_arguments_never_hand_over(tmp_path: Path) -> None:
+    h = Harness(tmp_path)
+    h.llm.responses += [
+        _resp(tool_calls=[_raw_call("h1", "hand_over", "{bad")]),
+        _resp(content="ขอโทษค่ะ ช่วยพิมพ์อีกครั้งได้ไหมคะ"),
+    ]
+    h.text("U_A", "แพ้ถั่วไหมคะ")
+    assert _tool_result(h.llm.calls[1], "h1") == {"ok": False, "error": BAD_ARGS_ERROR}
+    assert h.cards("U_A") == []
+    assert h.until("U_A") is None
+    assert h.line.replies[-1][1] == [{"type": "text", "text": "ขอโทษค่ะ ช่วยพิมพ์อีกครั้งได้ไหมคะ"}]
+
+
+def test_card_edited_after_it_was_built_in_the_same_turn_is_never_sent(tmp_path: Path) -> None:
+    edits = [
+        _tool_call("e1", "update_cart", {"action": "add", "items": [WATER]}),
+        _tool_call("e1", "set_fulfillment", {"fulfillment": "delivery", "address": "บ้าน 1"}),
+    ]
+    for i, edit in enumerate(edits):
+        h = Harness(tmp_path / str(i))
+        h.llm.responses += [
+            _resp(tool_calls=BUILD_PICKUP_CARD),
+            _resp(tool_calls=[edit]),
+            _resp(content="แก้ไขแล้วค่ะ"),
+        ]
+        h.text("U_A", "กะเพราหมูกรอบ 1 รับเอง")
+        assert _tool_result(h.llm.calls[2], "e1")["ok"] is True
+        sent = h.line.replies[-1][1]
+        assert sent == [{"type": "text", "text": "แก้ไขแล้วค่ะ"}]  # no stale Flex card
+        assert h.db.get_or_create_conversation("U_A").active_card_id is None
+
+
+def test_update_cart_checks_the_whole_cart_before_saving(tmp_path: Path) -> None:
+    h = Harness(tmp_path)
+    conv = h.db.get_or_create_conversation("U_A")
+    h.db.save_draft(conv.id, {"items": [KAPHRAO], "fulfillment": "pickup"})
+    snap, _ = build_card_snapshot_for_conv(h.db, h.db.get_or_create_conversation("U_A"), h.menu)
+    assert snap is not None
+    h.db.set_override("dish", "kaphrao", False)  # sold out after it was added
+    add_water = _tool_call("u1", "update_cart", {"action": "add", "items": [WATER]})
+    h.llm.responses += [_resp(tool_calls=[add_water]), _resp(content="ข้าวกะเพราหมดแล้วค่ะ")]
+    h.text("U_A", "เอาน้ำเปล่าด้วย")
+    assert _tool_result(h.llm.calls[1], "u1") == {"ok": False, "error": "ข้าวกะเพรา หมดแล้วค่ะ"}
+    after = h.db.get_or_create_conversation("U_A")
+    assert after.draft["items"] == [KAPHRAO]  # no duplicate or extra line
+    assert after.active_card_id == snap["card_id"]
+    assert after.draft_revision == conv.draft_revision + 1  # only the setup save
+
+    # 20 lines is the maximum: a 21st line is refused and nothing is saved
+    h.db.set_override("dish", "kaphrao", True)
+    h.db.save_draft(after.id, {"items": [WATER] * 20, "fulfillment": "pickup"})
+    h.llm.responses += [_resp(tool_calls=[add_water]), _resp(content="สั่งได้ไม่เกิน 20 รายการค่ะ")]
+    h.text("U_A", "เอาน้ำเปล่าอีกขวด")
+    assert _tool_result(h.llm.calls[3], "u1") == {
+        "ok": False,
+        "error": "สั่งได้ไม่เกิน 20 รายการต่อออเดอร์ค่ะ",
+    }
+    assert len(h.db.get_or_create_conversation("U_A").draft["items"]) == 20
+
+
+def test_cancel_tap_clears_the_items_and_keeps_delivery_details(tmp_path: Path) -> None:
+    h = Harness(tmp_path)
+    conv = h.db.get_or_create_conversation("U_A")
+    pin = "https://maps.google.com/?q=13.7,100.5"
+    h.db.save_draft(
+        conv.id,
+        {"items": [KAPHRAO], "fulfillment": "delivery", "address": "บ้าน 99", "location_url": pin},
+    )
+    old, _ = build_card_snapshot_for_conv(h.db, h.db.get_or_create_conversation("U_A"), h.menu)
+    assert old is not None
+    rev = h.db.get_or_create_conversation("U_A").draft_revision
+    h.postback("U_A", f"action=cancel&card_id={old['card_id']}")
+    after = h.db.get_or_create_conversation("U_A")
+    assert after.active_card_id is None
+    assert after.draft == {
+        "items": [],
+        "fulfillment": "delivery",
+        "address": "บ้าน 99",
+        "location_url": pin,
+    }
+    assert after.draft_revision == rev + 1
+    assert h.line.replies[-1][1][0]["text"] == "ยกเลิกสรุปออเดอร์นี้แล้วค่ะ พิมพ์สั่งใหม่ได้เลยนะคะ"
+
+    # A stale Cancel tap leaves the newer draft and card alone
+    h.db.save_draft(after.id, {**after.draft, "items": [WATER]})
+    new, _ = build_card_snapshot_for_conv(h.db, h.db.get_or_create_conversation("U_A"), h.menu)
+    assert new is not None
+    before = h.db.get_or_create_conversation("U_A")
+    h.postback("U_A", f"action=cancel&card_id={old['card_id']}")
+    stale = h.db.get_or_create_conversation("U_A")
+    assert (stale.active_card_id, stale.draft, stale.draft_revision) == (
+        new["card_id"],
+        before.draft,
+        before.draft_revision,
+    )
+    assert h.line.replies[-1][1][0]["text"] == "การ์ดนี้ถูกยกเลิกหรือยืนยันไปแล้วค่ะ"
+
+
+def test_undelivered_text_or_location_card_keeps_the_items(tmp_path: Path) -> None:
+    def broken_reply(reply_token: str, messages: list[dict[str, Any]]) -> None:
+        raise ConnectionError("LINE down")
+
+    h = Harness(tmp_path / "text")
+    h.llm.responses += [_resp(tool_calls=BUILD_PICKUP_CARD), _resp(content="กดยืนยันได้เลยค่ะ")]
+    h.line.reply_messages = broken_reply  # type: ignore[method-assign]
+    h.text("U_A", "กะเพราหมูกรอบ 1 รับเอง")
+    conv = h.db.get_or_create_conversation("U_A")
+    assert conv.active_card_id is None
+    assert conv.draft["items"] == [{**KAPHRAO, "note": ""}]
+
+    h = Harness(tmp_path / "location")
+    _draft_ready(h, "U_A")
+    h.line.reply_messages = broken_reply  # type: ignore[method-assign]
+    h.send("U_A", {"type": "location", "address": "บ้าน 9", "latitude": 13.7, "longitude": 100.5})
+    conv = h.db.get_or_create_conversation("U_A")
+    assert conv.active_card_id is None
+    assert conv.draft["items"] == [{"dish_id": "kaphrao", "qty": 1, "option_ids": ["chicken"]}]
+
+
+def test_resume_note_stays_owed_when_the_first_llm_call_fails(tmp_path: Path) -> None:
+    h = Harness(tmp_path)
+    h.off_menu_hand_over("U_A")
+    h.clock.now = T0 + timedelta(minutes=20)  # quiet is over, the note is owed
+
+    def failing(**kwargs: Any) -> Any:
+        h.llm.calls.append(kwargs)
+        raise TimeoutError("LLM timed out")
+
+    h.llm.chat = SimpleNamespace(completions=SimpleNamespace(create=failing))
+    h.text("U_A", "ข้อความแรก")
+    assert {"role": "system", "content": RESUME_NOTE} in h.llm.calls[-1]["messages"]
+    assert h.line.replies[-1][1] == [{"type": "text", "text": ERROR_REPLY}]
+
+    h.llm.chat = SimpleNamespace(completions=SimpleNamespace(create=h.llm._create))
+    h.llm.responses += [_resp(content="รับอะไรดีคะ"), _resp(content="ได้ค่ะ")]
+    h.text("U_A", "ข้อความสอง")
+    assert {"role": "system", "content": RESUME_NOTE} in h.llm.calls[-1]["messages"]
+    h.text("U_A", "ข้อความสาม")  # given once, after the call that succeeded
+    assert {"role": "system", "content": RESUME_NOTE} not in h.llm.calls[-1]["messages"]
+
+
+def test_hand_over_in_a_batch_runs_none_of_the_other_tools(tmp_path: Path) -> None:
+    # [cancel_order, hand_over(edit_confirmed)]: the queued order is not cancelled
+    h = Harness(tmp_path / "cancel")
+    _draft_ready(h, "U_A")
+    snap, _ = build_card_snapshot_for_conv(h.db, h.db.get_or_create_conversation("U_A"), h.menu)
+    assert snap is not None
+    order = h.db.confirm_card("U_A", snap["card_id"], h.menu).order
+    assert order is not None
+    h.llm.responses.append(
+        _resp(
+            tool_calls=[
+                _tool_call("t1", "cancel_order", {"order_id": order.id}),
+                _tool_call("t2", "hand_over", {"reason": "edit_confirmed", "queue_number": 1}),
+            ]
+        )
+    )
+    h.text("U_A", "ขอแก้ #1 เป็นไก่")
+    assert h.db.get_order(order.id).status == "queued"  # type: ignore[union-attr]
+    assert h.line.replies[-1][1] == [{"type": "text", "text": HANDOVER_REPLY}]
+    assert h.cards("U_A")[0]["reasons"] == ["edit_confirmed"]
+
+    # [update_cart, hand_over(off_menu)]: the draft is not changed
+    h = Harness(tmp_path / "cart")
+    h.llm.responses.append(
+        _resp(
+            tool_calls=[
+                _tool_call("t1", "update_cart", {"action": "add", "items": [KAPHRAO]}),
+                _tool_call("t2", "hand_over", {"reason": "off_menu"}),
+            ]
+        )
+    )
+    h.text("U_A", "กะเพราหมูกรอบ แพ้ถั่วด้วยค่ะ")
+    conv = h.db.get_or_create_conversation("U_A")
+    assert conv.draft == {} and conv.draft_revision == 0
+    assert h.line.replies[-1][1] == [{"type": "text", "text": HANDOVER_REPLY}]
+    assert h.cards("U_A")[0]["reasons"] == ["off_menu"]
+
+
+def test_paid_cancel_request_stops_the_rest_of_the_batch(tmp_path: Path) -> None:
+    h = Harness(tmp_path)
+    _draft_ready(h, "U_A")
+    snap, _ = build_card_snapshot_for_conv(h.db, h.db.get_or_create_conversation("U_A"), h.menu)
+    assert snap is not None
+    order = h.db.confirm_card("U_A", snap["card_id"], h.menu).order
+    assert order is not None
+    h.db.set_payment_status(order.id, "transfer_manual")
+    h.llm.responses.append(
+        _resp(
+            tool_calls=[
+                _tool_call("t1", "cancel_order", {"order_id": order.id}),
+                _tool_call("t2", "update_cart", {"action": "add", "items": [KAPHRAO]}),
+            ]
+        )
+    )
+    h.text("U_A", "ยกเลิก #1 แล้วสั่งกะเพราแทน")
+    assert not h.db.get_or_create_conversation("U_A").draft.get("items")  # update_cart never ran
+    assert h.line.replies[-1][1] == [{"type": "text", "text": HANDOVER_REPLY}]
+    assert h.cards("U_A")[0]["reasons"] == ["paid_cancel_request"]
+
+
+def test_pause_during_the_llm_call_sends_nothing_and_cancels_the_card(tmp_path: Path) -> None:
+    h = Harness(tmp_path)
+    replies = iter([_resp(tool_calls=BUILD_PICKUP_CARD), _resp(content="กดยืนยันได้เลยค่ะ")])
+
+    def pause_on_second_call(**kwargs: Any) -> Any:
+        h.llm.calls.append(kwargs)
+        if len(h.llm.calls) == 2:
+            h.db.set_bot_enabled(False)  # the owner pauses the bot meanwhile
+        return next(replies)
+
+    h.llm.chat = SimpleNamespace(completions=SimpleNamespace(create=pause_on_second_call))
+    h.text("U_A", "กะเพราหมูกรอบ 1 รับเอง")
+    assert h.line.replies == []
+    conv = h.db.get_or_create_conversation("U_A")
+    assert conv.active_card_id is None
+    assert conv.messages == [{"role": "user", "content": "กะเพราหมูกรอบ 1 รับเอง"}]
+    assert h.state()["inbox"] == []
+
+
+def test_bold_markers_are_stripped_but_queue_numbers_kept(tmp_path: Path) -> None:
+    h = Harness(tmp_path)
+    h.llm.responses.append(_resp(content="สั่ง **กะเพราหมูกรอบ** คิว #3 ค่ะ"))
+    h.text("U_A", "สั่งอะไรไป")
+    assert h.line.replies[-1][1] == [{"type": "text", "text": "สั่ง กะเพราหมูกรอบ คิว #3 ค่ะ"}]
+    saved = h.db.get_or_create_conversation("U_A").messages[-1]
+    assert saved == {"role": "assistant", "content": "สั่ง กะเพราหมูกรอบ คิว #3 ค่ะ"}
+
+
+def test_broken_hand_over_calls_never_hand_over_or_block_the_batch(tmp_path: Path) -> None:
+    """Review fixes: empty args, an unknown reason, and a huge integer are all tool errors."""
+    for i, args in enumerate(["", '{"reason": "unsupported"}', '{"reason": 1' + "1" * 5000 + "}"]):
+        h = Harness(tmp_path / str(i))
+        h.llm.responses += [
+            _resp(
+                tool_calls=[
+                    _tool_call("t1", "update_cart", {"action": "add", "items": [KAPHRAO]}),
+                    _raw_call("t2", "hand_over", args),
+                ]
+            ),
+            _resp(content="เพิ่มกะเพราหมูกรอบแล้วค่ะ"),
+        ]
+        h.text("U_A", "กะเพราหมูกรอบ 1")
+        assert _tool_result(h.llm.calls[1], "t2")["ok"] is False
+        assert h.cards("U_A") == [] and h.until("U_A") is None
+        assert h.db.get_or_create_conversation("U_A").draft["items"] == [{**KAPHRAO, "note": ""}]
+        assert h.line.replies[-1][1] == [{"type": "text", "text": "เพิ่มกะเพราหมูกรอบแล้วค่ะ"}]
+
+
+def test_non_text_llm_content_after_a_card_does_not_crash_the_turn(tmp_path: Path) -> None:
+    h = Harness(tmp_path)
+    h.llm.responses += [
+        _resp(tool_calls=BUILD_PICKUP_CARD),
+        SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content=[{"x": 1}], tool_calls=None))]
+        ),
+    ]
+    h.text("U_A", "กะเพราหมูกรอบ 1 รับเอง")
+    sent = h.line.replies[-1][1]
+    assert [m["type"] for m in sent] == ["flex"]  # the card goes out, with no crash
+    assert h.db.get_or_create_conversation("U_A").active_card_id is not None
+
+
+def test_location_card_changed_while_rendering_is_not_sent(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    import app.agent as agent_mod
+
+    h = Harness(tmp_path)
+    _draft_ready(h, "U_A")
+    real = agent_mod.card_wait_line
+
+    def draft_write_meanwhile(db: ShopDB, menu: Any, snapshot: dict[str, Any]) -> str:
+        conv = db.get_or_create_conversation("U_A")
+        db.save_draft(conv.id, {**conv.draft, "items": [WATER]})  # e.g. a parallel write
+        return real(db, menu, snapshot)
+
+    monkeypatch.setattr(agent_mod, "card_wait_line", draft_write_meanwhile)
+    h.send("U_A", {"type": "location", "address": "บ้าน 9", "latitude": 13.7, "longitude": 100.5})
+    assert [m["type"] for m in h.line.replies[-1][1]] == ["text"]
+    assert h.db.get_or_create_conversation("U_A").active_card_id is None
+
+
+def test_turn_never_clears_a_newer_resume_note(tmp_path: Path) -> None:
+    """Review fix: a takeover started and resolved during the LLM call still owes its note."""
+    h = Harness(tmp_path)
+    h.off_menu_hand_over("U_A")
+    h.clock.now = T0 + timedelta(minutes=20)  # the first note is owed
+
+    def takeover_and_resolve(**kwargs: Any) -> Any:
+        h.llm.calls.append(kwargs)
+        h.db.open_handover("U_A", "owner_takeover", "#1")
+        h.clock.now += timedelta(minutes=1)
+        assert h.db.resolve_handover(h.cards("U_A")[0]["id"]) is True
+        return _resp(content="ได้ค่ะ")
+
+    h.llm.chat = SimpleNamespace(completions=SimpleNamespace(create=takeover_and_resolve))
+    h.text("U_A", "ข้อความแรก")
+    h.llm.chat = SimpleNamespace(completions=SimpleNamespace(create=h.llm._create))
+    h.llm.responses.append(_resp(content="รับอะไรดีคะ"))
+    h.text("U_A", "ข้อความสอง")
+    assert {"role": "system", "content": RESUME_NOTE} in h.llm.calls[-1]["messages"]
+
+
+def test_failed_reply_tells_the_next_llm_turn_the_customer_never_saw_it(tmp_path: Path) -> None:
+    """Ticket 1 review (I4): history must not claim a card reached the customer."""
+    from app.main import undelivered_note
+
+    note = undelivered_note("กดยืนยันได้เลยค่ะ")
+    assert note == '[ระบบ: ข้อความตอบกลับของบอท "กดยืนยันได้เลยค่ะ…" ส่งไม่ถึงลูกค้า ลูกค้าไม่เห็นข้อความและการ์ดนั้น]'
+    h = Harness(tmp_path)
+    h.llm.responses += [_resp(tool_calls=BUILD_PICKUP_CARD), _resp(content="กดยืนยันได้เลยค่ะ")]
+    real_reply = h.line.reply_messages
+
+    def broken_reply(reply_token: str, messages: list[dict[str, Any]]) -> None:
+        raise ConnectionError("LINE down")
+
+    h.line.reply_messages = broken_reply  # type: ignore[method-assign]
+    h.text("U_A", "กะเพราหมูกรอบ 1 รับเอง")
+    conv = h.db.get_or_create_conversation("U_A")
+    assert conv.active_card_id is None
+    assert conv.messages[-2:] == [
+        {"role": "assistant", "content": "กดยืนยันได้เลยค่ะ"},
+        {"role": "user", "content": note},
+    ]
+    h.line.reply_messages = real_reply  # type: ignore[method-assign]
+    h.llm.responses.append(_resp(content="ส่งการ์ดใหม่ให้นะคะ"))
+    h.text("U_A", "ไม่เห็นการ์ดเลยค่ะ")
+    assert h.llm.calls[-1]["messages"][-2:] == [
+        {"role": "user", "content": note},
+        {"role": "user", "content": "ไม่เห็นการ์ดเลยค่ะ"},
+    ]
+
+    # The location path records the same note
+    h2 = Harness(tmp_path / "loc")
+    _draft_ready(h2, "U_A")
+    h2.line.reply_messages = broken_reply  # type: ignore[method-assign]
+    h2.send("U_A", {"type": "location", "address": "บ้าน 9", "latitude": 13.7, "longitude": 100.5})
+    assert (
+        h2.db.get_or_create_conversation("U_A")
+        .messages[-1]["content"]
+        .startswith('[ระบบ: ข้อความตอบกลับของบอท "บันทึกพิกัดจัดส่ง (บ้าน 9)')
+    )
+
+
+def test_card_built_before_a_failed_edit_in_the_batch_is_not_sent(tmp_path: Path) -> None:
+    """Final re-review B1: [build, failing edits] must not send the old cart's card."""
+    h = Harness(tmp_path)
+    _draft_ready(h, "U_A")
+    h.llm.responses += [
+        _resp(
+            tool_calls=[
+                _tool_call("b1", "build_order_card", {}),
+                _tool_call(
+                    "u1", "update_cart", {"action": "add", "items": [{"dish_id": "nope", "qty": 1}]}
+                ),
+            ]
+        ),
+        _resp(content="ไม่มีเมนูนี้ค่ะ"),
+    ]
+    h.text("U_A", "เพิ่มเมนูลับด้วย")
+    assert h.line.replies[-1][1] == [{"type": "text", "text": "ไม่มีเมนูนี้ค่ะ"}]
+    assert h.db.get_or_create_conversation("U_A").active_card_id is None
+    assert _tool_result(h.llm.calls[1], "b1") == {"ok": False, "error": CARD_AFTER_FAILED_EDIT}
+
+
+def test_card_is_cancelled_when_the_turn_crashes_or_cannot_reply(tmp_path: Path) -> None:
+    """Final re-review B2: a card the customer never got never stays confirmable."""
+    from app.main import undelivered_note
+
+    # (a) a crash after the card was saved (here: the DB fails on the next status read)
+    h = Harness(tmp_path / "crash")
+    _draft_ready(h, "U_A")
+    real_status = h.db.get_shop_status
+    calls = iter([_resp(tool_calls=[_tool_call("b1", "build_order_card", {})])])
+
+    def create(**kwargs: Any) -> Any:
+        try:
+            return next(calls)
+        except StopIteration:
+            h.db.get_shop_status = boom  # type: ignore[method-assign]
+            return _resp(content="ตรวจสอบการ์ดได้เลยค่ะ")
+
+    def boom(menu: Any) -> Any:
+        raise RuntimeError("database is locked")
+
+    h.llm.chat = SimpleNamespace(completions=SimpleNamespace(create=create))
+    h.text("U_A", "สั่งเลย")
+    h.db.get_shop_status = real_status  # type: ignore[method-assign]
+    assert h.line.replies == []
+    assert h.db.get_or_create_conversation("U_A").active_card_id is None
+
+    # (b) no reply token: nothing can be sent, so the card is cancelled and history says so
+    h = Harness(tmp_path / "token")
+    _draft_ready(h, "U_A")
+    h.llm.responses += [
+        _resp(tool_calls=[_tool_call("b1", "build_order_card", {})]),
+        _resp(content="ตรวจสอบการ์ดได้เลยค่ะ"),
+    ]
+    h._post(
+        {
+            "webhookEventId": "evt-no-token",
+            "type": "message",
+            "source": {"type": "user", "userId": "U_A"},
+            "message": {"id": "m-x", "type": "text", "text": "สั่งเลย"},
+        }
+    )
+    conv = h.db.get_or_create_conversation("U_A")
+    assert h.line.replies == [] and conv.active_card_id is None
+    assert conv.messages[-1] == {"role": "user", "content": undelivered_note("ตรวจสอบการ์ดได้เลยค่ะ")}
+
+
+def test_malformed_tool_names_are_not_replayed_and_notes_hide_delivery_data(
+    tmp_path: Path,
+) -> None:
+    """Final re-review I1 + I3."""
+    h = Harness(tmp_path)
+    h.db.upsert_customer("U_A", last_address="บ้าน 45/2 ซอยลับ", update_address=True)
+    conv = h.db.get_or_create_conversation("U_A")
+    note = "ส่ง บ้าน 45/2 ซอยลับ https://maps.app/x"
+    h.db.save_draft(conv.id, {"items": [{**WATER, "note": note}], "fulfillment": "pickup"})
+    odd = SimpleNamespace(id="x1", function=SimpleNamespace(name=["x"], arguments=None))
+    h.llm.responses += [_resp(tool_calls=[odd]), _resp(content="ค่ะ")]
+    h.text("U_A", "โอเค")
+    replayed = next(m for m in h.llm.calls[1]["messages"] if m.get("tool_calls"))
+    assert replayed["tool_calls"][0]["function"] == {"name": "invalid", "arguments": "{}"}
+    live = h.llm.calls[0]["messages"][1]["content"]
+    assert "45/2" not in live and "maps" not in live
+    assert 'โน้ตลูกค้า "ส่ง … …"' in live
+
+
+def test_fix_verification_edge_cases(tmp_path: Path) -> None:
+    """Fix-verification pass: cross-batch card drop, non-string args, address masking."""
+    from app.agent import _cart_text
+
+    # B1: [build] then [failed edit, build] in one turn -> no card is sent or left active
+    h = Harness(tmp_path / "b1")
+    _draft_ready(h, "U_A")
+    bad_add = {"action": "add", "items": [{"dish_id": "nope", "qty": 1}]}
+    h.llm.responses += [
+        _resp(tool_calls=[_tool_call("b1", "build_order_card", {})]),
+        _resp(
+            tool_calls=[
+                _tool_call("u1", "update_cart", bad_add),
+                _tool_call("b2", "build_order_card", {}),
+            ]
+        ),
+        _resp(content="ไม่มีเมนูนี้ค่ะ"),
+    ]
+    h.text("U_A", "สั่งเลย แล้วเพิ่มเมนูลับ")
+    assert h.line.replies[-1][1] == [{"type": "text", "text": "ไม่มีเมนูนี้ค่ะ"}]
+    assert h.db.get_or_create_conversation("U_A").active_card_id is None
+
+    # I1: arguments that are not a JSON string never run the tool
+    h = Harness(tmp_path / "i1")
+    _draft_ready(h, "U_A")
+    odd = SimpleNamespace(id="x1", function=SimpleNamespace(name="build_order_card", arguments={}))
+    h.llm.responses += [_resp(tool_calls=[odd]), _resp(content="ค่ะ")]
+    h.text("U_A", "สั่งเลย")
+    assert [m["type"] for m in h.line.replies[-1][1]] == ["text"]
+    assert _tool_result(h.llm.calls[1], "x1") == {"ok": False, "error": BAD_ARGS_ERROR}
+
+    # I3: the longer address is masked first, and a link inside an address doesn't leak it
+    menu = load_menu(MENU_PATH)
+    items = [{"dish_id": "water", "qty": 1, "note": "ส่ง บ้าน 45/2 ซอยลับ นะ"}]
+    assert "45" not in _cart_text(menu, items, hide=("บ้าน 45", "บ้าน 45/2 ซอยลับ"))
+    linked = "บ้าน 9 https://maps.app/x"
+    text = _cart_text(
+        menu, [{"dish_id": "water", "qty": 1, "note": f"ส่ง {linked}"}], hide=(linked,)
+    )
+    assert "บ้าน 9" not in text and "maps" not in text
+
+
+def test_no_line_access_token_counts_as_not_delivered(tmp_path: Path) -> None:
+    """Fix-verification B2: with no access token the app replies through NoopLineClient,
+    which sends nothing, so the card is cancelled like any undelivered one."""
+    h = Harness(tmp_path)
+    _draft_ready(h, "U_A")
+    app = create_app(
+        settings=h.settings.__class__(**{**h.settings.__dict__, "line_channel_access_token": ""}),
+        db=h.db,
+        menu=h.menu,
+        llm_client=h.llm,
+    )
+    h.client = TestClient(app)
+    h.llm.responses += [
+        _resp(tool_calls=[_tool_call("b1", "build_order_card", {})]),
+        _resp(content="ตรวจสอบการ์ดได้เลยค่ะ"),
+    ]
+    h.text("U_A", "สั่งเลย")
+    assert h.db.get_or_create_conversation("U_A").active_card_id is None
+
+
+def test_balance_check_runs_before_the_reply_is_saved(tmp_path: Path) -> None:
+    """Fix-verification I4: a crash in the final QR check leaves no unsent reply in history."""
+    h = Harness(tmp_path)
+    h.settings = h.settings.__class__(
+        **{
+            **h.settings.__dict__,
+            "promptpay_id": "0812345678",
+            "public_base_url": "https://x.example",
+        }
+    )
+    h.client = TestClient(
+        create_app(settings=h.settings, db=h.db, menu=h.menu, line_client=h.line, llm_client=h.llm)
+    )
+    _draft_ready(h, "U_A")
+    snap, _ = build_card_snapshot_for_conv(h.db, h.db.get_or_create_conversation("U_A"), h.menu)
+    assert snap is not None and h.db.confirm_card("U_A", snap["card_id"], h.menu).ok
+    real = h.db.get_unpaid_balance
+    broken = {"on": False}
+
+    def flaky(uid: str) -> Any:
+        if broken["on"]:  # the final QR balance check, after the last LLM call
+            raise RuntimeError("database is locked")
+        return real(uid)
+
+    replies = iter(
+        [
+            _resp(tool_calls=[_tool_call("p1", "get_payment_info", {"send_qr": True})]),
+            _resp(content="ยอด 50 บาทค่ะ สแกน QR ได้เลย"),
+        ]
+    )
+
+    def create(**kwargs: Any) -> Any:
+        resp = next(replies)
+        broken["on"] = resp.choices[0].message.tool_calls is None
+        return resp
+
+    h.llm.chat = SimpleNamespace(completions=SimpleNamespace(create=create))
+    h.db.get_unpaid_balance = flaky  # type: ignore[method-assign,assignment]
+    h.text("U_A", "ขอ QR")
+    h.db.get_unpaid_balance = real  # type: ignore[method-assign]
+    assert h.line.replies == []
+    saved = h.db.get_or_create_conversation("U_A").messages
+    assert {"role": "assistant", "content": "ยอด 50 บาทค่ะ สแกน QR ได้เลย"} not in saved
+
+
+def test_fresh_review_batch_order_and_cleared_cards(tmp_path: Path) -> None:
+    """Fresh review: a build listed before its edits still shows the edited cart, and an
+    edit that cancels an earlier card tells the LLM so."""
+    from app.agent import CARD_CLEARED_NOTE
+
+    h = Harness(tmp_path / "order")
+    _draft_ready(h, "U_A")
+    h.llm.responses += [
+        _resp(
+            tool_calls=[
+                _tool_call("b1", "build_order_card", {}),
+                _tool_call("u1", "update_cart", {"action": "add", "items": [WATER]}),
+                _tool_call("f1", "set_fulfillment", {"fulfillment": "pickup"}),
+            ]
+        ),
+        _resp(content="ตรวจสอบการ์ดได้เลยค่ะ"),
+    ]
+    h.text("U_A", "เพิ่มน้ำเปล่า รับเอง")
+    sent = h.line.replies[-1][1]
+    assert [m["type"] for m in sent] == ["text", "flex"]
+    assert "น้ำเปล่า" in json.dumps(sent[1], ensure_ascii=False)  # the edited cart
+    assert [m["tool_call_id"] for m in h.llm.calls[1]["messages"][-3:]] == ["b1", "u1", "f1"]
+
+    h = Harness(tmp_path / "cleared")
+    _draft_ready(h, "U_A")
+    h.llm.responses += [
+        _resp(tool_calls=[_tool_call("b1", "build_order_card", {})]),
+        _resp(tool_calls=[_tool_call("u1", "update_cart", {"action": "add", "items": [WATER]})]),
+        _resp(content="เพิ่มน้ำเปล่าแล้วค่ะ"),
+    ]
+    h.text("U_A", "สั่งเลย แล้วเพิ่มน้ำด้วย")
+    assert _tool_result(h.llm.calls[2], "u1")["card_note"] == CARD_CLEARED_NOTE
+    assert [m["type"] for m in h.line.replies[-1][1]] == ["text"]
+
+
+def test_fresh_review_tool_entry_without_function_gets_the_error_reply(tmp_path: Path) -> None:
+    h = Harness(tmp_path)
+    h.llm.responses.append(_resp(tool_calls=[SimpleNamespace(id="x1", function=None)]))
+    h.text("U_A", "สั่งเลย")
+    assert h.line.replies[-1][1] == [{"type": "text", "text": ERROR_REPLY}]
+
+
+def test_fresh_review_failed_cancel_reply_is_marked_in_history(tmp_path: Path) -> None:
+    from app.main import undelivered_note
+
+    h = Harness(tmp_path)
+    _draft_ready(h, "U_A")
+    snap, _ = build_card_snapshot_for_conv(h.db, h.db.get_or_create_conversation("U_A"), h.menu)
+    assert snap is not None
+
+    def broken_reply(reply_token: str, messages: list[dict[str, Any]]) -> None:
+        raise ConnectionError("LINE down")
+
+    h.line.reply_messages = broken_reply  # type: ignore[method-assign]
+    h.postback("U_A", f"action=cancel&card_id={snap['card_id']}")
+    conv = h.db.get_or_create_conversation("U_A")
+    assert conv.draft["items"] == []  # the cart is still cleared
+    assert conv.messages[-1] == {
+        "role": "user",
+        "content": undelivered_note("ยกเลิกสรุปออเดอร์นี้แล้วค่ะ พิมพ์สั่งใหม่ได้เลยนะคะ"),
+    }
+
+
+def test_fix_review_resume_note_and_card_note_on_failed_fulfillment(tmp_path: Path) -> None:
+    from app.agent import CARD_CLEARED_NOTE
+
+    # A malformed first reply after a hand-over leaves the resume note owed
+    h = Harness(tmp_path / "resume")
+    h.off_menu_hand_over("U_A")
+    h.clock.now = T0 + timedelta(minutes=20)
+    h.llm.responses += [
+        _resp(tool_calls=[SimpleNamespace(id="x1", function=None)]),
+        _resp(content="รับอะไรดีคะ"),
+    ]
+    h.text("U_A", "ข้อความแรก")
+    assert h.line.replies[-1][1] == [{"type": "text", "text": ERROR_REPLY}]
+    h.text("U_A", "ข้อความสอง")
+    assert {"role": "system", "content": RESUME_NOTE} in h.llm.calls[-1]["messages"]
+
+    # Switching to delivery with no address clears the earlier card: the LLM is told
+    h = Harness(tmp_path / "ff")
+    _draft_ready(h, "U_A")
+    h.llm.responses += [
+        _resp(tool_calls=[_tool_call("b1", "build_order_card", {})]),
+        _resp(tool_calls=[_tool_call("f1", "set_fulfillment", {"fulfillment": "delivery"})]),
+        _resp(content="ขอที่อยู่จัดส่งด้วยค่ะ"),
+    ]
+    h.text("U_A", "สั่งเลย เปลี่ยนเป็นส่งนะ")
+    result = _tool_result(h.llm.calls[2], "f1")
+    assert result["ok"] is False and result["card_note"] == CARD_CLEARED_NOTE
+    assert [m["type"] for m in h.line.replies[-1][1]] == ["text"]
+    assert h.db.get_or_create_conversation("U_A").active_card_id is None

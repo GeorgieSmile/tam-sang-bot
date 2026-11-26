@@ -337,6 +337,7 @@ The owner tested on a real phone and approved these changes. They are already wr
     - **Rejected:** the stale QR between building and sending the Confirm reply. The window is milliseconds, and the owner can only mark orders that existed before the tap.
 15. **Deferred / dropped:** a slip problem still makes the bot quiet (deferred until real data shows how often it happens). Rechecking a never-verified slip on resend was dropped.
 16. **Later fix (2026-11-25):** the location-pin path also cancels its order card when the LINE reply fails (§3.2 item 10), found while drafting `CODING_STANDARDS.md`.
+17. **Cancel tap clears the cart (2026-11-26, owner-approved Option A):** tapping **ยกเลิก** on an order card also empties the draft's items and keeps fulfillment, address, pin and time; internal card cleanup still keeps the items (`docs/specs/2026-11-26-agent-polish.md` §3.2).
 
 ---
 

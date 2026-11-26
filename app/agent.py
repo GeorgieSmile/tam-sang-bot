@@ -7,7 +7,7 @@ import logging
 import re
 import time
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import openai
@@ -32,6 +32,10 @@ TURN_LIMIT_REPLY = "ตอนนี้ระบบส่งต่อให้เ
 LIMIT_REPLY = "ขอโทษค่ะ ลองพิมพ์ใหม่อีกครั้งนะคะ"
 VOICE_REPLY = "รบกวนพิมพ์เป็นข้อความนะคะ 🙏"
 ERROR_REPLY = "ขอโทษค่ะ ระบบขัดข้องชั่วคราว ลองส่งใหม่อีกครั้งนะคะ"
+# Tool result when the LLM's arguments are not a JSON object: the tool is not run
+BAD_ARGS_ERROR = "รูปแบบคำสั่งไม่ถูกต้อง กรุณาลองใหม่ค่ะ"
+CARD_CLEARED_NOTE = "การ์ดที่สร้างไว้ก่อนหน้าถูกยกเลิกแล้วเพราะตะกร้าเปลี่ยน ต้องเรียก build_order_card ใหม่"
+CARD_AFTER_FAILED_EDIT = "ยังไม่สร้างการ์ด เพราะคำสั่งแก้ตะกร้าหรือวิธีรับก่อนหน้านี้ไม่สำเร็จ แก้ให้ครบก่อนค่ะ"
 
 STATUS_TH = {
     "queued": "กำลังรอทำ",
@@ -229,6 +233,82 @@ class AgentTurn:
     card_id: str | None = None
 
 
+@dataclass
+class TurnStats:
+    """One webhook event's PII-free telemetry, filled in while it runs (SPEC polish §3.4)."""
+
+    turn_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
+    llm_calls: int = 0
+    reason: str = "ignored"
+    reply_ok: bool | None = None  # None: nothing was sent
+    # An LLM call that returned but is not logged yet: (model, latency_ms, response)
+    unlogged_call: tuple[str, int, Any] | None = None
+    # Order card saved this turn and not yet handed back: cancelled if the turn crashes
+    card_id: str | None = None
+
+
+_TOOL_NAMES = frozenset(t["function"]["name"] for t in TOOLS)
+
+
+def _tool_label(name: Any) -> str:
+    """Tool names come from the LLM: log only known ones."""
+    return name if isinstance(name, str) and name in _TOOL_NAMES else "unknown"
+
+
+# Provider-supplied finish reasons: anything else is logged as "other" (no free text in logs)
+_FINISH_REASONS = frozenset({"stop", "length", "tool_calls", "content_filter", "function_call"})
+
+
+def _ms_since(t: float) -> int:
+    return round((time.monotonic() - t) * 1000)
+
+
+def _known(value: Any, allowed: frozenset[str]) -> str:
+    if value is None:
+        return "-"
+    return value if isinstance(value, str) and value in allowed else "other"
+
+
+def _num(value: Any) -> int | str:
+    return value if isinstance(value, int) and not isinstance(value, bool) else "-"
+
+
+def log_llm_call(
+    stats: TurnStats,
+    model: str,
+    latency_ms: int,
+    resp: Any = None,
+    tools: str = "",
+    error: str = "",
+) -> None:
+    """One line per LLM call. Never logs message text, tool arguments or error bodies."""
+    stats.unlogged_call = None
+    usage = getattr(resp, "usage", None)
+    details = getattr(usage, "prompt_tokens_details", None)
+    choices = getattr(resp, "choices", None)
+    first = choices[0] if isinstance(choices, list) and choices else None
+    log.info(
+        "llm_call turn_id=%s model=%s latency_ms=%d prompt_tokens=%s cached_tokens=%s "
+        "completion_tokens=%s finish_reason=%s tools=%s error=%s",
+        stats.turn_id,
+        model,
+        latency_ms,
+        _num(getattr(usage, "prompt_tokens", None)),
+        _num(getattr(details, "cached_tokens", None)),
+        _num(getattr(usage, "completion_tokens", None)),
+        _known(getattr(first, "finish_reason", None), _FINISH_REASONS),
+        tools or "-",
+        error or "-",
+    )
+
+
+def flush_llm_call(stats: TurnStats, error: str) -> None:
+    """The turn crashed after an LLM call returned: still log that call, once."""
+    if stats.unlogged_call is not None:
+        model, latency_ms, resp = stats.unlogged_call
+        log_llm_call(stats, model, latency_ms, resp, error=error)
+
+
 def start_handover(
     db: ShopDB,
     line_user_id: str,
@@ -284,6 +364,9 @@ def _system_prompt(menu: Menu, overrides: dict[tuple[str, str], bool]) -> dict[s
         "'ส่งที่เดิมนะคะ ถ้าเปลี่ยนที่อยู่บอกได้เลยค่ะ' ห้ามพิมพ์ที่อยู่เต็ม (การ์ดแสดงที่อยู่ให้แล้ว) "
         "เวลาถามวิธีรับอาหารให้ใช้คำว่า 'ส่งที่เดิม' โดยไม่ต้องพิมพ์ที่อยู่\n"
         "6. เมื่อรายการและวิธีรับอาหารครบแล้ว ให้เรียก build_order_card เพื่อให้ระบบส่งการ์ดยืนยัน "
+        "ถ้าลูกค้าบอกจานพร้อมตัวเลือกที่จำเป็นครบและวิธีรับอาหาร (หรือให้ส่งโดยมีที่อยู่เดิม) มาในข้อความเดียว "
+        "ให้เรียก update_cart, set_fulfillment และ build_order_card พร้อมกันในการตอบครั้งเดียว "
+        "(ไม่ต้องรอผลของ update_cart ก่อนเรียก build_order_card และไม่ต้องเรียกทีละครั้ง) "
         "เมื่อ build_order_card สำเร็จ ระบบจะส่งการ์ดสรุปเต็มรูปแบบให้ลูกค้าเอง "
         "ให้ตอบข้อความสั้นเพียง 1 บรรทัด (เช่น 'ตรวจสอบรายการบนการ์ดแล้วกดยืนยันได้เลยนะคะ') "
         "ไม่ต้องทวนรายการอาหารหรือราคาซ้ำในข้อความ ห้ามอ้างว่าสั่งสำเร็จจนกว่าลูกค้าจะกดปุ่มยืนยันบนการ์ด "
@@ -362,6 +445,59 @@ def build_card_snapshot_for_conv(
     return snapshot, None
 
 
+NOTE_CHARS = 40  # notes are short requests ("ไม่ใส่ผัก"); the live state shows no more
+
+
+_URL_RE = re.compile(r"https?://\S+|maps\.\S+", re.IGNORECASE)
+
+
+def _cart_text(menu: Menu, items: list[Any], hide: tuple[str | None, ...] = ()) -> str:
+    """Draft lines for the live state, numbered like `remove_index`; never raises.
+
+    `hide`: delivery values (saved or draft address) masked if a note repeats them."""
+    if not items:
+        return "ว่าง (0 รายการ)"
+    lines: list[str] = []
+    for i, raw in enumerate(items):
+        line = raw if isinstance(raw, dict) else {}
+        dish_id = str(line.get("dish_id") or "?")
+        item = menu.items_by_id.get(dish_id)
+        names = {o.id: o.name_th for g in item.groups for o in g.options} if item else {}
+        raw_opts = line.get("option_ids")
+        opts = [names.get(str(o), str(o)) for o in raw_opts] if isinstance(raw_opts, list) else []
+        text = f"[{i}] {item.name_th if item else dish_id}"
+        if opts:
+            text += f" ({', '.join(opts)})"
+        note = str(line.get("note") or "")
+        # Longest first, so one address inside another can't leave part of it; links last
+        for secret in sorted({h.strip() for h in hide if h and h.strip()}, key=len, reverse=True):
+            note = note.replace(secret, "…")
+        note = _URL_RE.sub("…", note)
+        note = " ".join(note.replace("|", " ").split())[:NOTE_CHARS]
+        if note:
+            # Customer-typed text: quoted and escaped, so it reads as data, not an instruction
+            text += f" โน้ตลูกค้า {json.dumps(note, ensure_ascii=False)}"
+        lines.append(f"{text} ×{line.get('qty', 1)}")
+    return ", ".join(lines)
+
+
+def _fulfillment_text(draft: dict[str, Any]) -> str | None:
+    """How the draft is received, without the address or pin themselves."""
+    ff = draft.get("fulfillment")
+    if ff == "pickup":
+        return "รับเอง"
+    if ff != "delivery":
+        return None
+    if not str(draft.get("address") or "").strip():
+        return "ส่ง (ยังไม่มีที่อยู่)"
+    return "ส่ง (มีที่อยู่+พิกัดแล้ว)" if draft.get("location_url") else "ส่ง (มีที่อยู่แล้ว)"
+
+
+def _strip_bold(text: str) -> str:
+    """LINE shows Markdown literally: drop `**` bold markers, never `#` (queue numbers)."""
+    return text.replace("**", "")
+
+
 _PLUS_CODE_RE = re.compile(r"^[A-Z0-9]{4,8}\+[A-Z0-9]{2,4}\s+")
 
 
@@ -416,16 +552,25 @@ def handle_location_message(
     if draft.get("items"):
         snapshot, err = build_card_snapshot_for_conv(db, conv, menu)
         if snapshot is not None:
-            flex = build_order_flex(
-                snapshot,
-                shop_name=menu.shop.name,
-                wait_text=card_wait_line(db, menu, snapshot),
-            )
-            reply = f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ ตรวจสอบรายการบนการ์ดแล้วกดยืนยันได้เลยนะคะ"
-            db.append_conversation_event(line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply)
-            return AgentTurn(
-                reply_text=reply, flex_card=flex, reason="ok", card_id=str(snapshot["card_id"])
-            )
+            card_id = str(snapshot["card_id"])
+            try:
+                flex = build_order_flex(
+                    snapshot,
+                    shop_name=menu.shop.name,
+                    wait_text=card_wait_line(db, menu, snapshot),
+                )
+                # Send only the card that is still active (a draft write meanwhile clears it)
+                if db.get_or_create_conversation(line_user_id).active_card_id == card_id:
+                    reply = (
+                        f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ ตรวจสอบรายการบนการ์ดแล้วกดยืนยันได้เลยนะคะ"
+                    )
+                    db.append_conversation_event(
+                        line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply
+                    )
+                    return AgentTurn(reply_text=reply, flex_card=flex, reason="ok", card_id=card_id)
+            except Exception:
+                db.cancel_active_card(line_user_id, card_id)  # saved but never sent
+                raise
         reply_err = err or f"บันทึกพิกัดจัดส่ง ({clean_addr}) แล้วค่ะ"
         db.append_conversation_event(line_user_id, f"[ลูกค้าส่งพิกัดจัดส่ง: {clean_addr}]", reply_err)
         return AgentTurn(reply_text=reply_err, reason="ok")
@@ -473,9 +618,11 @@ def handle_customer_text(
     llm_client: Any,
     settings: Settings,
     started_at: float | None = None,
+    stats: TurnStats | None = None,
 ) -> AgentTurn:
     """Run one customer turn with tool execution, hand-over rules, and safety guardrails."""
     t_start = time.monotonic() if started_at is None else started_at
+    stats = stats or TurnStats()
     status = db.get_shop_status(menu)
     if not status.bot_enabled:
         return AgentTurn(reply_text=None, reason="bot_disabled")
@@ -494,7 +641,9 @@ def handle_customer_text(
         db.append_conversation_messages(conv.id, [user_msg])
         return start_handover(db, line_user_id, "turn_limit", TURN_LIMIT_REPLY, customer_text=text)
 
-    resume_note = db.consume_resume_note(conv)
+    # A hand-over ended: the note is owed, and cleared only once an LLM call succeeds
+    resume_note = bool(conv.handed_over_until)
+    resume_conv = conv
 
     overrides = db.get_overrides()
     system_msgs: list[dict[str, Any]] = [_system_prompt(menu, overrides)]
@@ -502,18 +651,26 @@ def handle_customer_text(
     # Dynamic live-state note (separate from cached menu prefix) so the LLM never trusts stale chat
     sold_parts = [*status.sold_out_ingredients, *status.sold_out_dishes]
     sold_text = ", ".join(sold_parts) if sold_parts else "ไม่มี (ทุกเมนูและวัตถุดิบพร้อมขาย)"
-    draft_items = list(conv.draft.get("items") or [])
-    cart_text = f"มี {len(draft_items)} รายการ" if draft_items else "ว่าง (0 รายการ)"
+    customer = db.get_customer(line_user_id)
+    cart_text = _cart_text(
+        menu,
+        list(conv.draft.get("items") or []),
+        hide=(customer.last_address if customer else None, conv.draft.get("address")),
+    )
     busy_text = "สั่ง 1 กล่องตอนนี้รอ" + range_text(one_box_minutes(db, menu), delivery=False)
     open_text = "เปิดรับออเดอร์" if status.is_open else f"ปิดร้าน (ปกติเปิด {status.hours_text})"
     unpaid_total = db.get_unpaid_balance(line_user_id).total
+    # Only whether an address is saved, never the address itself (Rule 5)
+    saved_addr = "มี" if customer and (customer.last_address or "").strip() else "ไม่มี"
+    ff_text = _fulfillment_text(conv.draft)
     system_msgs.append(
         {
             "role": "system",
             "content": (
                 f"สถานะระบบล่าสุดตอนนี้ (ยึดข้อมูลนี้เหนือข้อความเก่าในแชท): "
                 f"ร้าน={open_text} | {busy_text} | ของหมดตอนนี้={sold_text} | ตะกร้าปัจจุบัน={cart_text} "
-                f"| ยอดค้างชำระ={unpaid_total} บาท"
+                f"| ยอดค้างชำระ={unpaid_total} บาท | ที่อยู่เดิม={saved_addr}"
+                + (f" | วิธีรับ={ff_text}" if ff_text else "")
                 + (" | วิธีจ่าย=เงินสด (ไม่ต้องส่ง QR)" if db.pays_cash(line_user_id) else "")
             ),
         }
@@ -545,6 +702,22 @@ def handle_customer_text(
         db.record_quiet_activity(line_user_id, text)
         return AgentTurn(reply_text=None, reason="silent")
 
+    def control_stop() -> AgentTurn | None:
+        """Bot paused or คุยเอง while this turn ran (re-checked after every slow call)."""
+        if not db.get_shop_status(menu).bot_enabled:
+            # Global pause: no reply and no inbox card, like a message sent while paused
+            drop_unsent_card()
+            db.append_conversation_messages(conv.id, [user_msg])
+            return AgentTurn(reply_text=None, reason="bot_disabled")
+        return owner_took_over()
+
+    def fail_turn() -> AgentTurn:
+        if (stop := control_stop()) is not None:
+            return stop
+        drop_unsent_card()
+        save_turn({"role": "assistant", "content": ERROR_REPLY})
+        return AgentTurn(reply_text=ERROR_REPLY, reason="error")
+
     tool_calls_made = 0
     built_flex: dict[str, Any] | None = None
     qr_url: str | None = None
@@ -558,6 +731,14 @@ def handle_customer_text(
 
     HandOver = tuple[str, str | None] | None
 
+    def save_draft(draft: dict[str, Any]) -> None:
+        """Any draft write invalidates the order card (SQLite clears it): never send it."""
+        nonlocal conv, built_flex, built_card_id
+        db.save_draft(conv.id, draft)
+        conv = db.get_or_create_conversation(line_user_id)
+        built_flex = None
+        built_card_id = None
+
     def _run_tool(name: str, args: dict[str, Any]) -> tuple[dict[str, Any], HandOver]:
         """Execute a tool; returns (result_payload, (reason, detail) to hand over now or None)."""
         nonlocal conv, built_flex, built_card_id, qr_url, qr_explicit, qr_amount, menu_text
@@ -569,7 +750,8 @@ def handle_customer_text(
                     "error": "คำทักทายให้ทักกลับเองแล้วถามว่าวันนี้รับอะไรดี ไม่ต้องส่งต่อร้าน",
                 }, None
             if reason not in LLM_HANDOVER_REASONS:
-                reason = "off_menu"
+                # A broken call never hands over (and never blocks the rest of the batch)
+                return {"ok": False, "error": "reason ต้องเป็น edit_confirmed หรือ off_menu"}, None
             q = args.get("queue_number")
             detail = f"#{q}" if isinstance(q, int) and not isinstance(q, bool) else None
             return {"ok": True}, (reason, detail if reason == "edit_confirmed" else None)
@@ -651,13 +833,16 @@ def handle_customer_text(
                 return {"ok": False, "error": "คำสั่งตะกร้าไม่ถูกต้อง"}, None
 
             draft["items"] = items
-            db.save_draft(conv.id, draft)
-            conv = db.get_or_create_conversation(line_user_id)
-
             if not items:
+                save_draft(draft)  # clearing is allowed even if an item is sold out
                 return {"ok": True, "items": [], "food_total": 0}, None
+            # Validate the whole cart (sold out since added, too many lines) before saving
             ff: Fulfillment = "delivery" if draft.get("fulfillment") == "delivery" else "pickup"
-            priced = menu.price_cart(items, ff, db.get_overrides())
+            try:
+                priced = menu.price_cart(items, ff, db.get_overrides())
+            except MenuError as exc:
+                return {"ok": False, "error": str(exc)}, None
+            save_draft(draft)
             cust = db.get_customer(line_user_id)
             return {
                 "ok": True,
@@ -708,8 +893,7 @@ def handle_customer_text(
                     used_saved = True
                 elif not current_addr:
                     draft["fulfillment"] = "delivery"
-                    db.save_draft(conv.id, draft)
-                    conv = db.get_or_create_conversation(line_user_id)
+                    save_draft(draft)
                     return {
                         "ok": False,
                         "fulfillment": "delivery",
@@ -722,8 +906,7 @@ def handle_customer_text(
             if "requested_time" in args and args["requested_time"] is not None:
                 draft["requested_time"] = str(args["requested_time"]).strip() or None
 
-            db.save_draft(conv.id, draft)
-            conv = db.get_or_create_conversation(line_user_id)
+            save_draft(draft)
             return {
                 "ok": True,
                 "fulfillment": draft["fulfillment"],
@@ -737,9 +920,12 @@ def handle_customer_text(
             snapshot, err = build_card_snapshot_for_conv(db, conv, menu)
             if snapshot is None:
                 return {"ok": False, "error": err or "สร้างสรุปออเดอร์ไม่สำเร็จค่ะ"}, None
+            # Saved as the active card: track it now so a failure below still cancels it
+            built_card_id = str(snapshot["card_id"])
+            stats.card_id = built_card_id
+            built_flex = None
             wait_line = card_wait_line(db, menu, snapshot)
             built_flex = build_order_flex(snapshot, shop_name=menu.shop.name, wait_text=wait_line)
-            built_card_id = str(snapshot["card_id"])
             return {
                 "ok": True,
                 "card_id": snapshot["card_id"],
@@ -857,12 +1043,14 @@ def handle_customer_text(
     while True:
         remaining = TURN_DEADLINE_S - (time.monotonic() - t_start)
         if remaining <= 0:
-            if (silent := owner_took_over()) is not None:
-                return silent
+            if (stop := control_stop()) is not None:
+                return stop
             drop_unsent_card()
             save_turn({"role": "assistant", "content": LIMIT_REPLY})
             return AgentTurn(reply_text=LIMIT_REPLY, reason="deadline")
 
+        stats.llm_calls += 1
+        t_call = time.monotonic()
         try:
             kwargs: dict[str, Any] = {
                 "model": settings.llm_model,
@@ -875,25 +1063,46 @@ def handle_customer_text(
                 kwargs["extra_body"] = extra_body
             resp = llm_client.chat.completions.create(**kwargs)
         except Exception as exc:
-            log.warning("LLM call failed: %s", type(exc).__name__)
-            if (silent := owner_took_over()) is not None:
-                return silent
-            drop_unsent_card()
-            save_turn({"role": "assistant", "content": ERROR_REPLY})
-            return AgentTurn(reply_text=ERROR_REPLY, reason="error")
+            http_status = _num(getattr(exc, "status_code", None))
+            error = type(exc).__name__ + (f":{http_status}" if http_status != "-" else "")
+            log_llm_call(stats, settings.llm_model, _ms_since(t_call), error=error)
+            return fail_turn()
+        latency_ms = _ms_since(t_call)
+        stats.unlogged_call = (settings.llm_model, latency_ms, resp)  # if the turn crashes
 
-        # คุยเอง tapped while the LLM was thinking: stop before running any tool or replying
-        if (silent := owner_took_over()) is not None:
-            return silent
+        # Paused or คุยเอง while the LLM was thinking: stop before running any tool or replying
+        if (stop := control_stop()) is not None:
+            log_llm_call(stats, settings.llm_model, latency_ms, resp)
+            return stop
 
-        msg = resp.choices[0].message
+        choices = getattr(resp, "choices", None)
+        msg = getattr(choices[0], "message", None) if choices else None
+        if msg is None:
+            log_llm_call(stats, settings.llm_model, latency_ms, resp, error="no_message")
+            return fail_turn()
         tool_calls = msg.tool_calls or []
+        if any(getattr(tc, "function", None) is None for tc in tool_calls):
+            log_llm_call(stats, settings.llm_model, latency_ms, resp, error="bad_tool_call")
+            return fail_turn()  # not usable: the resume note stays owed
+        if resume_note:
+            # First usable response: the note was delivered, so stop owing it
+            db.consume_resume_note(resume_conv)
+            resume_note = False
+        content = msg.content if isinstance(msg.content, str) else ""
 
         if not tool_calls:
-            reply_content = (msg.content or "").strip()
+            reply_content = _strip_bold(content).strip()
+            if built_card_id is not None and (
+                built_flex is None
+                or db.get_or_create_conversation(line_user_id).active_card_id != built_card_id
+            ):
+                # The card changed or failed to render after it was built: never send it
+                drop_unsent_card()
+                built_flex = None
+                built_card_id = None
             if not reply_content and built_flex is None:
                 reply_content = LIMIT_REPLY
-            save_turn({"role": "assistant", "content": reply_content})
+            log_llm_call(stats, settings.llm_model, latency_ms, resp)
             if qr_url is not None:
                 # The QR must show the amount the reply text quotes. If the balance changed
                 # during the turn (a later tool, or the owner recording a payment), or the
@@ -901,6 +1110,7 @@ def handle_customer_text(
                 balance_now = db.get_unpaid_balance(line_user_id).total
                 if balance_now != qr_amount or (db.pays_cash(line_user_id) and not qr_explicit):
                     qr_url = None
+            save_turn({"role": "assistant", "content": reply_content})  # last DB read done
             return AgentTurn(
                 reply_text=reply_content or None,
                 flex_card=built_flex,
@@ -911,51 +1121,108 @@ def handle_customer_text(
             )
 
         if tool_calls_made + len(tool_calls) > MAX_TOOL_CALLS:
+            log_llm_call(stats, settings.llm_model, latency_ms, resp, error="max_tool_calls")
             drop_unsent_card()
             save_turn({"role": "assistant", "content": LIMIT_REPLY})
             return AgentTurn(reply_text=LIMIT_REPLY, reason="max_tool_calls")
 
         assistant_tool_msg: dict[str, Any] = {
             "role": "assistant",
-            "content": msg.content or "",
+            "content": content,
             "tool_calls": [
                 {
                     "id": tc.id,
                     "type": "function",
-                    "function": {"name": tc.function.name, "arguments": tc.function.arguments},
+                    "function": {
+                        "name": tc.function.name
+                        if isinstance(tc.function.name, str)
+                        else "invalid",
+                        "arguments": tc.function.arguments
+                        if isinstance(tc.function.arguments, str)
+                        else "{}",
+                    },
                 }
                 for tc in tool_calls
             ],
         }
-        tool_results: list[dict[str, Any]] = []
-        handover_now: HandOver = None
-
+        parsed: list[dict[str, Any] | None] = []
         for tc in tool_calls:
-            tool_calls_made += 1
             try:
-                parsed_args = json.loads(tc.function.arguments or "{}")
-                if not isinstance(parsed_args, dict):
-                    parsed_args = {}
-            except json.JSONDecodeError:
-                parsed_args = {}
-            try:
-                result, trigger_handover = _run_tool(tc.function.name, parsed_args)
-            except Exception as exc:
-                log.warning("Tool %s failed: %s", tc.function.name, type(exc).__name__)
-                result, trigger_handover = (
-                    {"ok": False, "error": "ข้อมูลคำสั่งไม่ถูกต้อง กรุณาลองใหม่ค่ะ"},
-                    None,
-                )
-            if trigger_handover is not None and handover_now is None:
-                handover_now = trigger_handover
-            tool_results.append(
-                {
+                raw_args = tc.function.arguments
+                if raw_args is not None and not isinstance(raw_args, str):
+                    raise TypeError("arguments must be a JSON string")
+                args = json.loads(raw_args or "{}")
+            except (ValueError, TypeError):  # incl. JSONDecodeError and huge integers
+                args = None
+            parsed.append(args if isinstance(args, dict) else None)
+
+        # A hand-over wins over the whole batch: run none of its other tools
+        handover_now: HandOver = None
+        for tc, args in zip(tool_calls, parsed, strict=True):
+            if tc.function.name == "hand_over" and args is not None:
+                handover_now = _run_tool("hand_over", args)[1]  # no side effects
+                if handover_now is not None:
+                    break
+        tool_results: list[dict[str, Any]] = []
+        marks = ["hand_over:ok"] if handover_now is not None else []
+        edit_failed = False  # a cart/fulfillment edit in this batch failed
+        # Card builds run after the batch's other tools, whatever order the provider sent
+        # them in, so a card always shows the edited cart (results keep the original order)
+        run_order = sorted(
+            range(len(tool_calls)), key=lambda i: tool_calls[i].function.name == "build_order_card"
+        )
+        results_by_index: dict[int, dict[str, Any]] = {}
+        if handover_now is None:
+            for idx in run_order:
+                tc, args = tool_calls[idx], parsed[idx]
+                tool_calls_made += 1
+                had_card = built_card_id is not None
+                if args is None:
+                    # Broken arguments never run a tool (e.g. a hand_over with no reason)
+                    result, trigger_handover = {"ok": False, "error": BAD_ARGS_ERROR}, None
+                elif tc.function.name == "build_order_card" and edit_failed:
+                    # Batched with an edit that failed: never show a card for the old cart
+                    result, trigger_handover = {"ok": False, "error": CARD_AFTER_FAILED_EDIT}, None
+                else:
+                    try:
+                        result, trigger_handover = _run_tool(tc.function.name, args)
+                    except Exception as exc:
+                        log.warning("Tool %s failed: %s", tc.function.name, type(exc).__name__)
+                        result, trigger_handover = (
+                            {"ok": False, "error": "ข้อมูลคำสั่งไม่ถูกต้อง กรุณาลองใหม่ค่ะ"},
+                            None,
+                        )
+                ok = isinstance(result, dict) and result.get("ok") is not False
+                if not ok and tc.function.name in ("update_cart", "set_fulfillment"):
+                    edit_failed = True
+                if had_card and built_card_id is None and isinstance(result, dict):
+                    # This edit (even one that failed, e.g. delivery with no address yet)
+                    # cancelled a card built earlier in the turn: say so, or the LLM would
+                    # tell the customer to tap a card that is never sent
+                    result = {**result, "card_note": CARD_CLEARED_NOTE}
+                marks.append(f"{_tool_label(tc.function.name)}:{'ok' if ok else 'err'}")
+                if trigger_handover is not None:
+                    handover_now = trigger_handover  # e.g. a paid cancel: stop the batch here
+                    break
+                results_by_index[idx] = {
                     "role": "tool",
                     "tool_call_id": tc.id,
                     "content": json.dumps(result, ensure_ascii=False),
                 }
-            )
+            tool_results = [results_by_index[i] for i in sorted(results_by_index)]
 
+        if edit_failed:
+            # An edit failed: any card built this turn shows a cart the customer is changing,
+            # so it is never sent, and the LLM is told this batch's builds did not count
+            if built_card_id is not None:
+                drop_unsent_card()
+            built_flex = None
+            built_card_id = None
+            for i, (tc, res) in enumerate(zip(tool_calls, tool_results, strict=False)):
+                if tc.function.name == "build_order_card":
+                    refused = {"ok": False, "error": CARD_AFTER_FAILED_EDIT}
+                    tool_results[i] = {**res, "content": json.dumps(refused, ensure_ascii=False)}
+        log_llm_call(stats, settings.llm_model, latency_ms, resp, tools=",".join(marks))
         if handover_now is not None:
             drop_unsent_card()
             db.append_conversation_messages(

@@ -68,6 +68,8 @@ def handle_image(
     except Exception as exc:
         log.warning("LINE content download failed: %s", type(exc).__name__)
         content = b""
+    if not db.get_shop_status(menu).bot_enabled:
+        return SlipTurn()  # paused during the download: a paused bot sends nothing
     _, slip = find_slip_qr(content)
     if slip is None:
         turn = handle_image_message(db, line_user_id, activity_recorded=quiet)
@@ -91,6 +93,8 @@ def handle_image(
             detail = amount_text + (f" · ยอดค้าง {format_baht(owed)}฿" if owed is not None else "")
         if reason == "slip_unchecked":
             detail = f"{detail} · ดูรูปสลิปใน LINE OA" if detail else "ดูรูปสลิปใน LINE OA"
+        if not db.get_shop_status(menu).bot_enabled:
+            return SlipTurn()  # paused meanwhile (e.g. the quota lookup): no reply, no card
         preview = f"[{amount_text}]"
         # Quiet: add to the open card. If the owner resolved it meanwhile, hand over normally
         # so the slip problem is never lost.
@@ -164,7 +168,7 @@ def _after_claim(
     if db.amount_due_satang(line_user_id) == 0:
         db.record_slip_check(ref, line_user_id, "slip_nothing_due")
         return problem("slip_nothing_due")
-    # 6. SlipOK not configured, or its quota is known to be used up
+    # 6. SlipOK not configured, past the reply deadline, or its quota is known to be used up
     if (
         slip_client is None
         or time.monotonic() - t_start > SLIPOK_START_DEADLINE_S
@@ -174,6 +178,13 @@ def _after_claim(
         return problem("slip_unchecked")
     # What this slip could pay before the (slow) SlipOK call; re-checked when paying
     expected = db.slip_snapshot(line_user_id)
+    # Last checks right before the paid call: the quota lookup and the snapshot can be slow
+    if time.monotonic() - t_start > SLIPOK_START_DEADLINE_S:
+        db.record_slip_check(ref, line_user_id, "slip_unchecked")
+        return problem("slip_unchecked")
+    if not db.get_shop_status(menu).bot_enabled:
+        db.record_slip_check(ref, line_user_id, "slip_unchecked")
+        return SlipTurn()  # paused meanwhile: no paid check, no reply
     # 7. SlipOK check (receiver + duplicate checks need `log: true`)
     try:
         check = slip_client.check(raw_qr)
@@ -184,12 +195,19 @@ def _after_claim(
         # SlipOK must confirm the very transaction we read from the QR
         log.warning("SlipOK transRef missing or different from the slip QR")
         check = SlipCheck(ok=False)
-    if not check.ok or check.amount_satang is None or check.transfer_at is None:
+    usable = check.ok and check.amount_satang is not None and check.transfer_at is not None
+    if usable or check.error_code == SLIPOK_WRONG_RECEIVER:
+        quota.used_one()  # SlipOK also counts a wrong-receiver check against the quota
+    elif check.error_code == SLIPOK_PACKAGE_OVER_QUOTA:
+        quota.mark_exhausted()
+    if not db.get_shop_status(menu).bot_enabled:
+        # Bot paused during the SlipOK call: pay nothing, say nothing, the owner checks it
+        db.record_slip_check(
+            ref, line_user_id, "slip_unchecked", check.amount_satang, check.transfer_at
+        )
+        return SlipTurn()
+    if not usable or check.amount_satang is None or check.transfer_at is None:
         log.warning("SlipOK check not usable: ok=%s code=%s", check.ok, check.error_code)
-        if check.error_code == SLIPOK_PACKAGE_OVER_QUOTA:
-            quota.mark_exhausted()
-        elif check.error_code == SLIPOK_WRONG_RECEIVER:
-            quota.used_one()  # SlipOK counts a wrong-receiver check against the quota
         reason = {
             SLIPOK_DUPLICATE: "slip_duplicate",
             SLIPOK_WRONG_RECEIVER: "slip_wrong_receiver",
@@ -197,7 +215,6 @@ def _after_claim(
         db.record_slip_check(ref, line_user_id, reason, check.amount_satang, check.transfer_at)
         card_detail = "SlipOK แจ้งว่าสลิปนี้เคยใช้แล้ว" if reason == "slip_duplicate" else None
         return problem(reason, check.amount_satang, card_detail=card_detail)
-    quota.used_one()
     amount = check.amount_satang
     transfer_at: datetime = check.transfer_at
 

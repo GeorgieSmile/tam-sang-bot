@@ -52,6 +52,11 @@ class HttpLineClient:
     def __init__(self, access_token: str, timeout_s: float = 8.0) -> None:
         self._token = access_token
         self._timeout_s = timeout_s
+        # One pooled client for every call: reuses TLS connections to LINE (thread-safe)
+        self._client = httpx.Client(timeout=timeout_s)
+
+    def close(self) -> None:
+        self._client.close()
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -62,60 +67,56 @@ class HttpLineClient:
     def reply_messages(self, reply_token: str, messages: list[dict[str, Any]]) -> None:
         if not self._token or not reply_token or not messages:
             return
-        with httpx.Client(timeout=self._timeout_s) as client:
-            resp = client.post(
-                LINE_REPLY_URL,
-                headers=self._headers(),
-                json={"replyToken": reply_token, "messages": messages[:5]},
-            )
-            resp.raise_for_status()
+        resp = self._client.post(
+            LINE_REPLY_URL,
+            headers=self._headers(),
+            json={"replyToken": reply_token, "messages": messages[:5]},
+        )
+        resp.raise_for_status()
 
     def push_text(self, user_id: str, text: str) -> None:
         if not self._token or not user_id or not text:
             return
-        with httpx.Client(timeout=self._timeout_s) as client:
-            resp = client.post(
-                LINE_PUSH_URL,
-                headers=self._headers(),
-                json={"to": user_id, "messages": [{"type": "text", "text": text}]},
-            )
-            resp.raise_for_status()
+        resp = self._client.post(
+            LINE_PUSH_URL,
+            headers=self._headers(),
+            json={"to": user_id, "messages": [{"type": "text", "text": text}]},
+        )
+        resp.raise_for_status()
 
     def get_profile(self, user_id: str) -> str | None:
         """Customer display name from GET /v2/bot/profile/{userId}."""
         if not self._token or not user_id:
             return None
-        with httpx.Client(timeout=self._timeout_s) as client:
-            resp = client.get(
-                LINE_PROFILE_URL.format(user_id=user_id),
-                headers={"Authorization": f"Bearer {self._token}"},
-            )
-            resp.raise_for_status()
-            name = resp.json().get("displayName")
+        resp = self._client.get(
+            LINE_PROFILE_URL.format(user_id=user_id),
+            headers={"Authorization": f"Bearer {self._token}"},
+        )
+        resp.raise_for_status()
+        name = resp.json().get("displayName")
         return str(name) if name else None
 
     def get_message_content(self, message_id: str) -> bytes:
         """Image bytes from GET api-data.line.me/v2/bot/message/{messageId}/content."""
         if not self._token or not message_id:
             return b""
-        with httpx.Client(timeout=self._timeout_s) as client:
-            resp = client.get(
-                LINE_CONTENT_URL.format(message_id=message_id),
-                headers={"Authorization": f"Bearer {self._token}"},
-            )
-            resp.raise_for_status()
-            return resp.content
+        resp = self._client.get(
+            LINE_CONTENT_URL.format(message_id=message_id),
+            headers={"Authorization": f"Bearer {self._token}"},
+        )
+        resp.raise_for_status()
+        return resp.content
 
     def show_loading(self, user_id: str, seconds: int = 20) -> None:
         if not self._token or not user_id:
             return
         try:
-            with httpx.Client(timeout=3.0) as client:
-                client.post(
-                    LINE_LOADING_URL,
-                    headers=self._headers(),
-                    json={"chatId": user_id, "loadingSeconds": max(5, min(seconds, 60))},
-                )
+            self._client.post(
+                LINE_LOADING_URL,
+                headers=self._headers(),
+                json={"chatId": user_id, "loadingSeconds": max(5, min(seconds, 60))},
+                timeout=3.0,
+            )
         except Exception as exc:
             log.debug("LINE loading animation skipped: %s", type(exc).__name__)
 

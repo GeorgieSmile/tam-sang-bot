@@ -227,6 +227,7 @@ class HttpSlipOkClient:
         body = resp.json()
         if resp.status_code != 200:
             code = body.get("code") if isinstance(body, dict) else None
+            code = code if isinstance(code, int) and not isinstance(code, bool) else "other"
             log.warning("SlipOK quota read refused: HTTP %s, code=%s", resp.status_code, code)
         data = body.get("data") if isinstance(body, dict) else None
         quota = data.get("quota") if isinstance(data, dict) else None
