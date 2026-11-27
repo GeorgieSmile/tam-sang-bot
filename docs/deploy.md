@@ -31,7 +31,7 @@ All commands run from the Mac. `ssh tamsang` is set up in [SSH access](#ssh-acce
 
 **Deploy what's on `main`:**
 ```bash
-ssh tamsang 'cd ~/tam-sang-bot && git pull && ~/.local/bin/uv sync --no-dev && sudo systemctl restart tam-sang-bot \
+ssh tamsang 'cd ~/tam-sang-bot && git pull && ~/.local/bin/uv sync --locked --no-dev && sudo systemctl restart tam-sang-bot \
   && curl -s --retry 10 --retry-delay 2 --retry-all-errors http://127.0.0.1:8000/health'
 ```
 - **Expected output:** `{"ok":true}`. The app takes about 4 s to start on this VM.
@@ -39,7 +39,7 @@ ssh tamsang 'cd ~/tam-sang-bot && git pull && ~/.local/bin/uv sync --no-dev && s
 
 **Roll back to an earlier commit:**
 ```bash
-ssh tamsang 'cd ~/tam-sang-bot && git checkout <sha> && ~/.local/bin/uv sync --no-dev && sudo systemctl restart tam-sang-bot'
+ssh tamsang 'cd ~/tam-sang-bot && git checkout <sha> && ~/.local/bin/uv sync --locked --no-dev && sudo systemctl restart tam-sang-bot'
 ```
 This leaves the repo on a detached commit. To go back to normal deploys, run `git checkout main && git pull` there. If the bad version changed the database schema, also [restore a backup](#restore-a-backup) from before the deploy.
 
@@ -145,7 +145,7 @@ sudo systemctl restart systemd-journald
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh && source $HOME/.local/bin/env
 git clone https://github.com/GeorgieSmile/tam-sang-bot.git && cd tam-sang-bot
-uv sync --no-dev
+uv sync --locked --no-dev
 ```
 
 **6. Secrets:**
@@ -254,5 +254,5 @@ Never paste a secret into chat, an issue or a commit.
 | HTTPS fails, but `http://127.0.0.1:8000/health` works on the VM | Check that `dig +short tamsang.duckdns.org` matches the VM's External IP. Then `journalctl -u caddy -n 30` for certificate errors. Ports 80 and 443 must stay open; the Let's Encrypt check uses port 80. |
 | The domain points at an old IP after a stop and start | Run `~/duckdns.sh` and wait for DNS, about 1 minute |
 | `backup.log` shows `403` or "insufficient scopes" | The VM lost the `storage-rw` scope. Redo step 10. |
-| `uv sync` picks the wrong Python | `.python-version` should say `3.13`. Rebuild with `rm -rf .venv && uv sync --no-dev`. |
+| `uv sync` picks the wrong Python | `.python-version` should say `3.13`. Rebuild with `rm -rf .venv && uv sync --locked --no-dev`. |
 | Out of memory | `free -h`. If swap is in use all the time, change the machine type to `e2-small` (about $12/month): stop the VM, edit it, start it. No reinstall is needed. |
