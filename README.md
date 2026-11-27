@@ -59,6 +59,32 @@ While quiet, the bot makes no replies and no LLM calls for that customer. Messag
 
 ---
 
+## Evaluation
+
+There is no live shop, so these numbers come from an offline evaluation (27 Nov 2026), not from real customers. Method: [the eval spec](docs/specs/2026-11-27-order-eval.md). Raw reports: [`evals/results/`](evals/results/).
+
+**Order accuracy.** 80 test chats in casual LINE Thai (typos, slang, multi-dish orders, side questions, messages that aren't orders). Two other model families wrote them, so the tested model never wrote its own tests: 40 by GPT-6.2 Sol ([`gpt.yaml`](evals/cases/gpt.yaml)) and 40 by Gemini 4 Neon ([`gemini.yaml`](evals/cases/gemini.yaml)). Neither writer saw the code, the prompt or the tests, and the Gemini half stayed unread until the final run. Each chat runs through the real app (stub LINE and SlipOK, the real LLM), and code grades the result from the database: the order card's dishes, options, quantities and pickup or delivery, or a hand-over to the owner. No LLM judge. 3 runs per chat, low reasoning effort.
+
+| Model | Passed (80 chats × 3) | GPT set | Gemini set (hidden) | Median reply | p95 reply | Cost per chat |
+|---|---|---|---|---|---|---|
+| Claude Haiku 5.5 (default) | 236/240 (98.3%) | 99.2% | 97.5% | 2.95 s | 4.8 s | $0.00058 |
+| Claude Sonnet 5.5 | 237/240 (98.75%) | 100% | 97.5% | 2.0 s | 4.0 s | $0.0074 |
+
+Sonnet costs about 13 times as much for one more passing run, so Haiku stays the default. Reply time is the bot's time per LINE event (`total_ms` in the logs). Costs are upper bounds: uncached input is priced at the higher of the input and cache-write rates.
+
+**Simulated customers.** Gemini 4 Hydrogen plays 20 customers, each with a persona and a hidden goal ([`goals.yaml`](evals/goals.yaml)), 3 times each, in the style of τ-bench. The customer ends the chat when the order card matches its goal, or after 8 turns, and the result is graded the same way. pass^1 is 98.3% (59 of 60 chats) and pass^3 is 95% (19 of 20 customers succeeded in all 3 tries). The one failure was the simulated customer ending the chat early, not the bot.
+
+**What it found.** In the hidden set, a first message with a request but no question word ("ขอที่อยู่ร้านหน่อยค่ะ") never got its answer, 3 of 3 runs on both models: the fast path skipped the second LLM call. The fix ([ADR-0002](docs/adr/0002-card-fast-path-question-word-check.md)) made it pass 3 of 3. Later runs on the same cases scored 238–239/240, but those cases were known by then, so they aren't a fresh test.
+
+**Run it** (paid; uses the model in `.env`):
+
+```bash
+uv run python scripts/eval.py run --set dev --runs 3 --max-cost-usd 0.5
+uv run python scripts/eval.py simulate --simulator google/gemini-4-hydrogen --runs 3 --max-cost-usd 1.0
+```
+
+---
+
 ## Quick start (local + live LINE OA)
 
 **Prerequisites:** [`uv`](https://docs.astral.sh/uv/), which installs Python 3.13 (pinned in `.python-version`); the `sqlite3` CLI (for helper scripts); a LINE Official Account with the Messaging API enabled; an OpenRouter (or other OpenAI-compatible) API key; and `cloudflared` (`brew install cloudflared`) for a public HTTPS webhook URL while testing locally. Optional: a PromptPay ID (for QR codes) and a [SlipOK](https://slipok.com/) account (for slip checks).
