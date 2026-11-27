@@ -11,6 +11,7 @@ Production runs on one Google Cloud VM at `https://tamsang.duckdns.org`. This pa
 | Logs | journald, persistent and capped at 200 MB. Needed for the ADR-0002 `card_path` count. |
 | Backups | Nightly at 03:00 Bangkok. 14 days kept on the VM and 30 days in `gs://tam-sang-bot-backups`. |
 | Secrets | `~/tam-sang-bot/.env` and `~/.duckdns-token`, only on the VM. Never in git. |
+| Deploys | Automatic: a systemd timer runs [`scripts/autodeploy.sh`](../scripts/autodeploy.sh) every 5 minutes. It deploys green `main` commits while the shop is closed. |
 
 **Deploying your own copy?** Replace these names throughout:
 - `tamsang.duckdns.org` and the DuckDNS subdomain `tamsang`;
@@ -29,7 +30,24 @@ Production runs on one Google Cloud VM at `https://tamsang.duckdns.org`. This pa
 
 All commands run from the Mac. `ssh tamsang` is set up in [SSH access](#ssh-access).
 
-**Deploy what's on `main`:**
+**Automatic deploys:** push to `main` and the VM deploys it by itself. The timer runs `scripts/autodeploy.sh` every 5 minutes, and the script deploys when all of these are true:
+- the VM's repo is on branch `main`;
+- the shop is closed, according to `menu.yaml` `shop.hours` in Bangkok time;
+- every GitHub check on the commit is green;
+- the commit hasn't already failed here.
+
+After restarting, it checks `/health`. If that fails, it rolls back to the previous commit and won't retry that commit, so the fix is to push a new one.
+
+```bash
+ssh tamsang 'journalctl -u tam-sang-autodeploy -n 20 --no-pager'   # what it did and why
+ssh tamsang 'systemctl list-timers tam-sang-autodeploy --no-pager' # when it runs next
+ssh tamsang 'cd ~/tam-sang-bot && DRY_RUN=1 AUTODEPLOY_NOW=21:00 scripts/autodeploy.sh'  # what it would do at 21:00
+```
+- **If it does nothing:** that's normal when there's nothing new to deploy, and nothing is logged.
+- **If the shop is open or CI isn't green yet:** it logs a `wait:` line.
+- **To pause auto-deploy:** `ssh tamsang 'sudo systemctl stop tam-sang-autodeploy.timer'`. Use `start` to resume.
+
+**Deploy now** (an urgent fix during shop hours, which skips the hours and CI checks):
 ```bash
 ssh tamsang 'cd ~/tam-sang-bot && git pull && ~/.local/bin/uv sync --locked --no-dev && sudo systemctl restart tam-sang-bot \
   && curl -s --retry 10 --retry-delay 2 --retry-all-errors http://127.0.0.1:8000/health'
@@ -41,7 +59,7 @@ ssh tamsang 'cd ~/tam-sang-bot && git pull && ~/.local/bin/uv sync --locked --no
 ```bash
 ssh tamsang 'cd ~/tam-sang-bot && git checkout <sha> && ~/.local/bin/uv sync --locked --no-dev && sudo systemctl restart tam-sang-bot'
 ```
-This leaves the repo on a detached commit. To go back to normal deploys, run `git checkout main && git pull` there. If the bad version changed the database schema, also [restore a backup](#restore-a-backup) from before the deploy.
+This leaves the repo on a detached commit, which also pauses auto-deploy, so the bad commit isn't deployed again 5 minutes later. Push a fix to `main` first. Then run `git checkout main` on the VM, and auto-deploy picks up the fix. If the bad version changed the database schema, also [restore a backup](#restore-a-backup) from before the deploy.
 
 **Status and logs:**
 ```bash
@@ -231,10 +249,39 @@ env -i HOME="$HOME" PATH=/usr/bin:/bin /bin/sh -c "$HOME/backup.sh" && echo BACK
 2. Click **Verify**, and make sure **Use webhook** is on.
 3. Send the bot a message, then check `journalctl -u tam-sang-bot -n 20` for a `webhook_event … reply_ok=true` line.
 
-**13. Reboot test:**
+**13. Automatic deploys (on the VM):**
+```bash
+sudo apt install -y jq
+sudo tee /etc/systemd/system/tam-sang-autodeploy.service >/dev/null <<EOF
+[Unit]
+Description=tam-sang-bot auto-deploy (scripts/autodeploy.sh)
+
+[Service]
+Type=oneshot
+User=$USER
+WorkingDirectory=$HOME/tam-sang-bot
+ExecStart=$HOME/tam-sang-bot/scripts/autodeploy.sh
+EOF
+sudo tee /etc/systemd/system/tam-sang-autodeploy.timer >/dev/null <<'EOF'
+[Unit]
+Description=Run tam-sang-bot auto-deploy every 5 minutes
+
+[Timer]
+OnCalendar=*:0/5
+
+[Install]
+WantedBy=timers.target
+EOF
+sudo systemctl daemon-reload && sudo systemctl enable --now tam-sang-autodeploy.timer
+DRY_RUN=1 AUTODEPLOY_NOW=21:00 ~/tam-sang-bot/scripts/autodeploy.sh; echo "exit $?"
+```
+The last line is a dry run. If nothing is new it prints only `exit 0`; otherwise it shows what would deploy.
+
+**14. Reboot test:**
 1. Run `sudo reboot`.
 2. A minute later, `curl https://tamsang.duckdns.org/health` should return `{"ok":true}`.
 3. `free -h` should show the 2 GB swap.
+4. `systemctl list-timers tam-sang-autodeploy` should show the timer.
 
 ## Secrets
 
@@ -254,5 +301,7 @@ Never paste a secret into chat, an issue or a commit.
 | HTTPS fails, but `http://127.0.0.1:8000/health` works on the VM | Check that `dig +short tamsang.duckdns.org` matches the VM's External IP. Then `journalctl -u caddy -n 30` for certificate errors. Ports 80 and 443 must stay open; the Let's Encrypt check uses port 80. |
 | The domain points at an old IP after a stop and start | Run `~/duckdns.sh` and wait for DNS, about 1 minute |
 | `backup.log` shows `403` or "insufficient scopes" | The VM lost the `storage-rw` scope. Redo step 10. |
+| A pushed commit never went live | Run `journalctl -u tam-sang-autodeploy -n 20`. A `wait:` line means the shop was open or CI wasn't green yet. A `skip:` line means the VM isn't on `main` (a manual rollback), or the commit already failed its health check here. |
+| `autodeploy: ROLLBACK ALSO FAILED` | The bot is down. Check `journalctl -u tam-sang-bot -n 50`, fix it by hand, then deploy. |
 | `uv sync` picks the wrong Python | `.python-version` should say `3.13`. Rebuild with `rm -rf .venv && uv sync --locked --no-dev`. |
 | Out of memory | `free -h`. If swap is in use all the time, change the machine type to `e2-small` (about $12/month): stop the VM, edit it, start it. No reinstall is needed. |
