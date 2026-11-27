@@ -1,0 +1,577 @@
+# Simple (6)
+- id: gem-001
+  category: simple
+  turns: ["กะเพราหมูสับ 1 กล่อง เดี๋ยวแวะมารับเองครับ"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: kaphrao, qty: 1, option_ids: [minced_pork]}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-002
+  category: simple
+  turns: ["เอาข้าวผัดไก่ 2 กล่องค่ะ ส่งที่คอนโดเดอะเบส พระราม 9 ล็อบบี้ตึก B"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: fried_rice, qty: 2, option_ids: [chicken]}
+      fulfillment: delivery
+      address_contains: "เดอะเบส"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-003
+  category: simple
+  turns: ["ผัดซีอิ๊วหมูจานนึงจ้า รับเอง"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: pad_see_ew, qty: 1, option_ids: [sliced_pork]}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-004
+  category: simple
+  turns: ["สั่งข้าวไข่ข้นเบคอน 1 ที่ ส่งบ้านเลขที่ 19 ซอยสุขใจ 3 นะครับ"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: bacon_soft_egg_rice, qty: 1, option_ids: []}
+      fulfillment: delivery
+      address_contains: "ซอยสุขใจ"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-005
+  category: simple
+  turns: ["สุกี้น้ำไก่ 3 ถุงค่ะ ส่งตึกเอ็มไพร์ ชั้น 12 ฝากไว้หน้าฟรอนต์ได้เลย"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: suki_soup, qty: 3, option_ids: [chicken]}
+      fulfillment: delivery
+      address_contains: "เอ็มไพร์"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-006
+  category: simple
+  turns: ["ไข่เจียวหมูสับ 2 กล่อง มารับเองที่ร้านนะ"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: pork_omelette_rice, qty: 2, option_ids: []}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: []
+
+# Options (7)
+- id: gem-007
+  category: options
+  turns: ["ผัดพริกแกงหมูกรอบ ไข่ดาวไม่สุก เผ็ดมาก 1 จาน รับเองครับ"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: curry_paste, qty: 1, option_ids: [crispy_pork, fried_egg_runny, spice_extra]}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-008
+  category: options
+  turns: ["ข้าวกระเทียมกุ้ง 2 กล่อง ขอไข่ดาวสุกแล้วก็เพิ่มข้าวทั้ง 2 กล่องเลยค่ะ ส่งคอนโดไลฟ์ อโศก วางตรงจุดรับส่งอาหาร"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: garlic, qty: 2, option_ids: [shrimp, fried_egg_cooked, extra_rice]}
+      fulfillment: delivery
+      address_contains: "ไลฟ์ อโศก"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-009
+  category: options
+  turns: ["พริกเผาปลาหมึกพิเศษ เพิ่มไข่เจียว เผ็ดน้อย 1 กล่อง ส่งซอยลาดพร้าว 18 แยก 4 บ้านรั้วสีขาวครับ"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: chili_paste, qty: 1, option_ids: [squid, omelette_addon, spice_mild, special]}
+      fulfillment: delivery
+      address_contains: "ลาดพร้าว 18"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-010
+  category: options
+  turns: ["คะน้าหมูกรอบ เพิ่มไข่ข้น 1 จาน เดี๋ยวเดินไปรับเองจ้า"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: kale, qty: 1, option_ids: [crispy_pork, soft_egg_addon]}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-011
+  category: options
+  turns: ["ผัดขี้เมาปลาหมึก ไม่เผ็ด พิเศษ 2 กล่องค่ะ ส่งออฟฟิศเคทาวเวอร์ ชั้น 8 โทรมาตอนถึงนะคะ"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: drunken_noodles, qty: 2, option_ids: [squid, spice_none, special]}
+      fulfillment: delivery
+      address_contains: "เคทาวเวอร์"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-012
+  category: options
+  turns: ["กะเพรากุ้ง พิเศษ เพิ่มข้าว ไข่ดาวเยิ้มๆ เผ็ดน้อย 1 กล่อง ส่งหมู่บ้านพฤกษา ซอย 5 หลังที่ 42 ครับ"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: kaphrao, qty: 1, option_ids: [shrimp, fried_egg_runny, spice_mild, extra_rice, special]}
+      fulfillment: delivery
+      address_contains: "พฤกษา"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-013
+  category: options
+  turns: ["ข้าวไข่เจียว 4 กล่อง พิเศษ เพิ่มข้าวทุกกล่องเลยครับ เดี๋ยวขับรถมารับเอง"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: omelette_rice, qty: 4, option_ids: [extra_rice, special]}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: []
+
+# Multi-item (6)
+- id: gem-014
+  category: multi_item
+  turns: ["สั่งกะเพราหมูกรอบ ไข่ดาวไม่สุก 1 กล่อง ชาไทยหวานน้อย 1 แก้ว แล้วก็น้ำเปล่า 2 ขวดค่ะ ส่งคอนโดไอดีโอ โมบิ สุขุมวิท ห้อง 504"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: kaphrao, qty: 1, option_ids: [crispy_pork, fried_egg_runny]}
+        - {dish_id: thai_tea, qty: 1, option_ids: [sweetness_less]}
+        - {dish_id: water, qty: 2, option_ids: []}
+      fulfillment: delivery
+      address_contains: "ไอดีโอ โมบิ"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-015
+  category: multi_item
+  turns: ["เอาผัดไทยกุ้ง 2 กล่อง ไก่ป๊อป 1 โค้ก 3 กระป๋อง โกโก้เย็นไม่หวาน 1 แก้วครับ ส่งอาคารสินธร ทาวเวอร์ 2 ล็อบบี้"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: pad_thai, qty: 2, option_ids: [shrimp]}
+        - {dish_id: chicken_bites, qty: 1, option_ids: []}
+        - {dish_id: cola, qty: 3, option_ids: []}
+        - {dish_id: cocoa, qty: 1, option_ids: [sweetness_none]}
+      fulfillment: delivery
+      address_contains: "สินธร"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-016
+  category: multi_item
+  turns: ["สุกี้แห้งหมูพิเศษ 1 ข้าวไข่ข้น 1 แล้วก็ไข่ดาวเปล่าสุกๆ 2 ฟองค่ะ มารับเอง"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: suki_dry, qty: 1, option_ids: [sliced_pork, special]}
+        - {dish_id: soft_egg_rice, qty: 1, option_ids: []}
+        - {dish_id: fried_egg_side, qty: 2, option_ids: [egg_cooked]}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-017
+  category: multi_item
+  turns: ["ข้าวผัดกุ้ง 1 กล่อง ไข่เจียวเปล่า 1 ข้าวเปล่า 2 ถุง ส่งหอพักบ้านสบาย ซอย 9 หน้าประตูเลยจ้า"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: fried_rice, qty: 1, option_ids: [shrimp]}
+        - {dish_id: omelette_side, qty: 1, option_ids: []}
+        - {dish_id: plain_rice, qty: 2, option_ids: []}
+      fulfillment: delivery
+      address_contains: "บ้านสบาย"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-018
+  category: multi_item
+  turns: ["ขอทอดกระเทียมไก่ 1 กล่อง ไข่ข้นเปล่า 1 ชาเย็นหวานมาก 2 แก้ว น้ำดื่ม 5 ขวด ส่งออฟฟิศซอยอารีย์ 4 ฝั่งเหนือครับ"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: garlic, qty: 1, option_ids: [chicken]}
+        - {dish_id: soft_egg_side, qty: 1, option_ids: []}
+        - {dish_id: thai_tea, qty: 2, option_ids: [sweetness_extra]}
+        - {dish_id: water, qty: 5, option_ids: []}
+      fulfillment: delivery
+      address_contains: "อารีย์ 4"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-019
+  category: multi_item
+  turns: ["ผัดซีอิ๊วไก่ 2 จาน กับโกโก้หวานน้อย 2 แก้วนะคะ เดี๋ยวไปรับเองที่หน้าร้าน"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: pad_see_ew, qty: 2, option_ids: [chicken]}
+        - {dish_id: cocoa, qty: 2, option_ids: [sweetness_less]}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: []
+
+# Multi-turn (5)
+- id: gem-020
+  category: multi_turn
+  turns:
+    - "สั่งกะเพราไก่ ไข่ดาวสุก 1 กล่อง รับเองครับ"
+    - "ขอเพิ่มโกโก้เย็นหวานน้อย 1 แก้วด้วยนะครับ"
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: kaphrao, qty: 1, option_ids: [chicken, fried_egg_cooked]}
+        - {dish_id: cocoa, qty: 1, option_ids: [sweetness_less]}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-021
+  category: multi_turn
+  turns:
+    - "เอาผัดพริกแกงหมูชิ้น 1 กล่อง ส่งที่คอนโดศุภาลัย ริเวอร์ รีสอร์ท ล็อบบี้ค่ะ"
+    - "เปลี่ยนพริกแกงจากหมูชิ้นเป็นหมูกรอบ แล้วขอเผ็ดน้อยด้วยนะคะ"
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: curry_paste, qty: 1, option_ids: [crispy_pork, spice_mild]}
+      fulfillment: delivery
+      address_contains: "ศุภาลัย"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-022
+  category: multi_turn
+  turns:
+    - "ผัดไทยกุ้ง 2 กล่อง กับโค้ก 2 กระป๋อง เดี๋ยวไปรับเองครับ"
+    - "ฝนตกหนักเลย เปลี่ยนเป็นส่งแทนได้มั้ยครับ ส่งที่ตึกสาทรสแควร์ ชั้น 1 หน้าเคาน์เตอร์รปภ."
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: pad_thai, qty: 2, option_ids: [shrimp]}
+        - {dish_id: cola, qty: 2, option_ids: []}
+      fulfillment: delivery
+      address_contains: "สาทรสแควร์"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-023
+  category: multi_turn
+  turns:
+    - "ข้าวผัดหมู 1 กล่อง มารับเองจ้า"
+    - "ขอแก้เป็นข้าวผัดหมู 2 กล่อง แล้วใส่ไข่ดาวไม่สุกทั้ง 2 กล่องเลยนะ"
+    - "เพิ่มไก่ป๊อปอีก 1 กล่องด้วยจ้า"
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: fried_rice, qty: 2, option_ids: [sliced_pork, fried_egg_runny]}
+        - {dish_id: chicken_bites, qty: 1, option_ids: []}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-024
+  category: multi_turn
+  turns:
+    - "ผัดขี้เมากุ้ง เผ็ดมาก 1 จาน เดี๋ยวเดินไปรับเองค่ะ"
+    - "ขอเปลี่ยนเป็นไม่เผ็ดแทนนะคะ พอดีสั่งให้แม่"
+    - "เออ ขอเปลี่ยนเป็นให้มาส่งเลยดีกว่าค่ะ ส่งหมู่บ้านกลางเมือง โชคชัย 4 ซอย 2 บ้านเลขที่ 108 แล้วเพิ่มน้ำเปล่า 1 ขวดด้วย"
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: drunken_noodles, qty: 1, option_ids: [shrimp, spice_none]}
+        - {dish_id: water, qty: 1, option_ids: []}
+      fulfillment: delivery
+      address_contains: "หมู่บ้านกลางเมือง"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+# Side question (5)
+- id: gem-025
+  category: side_question
+  turns: ["สั่งกะเพราหมูกรอบ ไข่ดาวไม่สุก 1 กล่อง เดี๋ยวขับรถไปรับเองครับ ร้านอยู่ซอยไหนนะครับ"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: kaphrao, qty: 1, option_ids: [crispy_pork, fried_egg_runny]}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: ["ซอยตามสั่ง"]
+
+- id: gem-026
+  category: side_question
+  turns: ["ข้าวกระเทียมหมูชิ้น 1 กล่อง กับชาไทยหวานน้อย 1 แก้ว มารับเองค่ะ วันนี้ร้านปิดกี่โมงคะ"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: garlic, qty: 1, option_ids: [sliced_pork]}
+        - {dish_id: thai_tea, qty: 1, option_ids: [sweetness_less]}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: ["20"]
+
+- id: gem-027
+  category: side_question
+  turns: ["สุกี้แห้งกุ้ง 1 กล่อง ส่งคอนโดริทึ่ม รัชดา ล็อบบี้ครับ สั่งครบเท่าไหร่ถึงจะได้ส่งฟรีอะครับ"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: suki_dry, qty: 1, option_ids: [shrimp]}
+      fulfillment: delivery
+      address_contains: "ริทึ่ม"
+    no_card: false
+    handover: null
+    reply_contains: ["100"]
+
+- id: gem-028
+  category: side_question
+  turns: ["ข้าวผัดพริกเผาไก่ เผ็ดน้อย 2 กล่อง ส่งตึกจีทาวเวอร์ ชั้น 15 ค่ะ ร้านปิดกี่โมงเหรอคะ เผื่อเย็นนี้สั่งอีก"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: chili_paste, qty: 2, option_ids: [chicken, spice_mild]}
+      fulfillment: delivery
+      address_contains: "จีทาวเวอร์"
+    no_card: false
+    handover: null
+    reply_contains: ["20"]
+
+- id: gem-029
+  category: side_question
+  turns: ["คะน้าหมูชิ้นพิเศษ 1 กล่อง กับน้ำเปล่า 1 ขวด รับเองนะคะ ขอที่อยู่ร้านหน่อยค่ะ เพิ่งเคยสั่งครั้งแรก"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: kale, qty: 1, option_ids: [sliced_pork, special]}
+        - {dish_id: water, qty: 1, option_ids: []}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: ["ซอยตามสั่ง"]
+
+# Not order (6)
+- id: gem-030
+  category: not_order
+  turns: ["ส้มตำปูปลาร้าเผ็ดน้อย 1 ครก กับไก่ย่างครึ่งตัวครับ รับเอง"]
+  shop_open: true
+  expect:
+    card: null
+    no_card: true
+    handover: null
+    reply_contains: []
+
+- id: gem-031
+  category: not_order
+  turns: ["มีข้าวมันไก่ต้มไม่เอาหนังมั้ยคะ อยากสั่ง 2 ห่อ ส่งคอนโดเอสเปซ"]
+  shop_open: true
+  expect:
+    card: null
+    no_card: true
+    handover: null
+    reply_contains: []
+
+- id: gem-032
+  category: not_order
+  turns: ["สอบถามค่ะ อาหารที่ร้านใส่ผงชูรสมั้ยคะ พอดีคนทานแพ้ผงชูรส"]
+  shop_open: true
+  expect:
+    card: null
+    no_card: true
+    handover: off_menu
+    reply_contains: []
+
+- id: gem-033
+  category: not_order
+  turns: ["ผัดไทยที่ร้านใส่ถั่วลิสงกับกุ้งแห้งหรือเปล่าครับ ผมแพ้ถั่วลิสงหนักมาก"]
+  shop_open: true
+  expect:
+    card: null
+    no_card: true
+    handover: off_menu
+    reply_contains: []
+
+- id: gem-034
+  category: not_order
+  turns: ["กะเพราหมูสับ ไข่ดาวไม่สุก 1 กล่อง กับโค้ก 1 กระป๋อง ส่งหอพักยูเซ็นเตอร์ ห้อง 302 ครับ"]
+  shop_open: false
+  expect:
+    card: null
+    no_card: true
+    handover: null
+    reply_contains: []
+
+- id: gem-035
+  category: not_order
+  turns: ["ผัดซีอิ๊วหมูพิเศษ 1 จาน เดี๋ยวเดินไปรับเองค่ะ"]
+  shop_open: false
+  expect:
+    card: null
+    no_card: true
+    handover: null
+    reply_contains: []
+
+# Messy (5)
+- id: gem-036
+  category: messy
+  turns: ["กระเพาหมูกรอบไขดาวไม่สุกเผ็ดมากกก1กล่องไม่ใส่ผักนะคับรับเองจ้า🔥🍳"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: kaphrao, qty: 1, option_ids: [crispy_pork, fried_egg_runny, spice_extra]}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-037
+  category: messy
+  turns: ["หิวมากแม่😭 ขอข้าวไขข้นเบคอนพิเศษ1 + ชาเย็นหวานน้อย1แก้ว pls ส่งคอนโดโนเบิล รีโว่ วางlobbyได้เลยจ้า🙏✨"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: bacon_soft_egg_rice, qty: 1, option_ids: [special]}
+        - {dish_id: thai_tea, qty: 1, option_ids: [sweetness_less]}
+      fulfillment: delivery
+      address_contains: "โนเบิล"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-038
+  category: messy
+  turns: ["ผัดซิอิ้วกุ้ง2จาน+ไก่ป๊อบ1+เป๊ปซี่2ป๋อง ส่งตึกทรูดิจิทัลพาร์คฝั่งwestนะค้าบบบ🚀😋"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: pad_see_ew, qty: 2, option_ids: [shrimp]}
+        - {dish_id: chicken_bites, qty: 1, option_ids: []}
+        - {dish_id: cola, qty: 2, option_ids: []}
+      fulfillment: delivery
+      address_contains: "ทรูดิจิทัลพาร์ค"
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-039
+  category: messy
+  turns: ["สุกี้น้ามหมูชิ้น1ถุงแยกน้ำจิ้มด้วยน้าา+ไข่ดาวเปล่าเยิ้มๆ1ฟอง เด๋วแว้นไปเอาเองคับ🛵💨"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: suki_soup, qty: 1, option_ids: [sliced_pork]}
+        - {dish_id: fried_egg_side, qty: 1, option_ids: [egg_runny]}
+      fulfillment: pickup
+      address_contains: null
+    no_card: false
+    handover: null
+    reply_contains: []
+
+- id: gem-040
+  category: messy
+  turns: ["ขอกระเทียมไก่3กล่องเอาเพิ่มข้าว+ไข่เจียวเพิ่มทุกกล่องเลยค้าบบหิวจัด😵‍💫ส่งซอยทองหล่อ10หน้า7-11น้า"]
+  shop_open: true
+  expect:
+    card:
+      items:
+        - {dish_id: garlic, qty: 3, option_ids: [chicken, omelette_addon, extra_rice]}
+      fulfillment: delivery
+      address_contains: "ทองหล่อ"
+    no_card: false
+    handover: null
+    reply_contains: []

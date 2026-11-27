@@ -1,0 +1,25 @@
+# USD per 1M tokens, from OpenRouter's public model list (https://openrouter.ai/api/v1/models).
+# Look prices up again before a paid run and update `fetched`; never fill them in from memory.
+fetched: 2026-11-27
+source: https://openrouter.ai/api/v1/models
+models:
+  anthropic/claude-haiku-5.5:
+    input: 0.10
+    cache_read: 0.01
+    cache_write: 0.125
+    output: 0.50
+  anthropic/claude-sonnet-5.5:
+    input: 2.00
+    cache_read: 0.10
+    cache_write: 2.50
+    output: 10.00
+  google/gemini-4-hydrogen:
+    input: 1.50
+    cache_read: 0.075
+    cache_write: 0.0833
+    output: 7.50
+  google/gemini-3.8-flash:
+    input: 0.825
+    cache_read: 0.0825
+    cache_write: 0.0417
+    output: 4.125

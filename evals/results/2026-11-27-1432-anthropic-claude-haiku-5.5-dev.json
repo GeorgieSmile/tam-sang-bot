@@ -1,0 +1,2239 @@
+{
+  "status": "COMPLETE",
+  "date": "2026-11-27T14:32:12+07:00",
+  "model": "anthropic/claude-haiku-5.5",
+  "reasoning_effort": "low",
+  "commit": "afac262",
+  "case_files": {
+    "gpt.yaml": "f3ae2deaa2e89586"
+  },
+  "runs": 3,
+  "summary": {
+    "sets": {
+      "dev": {
+        "cases": 40,
+        "accuracy_per_run": [
+          0.975,
+          1.0,
+          1.0
+        ],
+        "accuracy_mean": 0.9917,
+        "by_category": {
+          "simple": "18/18",
+          "options": "21/21",
+          "multi_item": "18/18",
+          "multi_turn": "15/15",
+          "side_question": "14/15",
+          "not_order": "18/18",
+          "messy": "15/15"
+        },
+        "flipped_ids": [
+          "gpt-027"
+        ]
+      }
+    },
+    "errors": 0,
+    "reply_ms": {
+      "n": 141,
+      "median": 2911,
+      "p95": 4841
+    },
+    "tokens_per_case": {
+      "prompt_tokens": 21261,
+      "cached_tokens": 20237,
+      "completion_tokens": 475
+    },
+    "llm_calls_per_case": 1.53,
+    "cost_usd_total": 0.068134,
+    "cost_usd_per_case": 0.000568
+  },
+  "projected_cost_usd_80x3": {
+    "anthropic/claude-haiku-5.5": 0.1363,
+    "anthropic/claude-sonnet-5.5": 2.2397
+  },
+  "results": [
+    {
+      "id": "gpt-001",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2727
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13528,
+      "cached_tokens": 13198,
+      "completion_tokens": 305,
+      "cost_usd": 0.00032573000000000004,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-002",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3882
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13552,
+      "cached_tokens": 13198,
+      "completion_tokens": 651,
+      "cost_usd": 0.00050173,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-003",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2656
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13532,
+      "cached_tokens": 13198,
+      "completion_tokens": 300,
+      "cost_usd": 0.00032373,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-004",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3076
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13553,
+      "cached_tokens": 13198,
+      "completion_tokens": 518,
+      "cost_usd": 0.000435355,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-005",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3084
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13549,
+      "cached_tokens": 13198,
+      "completion_tokens": 439,
+      "cost_usd": 0.000395355,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-006",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2185
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13530,
+      "cached_tokens": 13198,
+      "completion_tokens": 287,
+      "cost_usd": 0.00031698,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-007",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3224
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13578,
+      "cached_tokens": 13198,
+      "completion_tokens": 517,
+      "cost_usd": 0.00043798000000000003,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-008",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2566
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13550,
+      "cached_tokens": 13198,
+      "completion_tokens": 380,
+      "cost_usd": 0.00036598,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-009",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3003
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13578,
+      "cached_tokens": 13198,
+      "completion_tokens": 488,
+      "cost_usd": 0.00042348,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-010",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3806
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27713,
+      "cached_tokens": 26396,
+      "completion_tokens": 407,
+      "cost_usd": 0.0006320850000000001,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-011",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2884
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13569,
+      "cached_tokens": 13198,
+      "completion_tokens": 405,
+      "cost_usd": 0.00038085500000000004,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-012",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2229
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13531,
+      "cached_tokens": 13198,
+      "completion_tokens": 294,
+      "cost_usd": 0.000320605,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-013",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3206
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13579,
+      "cached_tokens": 13198,
+      "completion_tokens": 522,
+      "cost_usd": 0.000440605,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-014",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3035
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13573,
+      "cached_tokens": 13198,
+      "completion_tokens": 469,
+      "cost_usd": 0.000413355,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-015",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2645
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13567,
+      "cached_tokens": 13198,
+      "completion_tokens": 333,
+      "cost_usd": 0.000344605,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-016",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3030
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13596,
+      "cached_tokens": 13198,
+      "completion_tokens": 586,
+      "cost_usd": 0.00047473000000000003,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-017",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2657
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13579,
+      "cached_tokens": 13198,
+      "completion_tokens": 474,
+      "cost_usd": 0.000416605,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-018",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2648
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13581,
+      "cached_tokens": 13198,
+      "completion_tokens": 421,
+      "cost_usd": 0.000390355,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-019",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2820
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13565,
+      "cached_tokens": 13198,
+      "completion_tokens": 420,
+      "cost_usd": 0.000387855,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-020",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2607,
+        2709
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42351,
+      "cached_tokens": 39594,
+      "completion_tokens": 563,
+      "cost_usd": 0.001022065,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-021",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2572,
+        3094
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42695,
+      "cached_tokens": 39594,
+      "completion_tokens": 677,
+      "cost_usd": 0.001122065,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-022",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2844,
+        3334,
+        2294
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 72311,
+      "cached_tokens": 65990,
+      "completion_tokens": 857,
+      "cost_usd": 0.001878525,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-023",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2380,
+        2447
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42272,
+      "cached_tokens": 39594,
+      "completion_tokens": 551,
+      "cost_usd": 0.0010061900000000001,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-024",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2373,
+        4065,
+        5887
+      ],
+      "llm_calls": 6,
+      "prompt_tokens": 86822,
+      "cached_tokens": 79188,
+      "completion_tokens": 940,
+      "cost_usd": 0.00221613,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-025",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4156
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27618,
+      "cached_tokens": 26396,
+      "completion_tokens": 557,
+      "cost_usd": 0.00069521,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-026",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        6421
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 41788,
+      "cached_tokens": 39594,
+      "completion_tokens": 730,
+      "cost_usd": 0.00103519,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-027",
+      "category": "side_question",
+      "passed": false,
+      "fails": [
+        "reply_contains: '100' not in the bot's text replies"
+      ],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4371
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27947,
+      "cached_tokens": 26396,
+      "completion_tokens": 687,
+      "cost_usd": 0.000801335,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-028",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3898
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27623,
+      "cached_tokens": 26396,
+      "completion_tokens": 478,
+      "cost_usd": 0.0006563350000000001,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-029",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4841
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27805,
+      "cached_tokens": 26396,
+      "completion_tokens": 726,
+      "cost_usd": 0.000803085,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-030",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2761
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13523,
+      "cached_tokens": 13198,
+      "completion_tokens": 323,
+      "cost_usd": 0.000334105,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-031",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2678
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13546,
+      "cached_tokens": 13198,
+      "completion_tokens": 357,
+      "cost_usd": 0.00035398,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-032",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2277
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13533,
+      "cached_tokens": 13198,
+      "completion_tokens": 175,
+      "cost_usd": 0.000261355,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-033",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2199
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13546,
+      "cached_tokens": 13198,
+      "completion_tokens": 155,
+      "cost_usd": 0.00025298,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-034",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2026
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13561,
+      "cached_tokens": 13198,
+      "completion_tokens": 224,
+      "cost_usd": 0.00028935500000000004,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-035",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        1962
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13569,
+      "cached_tokens": 13198,
+      "completion_tokens": 265,
+      "cost_usd": 0.000310855,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-036",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3381
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13555,
+      "cached_tokens": 13198,
+      "completion_tokens": 462,
+      "cost_usd": 0.000407605,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-037",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2788
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13538,
+      "cached_tokens": 13198,
+      "completion_tokens": 352,
+      "cost_usd": 0.00035048,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-038",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2654
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13561,
+      "cached_tokens": 13198,
+      "completion_tokens": 489,
+      "cost_usd": 0.000421855,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-039",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2826
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13548,
+      "cached_tokens": 13198,
+      "completion_tokens": 392,
+      "cost_usd": 0.00037173,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-040",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3491
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13567,
+      "cached_tokens": 13198,
+      "completion_tokens": 623,
+      "cost_usd": 0.000489605,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-001",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2083
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13528,
+      "cached_tokens": 13198,
+      "completion_tokens": 287,
+      "cost_usd": 0.00031673000000000004,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-002",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3092
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13552,
+      "cached_tokens": 13198,
+      "completion_tokens": 574,
+      "cost_usd": 0.00046323,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-003",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4305
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13532,
+      "cached_tokens": 13198,
+      "completion_tokens": 353,
+      "cost_usd": 0.00035023000000000004,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-004",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3583
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13553,
+      "cached_tokens": 13198,
+      "completion_tokens": 416,
+      "cost_usd": 0.000384355,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-005",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2743
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13549,
+      "cached_tokens": 13198,
+      "completion_tokens": 424,
+      "cost_usd": 0.000387855,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-006",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2936
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13530,
+      "cached_tokens": 13198,
+      "completion_tokens": 288,
+      "cost_usd": 0.00031748000000000003,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-007",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3639
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13578,
+      "cached_tokens": 13198,
+      "completion_tokens": 594,
+      "cost_usd": 0.00047648,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-008",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2648
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13550,
+      "cached_tokens": 13198,
+      "completion_tokens": 372,
+      "cost_usd": 0.00036198000000000003,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-009",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2701
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13578,
+      "cached_tokens": 13198,
+      "completion_tokens": 478,
+      "cost_usd": 0.00041848,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-010",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4012
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27712,
+      "cached_tokens": 26396,
+      "completion_tokens": 438,
+      "cost_usd": 0.0006474600000000001,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-011",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3124
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13569,
+      "cached_tokens": 13198,
+      "completion_tokens": 490,
+      "cost_usd": 0.00042335500000000004,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-012",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2078
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13531,
+      "cached_tokens": 13198,
+      "completion_tokens": 319,
+      "cost_usd": 0.00033310500000000004,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-013",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3002
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13579,
+      "cached_tokens": 13198,
+      "completion_tokens": 507,
+      "cost_usd": 0.00043310500000000004,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-014",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3262
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13573,
+      "cached_tokens": 13198,
+      "completion_tokens": 454,
+      "cost_usd": 0.000405855,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-015",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2949
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13567,
+      "cached_tokens": 13198,
+      "completion_tokens": 380,
+      "cost_usd": 0.00036810500000000003,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-016",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2889
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13596,
+      "cached_tokens": 13198,
+      "completion_tokens": 543,
+      "cost_usd": 0.00045323,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-017",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2645
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13579,
+      "cached_tokens": 13198,
+      "completion_tokens": 411,
+      "cost_usd": 0.000385105,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-018",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3415
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13581,
+      "cached_tokens": 13198,
+      "completion_tokens": 569,
+      "cost_usd": 0.000464355,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-019",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2970
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13565,
+      "cached_tokens": 13198,
+      "completion_tokens": 454,
+      "cost_usd": 0.000404855,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-020",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2424,
+        2997
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42345,
+      "cached_tokens": 39594,
+      "completion_tokens": 583,
+      "cost_usd": 0.001031315,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-021",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2992,
+        3082
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42638,
+      "cached_tokens": 39594,
+      "completion_tokens": 693,
+      "cost_usd": 0.0011229400000000002,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-022",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2206,
+        3102,
+        2441
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 72349,
+      "cached_tokens": 65990,
+      "completion_tokens": 784,
+      "cost_usd": 0.0018467750000000002,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-023",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2337,
+        2400
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42267,
+      "cached_tokens": 39594,
+      "completion_tokens": 577,
+      "cost_usd": 0.0010185650000000001,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-024",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2167,
+        3324,
+        2936
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 72470,
+      "cached_tokens": 65990,
+      "completion_tokens": 907,
+      "cost_usd": 0.0019234,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-025",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4101
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27615,
+      "cached_tokens": 26396,
+      "completion_tokens": 546,
+      "cost_usd": 0.000689335,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-026",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        5997
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 41788,
+      "cached_tokens": 39594,
+      "completion_tokens": 680,
+      "cost_usd": 0.00101019,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-027",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4864
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27876,
+      "cached_tokens": 26396,
+      "completion_tokens": 653,
+      "cost_usd": 0.0007754600000000001,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-028",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3880
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27623,
+      "cached_tokens": 26396,
+      "completion_tokens": 440,
+      "cost_usd": 0.000637335,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-029",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4982
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27808,
+      "cached_tokens": 26396,
+      "completion_tokens": 773,
+      "cost_usd": 0.0008269600000000001,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-030",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2783
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13523,
+      "cached_tokens": 13198,
+      "completion_tokens": 420,
+      "cost_usd": 0.000382605,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-031",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2956
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13546,
+      "cached_tokens": 13198,
+      "completion_tokens": 389,
+      "cost_usd": 0.00036998,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-032",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2082
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13533,
+      "cached_tokens": 13198,
+      "completion_tokens": 140,
+      "cost_usd": 0.000243855,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-033",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2211
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13546,
+      "cached_tokens": 13198,
+      "completion_tokens": 145,
+      "cost_usd": 0.00024797999999999997,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-034",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2275
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13561,
+      "cached_tokens": 13198,
+      "completion_tokens": 234,
+      "cost_usd": 0.000294355,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-035",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2166
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13569,
+      "cached_tokens": 13198,
+      "completion_tokens": 253,
+      "cost_usd": 0.00030485500000000003,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-036",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3529
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13555,
+      "cached_tokens": 13198,
+      "completion_tokens": 564,
+      "cost_usd": 0.000458605,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-037",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2960
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13538,
+      "cached_tokens": 13198,
+      "completion_tokens": 373,
+      "cost_usd": 0.00036098,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-038",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3268
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13561,
+      "cached_tokens": 13198,
+      "completion_tokens": 524,
+      "cost_usd": 0.000439355,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-039",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2911
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13548,
+      "cached_tokens": 13198,
+      "completion_tokens": 380,
+      "cost_usd": 0.00036573000000000004,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-040",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3897
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13567,
+      "cached_tokens": 13198,
+      "completion_tokens": 719,
+      "cost_usd": 0.000537605,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-001",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2060
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13528,
+      "cached_tokens": 13198,
+      "completion_tokens": 284,
+      "cost_usd": 0.00031523,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-002",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2641
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13552,
+      "cached_tokens": 13198,
+      "completion_tokens": 404,
+      "cost_usd": 0.00037823,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-003",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2487
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13532,
+      "cached_tokens": 13198,
+      "completion_tokens": 334,
+      "cost_usd": 0.00034073,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-004",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2753
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13553,
+      "cached_tokens": 13198,
+      "completion_tokens": 419,
+      "cost_usd": 0.000385855,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-005",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3355
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13549,
+      "cached_tokens": 13198,
+      "completion_tokens": 523,
+      "cost_usd": 0.000437355,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-006",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2543
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13530,
+      "cached_tokens": 13198,
+      "completion_tokens": 335,
+      "cost_usd": 0.00034098,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-007",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2866
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13578,
+      "cached_tokens": 13198,
+      "completion_tokens": 510,
+      "cost_usd": 0.00043448,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-008",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2654
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13550,
+      "cached_tokens": 13198,
+      "completion_tokens": 403,
+      "cost_usd": 0.00037748,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-009",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3251
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13578,
+      "cached_tokens": 13198,
+      "completion_tokens": 566,
+      "cost_usd": 0.00046248000000000003,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-010",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3856
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27714,
+      "cached_tokens": 26396,
+      "completion_tokens": 443,
+      "cost_usd": 0.00065021,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-011",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2846
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13569,
+      "cached_tokens": 13198,
+      "completion_tokens": 450,
+      "cost_usd": 0.00040335500000000004,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-012",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2223
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13531,
+      "cached_tokens": 13198,
+      "completion_tokens": 317,
+      "cost_usd": 0.000332105,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-013",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3411
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13579,
+      "cached_tokens": 13198,
+      "completion_tokens": 558,
+      "cost_usd": 0.000458605,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-014",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2478
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13573,
+      "cached_tokens": 13198,
+      "completion_tokens": 414,
+      "cost_usd": 0.000385855,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-015",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3008
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13567,
+      "cached_tokens": 13198,
+      "completion_tokens": 417,
+      "cost_usd": 0.00038660500000000004,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-016",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3169
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13596,
+      "cached_tokens": 13198,
+      "completion_tokens": 614,
+      "cost_usd": 0.00048873,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-017",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2387
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13579,
+      "cached_tokens": 13198,
+      "completion_tokens": 393,
+      "cost_usd": 0.000376105,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-018",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3356
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13581,
+      "cached_tokens": 13198,
+      "completion_tokens": 464,
+      "cost_usd": 0.00041185500000000003,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-019",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3059
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13565,
+      "cached_tokens": 13198,
+      "completion_tokens": 453,
+      "cost_usd": 0.000404355,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-020",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2139,
+        2823
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42347,
+      "cached_tokens": 39594,
+      "completion_tokens": 508,
+      "cost_usd": 0.0009940650000000001,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-021",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2395,
+        3359
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42638,
+      "cached_tokens": 39594,
+      "completion_tokens": 706,
+      "cost_usd": 0.00112944,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-022",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2030,
+        3293,
+        2126
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 72353,
+      "cached_tokens": 65990,
+      "completion_tokens": 728,
+      "cost_usd": 0.001819275,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-023",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2263,
+        2381
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42269,
+      "cached_tokens": 39594,
+      "completion_tokens": 511,
+      "cost_usd": 0.0009858150000000001,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-024",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2254,
+        3051,
+        3068
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 72464,
+      "cached_tokens": 65990,
+      "completion_tokens": 862,
+      "cost_usd": 0.0019001500000000002,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-025",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3709
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27617,
+      "cached_tokens": 26396,
+      "completion_tokens": 503,
+      "cost_usd": 0.0006680850000000001,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-026",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        7332
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 41790,
+      "cached_tokens": 39594,
+      "completion_tokens": 864,
+      "cost_usd": 0.00110244,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-027",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4834
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27878,
+      "cached_tokens": 26396,
+      "completion_tokens": 754,
+      "cost_usd": 0.0008262100000000001,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-028",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4052
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27628,
+      "cached_tokens": 26396,
+      "completion_tokens": 449,
+      "cost_usd": 0.0006424600000000001,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-029",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        5381
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 27809,
+      "cached_tokens": 26396,
+      "completion_tokens": 789,
+      "cost_usd": 0.000835085,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-030",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3387
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13523,
+      "cached_tokens": 13198,
+      "completion_tokens": 393,
+      "cost_usd": 0.000369105,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-031",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3198
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13546,
+      "cached_tokens": 13198,
+      "completion_tokens": 408,
+      "cost_usd": 0.00037948,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-032",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2065
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13533,
+      "cached_tokens": 13198,
+      "completion_tokens": 129,
+      "cost_usd": 0.000238355,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-033",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2153
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13546,
+      "cached_tokens": 13198,
+      "completion_tokens": 139,
+      "cost_usd": 0.00024498,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-034",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        1902
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13561,
+      "cached_tokens": 13198,
+      "completion_tokens": 232,
+      "cost_usd": 0.000293355,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-035",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        1942
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13569,
+      "cached_tokens": 13198,
+      "completion_tokens": 226,
+      "cost_usd": 0.00029135500000000003,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-036",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3233
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13555,
+      "cached_tokens": 13198,
+      "completion_tokens": 532,
+      "cost_usd": 0.000442605,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-037",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2497
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13538,
+      "cached_tokens": 13198,
+      "completion_tokens": 332,
+      "cost_usd": 0.00034048,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-038",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3563
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13561,
+      "cached_tokens": 13198,
+      "completion_tokens": 681,
+      "cost_usd": 0.000517855,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-039",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2637
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13548,
+      "cached_tokens": 13198,
+      "completion_tokens": 422,
+      "cost_usd": 0.00038673,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-040",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3321
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13567,
+      "cached_tokens": 13198,
+      "completion_tokens": 572,
+      "cost_usd": 0.00046410500000000003,
+      "set": "dev",
+      "run": 3
+    }
+  ]
+}

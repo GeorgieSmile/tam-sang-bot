@@ -1,0 +1,223 @@
+- id: sim-001
+  persona: "นักศึกษาหอใน พิมพ์สั้น ไม่ค่อยลงท้ายด้วยครับ"
+  opening: "Names kaphrao and the quantity. Leaves out the protein, toppings, spice level, and fulfillment."
+  goal: "ข้าวกะเพราหมูกรอบเผ็ดน้อย 2 กล่อง เพิ่มไข่ดาวไม่สุกทั้งสองกล่อง ส่งที่หอพักต้นฝน ห้อง 12"
+  expect:
+    card:
+      items:
+        - {dish_id: kaphrao, qty: 2, option_ids: [crispy_pork, fried_egg_runny, spice_mild]}
+      fulfillment: delivery
+      address_contains: "หอพักต้นฝน"
+
+- id: sim-002
+  persona: "พนักงานออฟฟิศที่สั่งข้าวก่อนลงไปรับช่วงพักเที่ยง พิมพ์สุภาพ"
+  opening: "Gives the full food order. Leaves out whether it is for pickup or delivery."
+  goal: "ข้าวไก่กระเทียมพริกไทย 1 กล่อง เพิ่มข้าวกับไข่ดาวสุก เดี๋ยวไปรับที่ร้านค่ะ"
+  expect:
+    card:
+      items:
+        - {dish_id: garlic, qty: 1, option_ids: [chicken, fried_egg_cooked, extra_rice]}
+      fulfillment: pickup
+
+- id: sim-003
+  persona: "คนทำงานกะบ่าย สั่งข้าวกินกับเพื่อนร่วมกะ พิมพ์สั้นแต่บอกจำนวนชัด"
+  opening: "Gives the full food order and asks for delivery. Leaves out the address."
+  goal: "ข้าวผัดพริกแกงกุ้งเผ็ดมาก 3 กล่อง ส่งที่อาคารร่มแก้ว ชั้น 2 ห้อง 204"
+  expect:
+    card:
+      items:
+        - {dish_id: curry_paste, qty: 3, option_ids: [shrimp, spice_extra]}
+      fulfillment: delivery
+      address_contains: "อาคารร่มแก้ว"
+
+- id: sim-004
+  persona: "แม่สั่งข้าวให้ลูก ๆ มักนึกได้ทีหลังว่าจะเอาเครื่องดื่มด้วย"
+  opening: "Orders only the fried rice and asks for delivery without an address. Adds the tea when answering with the address."
+  goal: "ข้าวผัดไก่ 4 กล่อง ชาไทยเย็นหวานน้อย 2 แก้ว ส่งที่บ้านเลขที่ 16 ซอยบัวพราย 3"
+  expect:
+    card:
+      items:
+        - {dish_id: fried_rice, qty: 4, option_ids: [chicken]}
+        - {dish_id: thai_tea, qty: 2, option_ids: [sweetness_less]}
+      fulfillment: delivery
+      address_contains: "ซอยบัวพราย 3"
+
+- id: sim-005
+  persona: "คนขับรถส่งของที่กำลังรีบ พิมพ์เป็นคำสั้น ๆ แล้วแก้รายการทันทีเมื่อนึกได้"
+  opening: "Initially orders one special chicken pad see ew and leaves out fulfillment. When asked, switches the protein to sliced pork, keeps the special portion, and says pickup."
+  goal: "ผัดซีอิ๊วเส้นใหญ่หมูชิ้นพิเศษ 1 กล่อง ไปรับเอง"
+  expect:
+    card:
+      items:
+        - {dish_id: pad_see_ew, qty: 1, option_ids: [sliced_pork, special]}
+      fulfillment: pickup
+
+- id: sim-006
+  persona: "พนักงานออฟฟิศที่รวบรวมออร์เดอร์จากเพื่อนร่วมโต๊ะ พิมพ์แยกทีละรายการ"
+  opening: "Starts with only the dry suki and asks for delivery. Leaves out the address. Sends the kaphrao and water in separate later messages before providing the address."
+  goal: "สุกี้แห้งปลาหมึก 1 กล่อง ข้าวกะเพราหมูสับไม่เผ็ด 2 กล่อง น้ำเปล่า 3 ขวด ส่งที่อาคารเมฆขาว ชั้น 4 ห้อง 405"
+  expect:
+    card:
+      items:
+        - {dish_id: suki_dry, qty: 1, option_ids: [squid]}
+        - {dish_id: kaphrao, qty: 2, option_ids: [minced_pork, spice_none]}
+        - {dish_id: water, qty: 3, option_ids: []}
+      fulfillment: delivery
+      address_contains: "อาคารเมฆขาว"
+
+- id: sim-007
+  persona: "ลูกค้าสูงวัยที่สั่งกับข้าวง่าย ๆ พิมพ์เป็นประโยคและลงท้ายด้วยจ้ะ"
+  opening: "Orders the rice and standalone fried eggs for pickup. Leaves out how the eggs are cooked."
+  goal: "ข้าวสวย 2 กล่องกับไข่ดาวสุกแยก 2 ฟอง เดี๋ยวไปรับเองจ้ะ"
+  expect:
+    card:
+      items:
+        - {dish_id: plain_rice, qty: 2, option_ids: []}
+        - {dish_id: fried_egg_side, qty: 2, option_ids: [egg_cooked]}
+      fulfillment: pickup
+
+- id: sim-008
+  persona: "คนเฝ้าร้านหนังสือที่ออกไปรับข้าวเองไม่ได้ พิมพ์สุภาพและระบุห้องชัด"
+  opening: "Gives the full food order and asks for delivery. Leaves out the address."
+  goal: "ข้าวผัดพริกเผาปลาหมึกเผ็ดน้อย 2 กล่อง เพิ่มไข่เจียวทั้งสองกล่อง ส่งที่ร้านหนังสือใบเมเปิล เลขที่ 23 ซอยดินสอสี"
+  expect:
+    card:
+      items:
+        - {dish_id: chili_paste, qty: 2, option_ids: [squid, omelette_addon, spice_mild]}
+      fulfillment: delivery
+      address_contains: "ร้านหนังสือใบเมเปิล"
+
+- id: sim-009
+  persona: "นักศึกษาที่สั่งข้าวเผื่อเพื่อนในห้อง ชอบใช้ชื่อเมนูสั้น ๆ"
+  opening: "Gives the full food order. Leaves out fulfillment and provides the delivery address when asked."
+  goal: "ข้าวคะน้าหมูกรอบพิเศษ 2 กล่อง ส่งที่หอพักดอกแก้ว ห้อง 307"
+  expect:
+    card:
+      items:
+        - {dish_id: kale, qty: 2, option_ids: [crispy_pork, special]}
+      fulfillment: delivery
+      address_contains: "หอพักดอกแก้ว"
+
+- id: sim-010
+  persona: "นักศึกษาฝึกงานที่ชอบอาหารเผ็ด พิมพ์เร็วเพราะใกล้หมดเวลาพัก"
+  opening: "Orders one very spicy drunken noodles for pickup. Leaves out the protein."
+  goal: "ผัดขี้เมาเส้นใหญ่กุ้งเผ็ดมาก 1 กล่อง ไปรับที่ร้าน"
+  expect:
+    card:
+      items:
+        - {dish_id: drunken_noodles, qty: 1, option_ids: [shrimp, spice_extra]}
+      fulfillment: pickup
+
+- id: sim-011
+  persona: "พ่อที่แวะรับมื้อเย็นหลังเลิกงาน อยากสั่งของกินเล่นไปฝากลูกด้วย"
+  opening: "Starts with only the suki soup. Leaves out fulfillment. Adds chicken bites when answering that the order is for pickup."
+  goal: "สุกี้น้ำหมูชิ้น 2 กล่อง ไก่ป๊อป 1 ชุด ผมไปรับที่ร้านครับ"
+  expect:
+    card:
+      items:
+        - {dish_id: suki_soup, qty: 2, option_ids: [sliced_pork]}
+        - {dish_id: chicken_bites, qty: 1, option_ids: []}
+      fulfillment: pickup
+
+- id: sim-012
+  persona: "ผู้ปกครองสั่งมื้อกลางวันให้เด็ก ๆ ที่มาทำงานกลุ่มด้วยกัน"
+  opening: "Initially orders three boxes of omelette rice for delivery without giving an address. When asked for the address, changes the total to five boxes and gives the address."
+  goal: "ข้าวไข่เจียว 5 กล่อง ส่งที่บ้านเลขที่ 28 ซอยต้นโมก 2"
+  expect:
+    card:
+      items:
+        - {dish_id: omelette_rice, qty: 5, option_ids: []}
+      fulfillment: delivery
+      address_contains: "ซอยต้นโมก 2"
+
+- id: sim-013
+  persona: "พนักงานใหม่ที่ช่วยสั่งมื้อเที่ยงให้เพื่อน พิมพ์ทีละรายการตามที่เพื่อนบอก"
+  opening: "Starts with only the minced-pork omelette rice. Leaves out fulfillment. Sends the bacon soft egg rice and cocoa in separate later messages before saying pickup."
+  goal: "ข้าวไข่เจียวหมูสับ 2 กล่อง ข้าวไข่ข้นเบคอนเพิ่มข้าว 1 กล่อง โกโก้เย็นไม่หวาน 1 แก้ว ไปรับเองค่ะ"
+  expect:
+    card:
+      items:
+        - {dish_id: pork_omelette_rice, qty: 2, option_ids: []}
+        - {dish_id: bacon_soft_egg_rice, qty: 1, option_ids: [extra_rice]}
+        - {dish_id: cocoa, qty: 1, option_ids: [sweetness_none]}
+      fulfillment: pickup
+
+- id: sim-014
+  persona: "คุณยายสั่งข้าวเผื่อหลาน พิมพ์ช้าและใช้คำสุภาพ"
+  opening: "Gives the full food order. Leaves out fulfillment and provides the delivery address when asked."
+  goal: "ข้าวไข่ข้นพิเศษ 3 กล่อง ส่งที่บ้านเลขที่ 42 ซอยพวงชมพู 5 ค่ะ"
+  expect:
+    card:
+      items:
+        - {dish_id: soft_egg_rice, qty: 3, option_ids: [special]}
+      fulfillment: delivery
+      address_contains: "ซอยพวงชมพู 5"
+
+- id: sim-015
+  persona: "นักศึกษาที่จะเดินผ่านร้านหลังเลิกเรียน มักบอกแค่ชื่อเมนูก่อน"
+  opening: "Orders one special pad Thai for pickup. Leaves out the protein."
+  goal: "ผัดไทยเส้นจันท์กุ้งพิเศษ 1 กล่อง เดี๋ยวไปรับที่ร้านครับ"
+  expect:
+    card:
+      items:
+        - {dish_id: pad_thai, qty: 1, option_ids: [shrimp, special]}
+      fulfillment: pickup
+
+- id: sim-016
+  persona: "เจ้าของร้านดอกไม้ที่สั่งมื้อเย็นให้คนในร้าน พิมพ์ชื่อเมนูกับจำนวนครบ"
+  opening: "Gives both items and asks for delivery. Leaves out the address."
+  goal: "ข้าวผัดกุ้ง 4 กล่อง โคล่า 4 กระป๋อง ส่งที่ร้านดอกไม้กลีบฝน เลขที่ 19 ซอยก้านแก้ว"
+  expect:
+    card:
+      items:
+        - {dish_id: fried_rice, qty: 4, option_ids: [shrimp]}
+        - {dish_id: cola, qty: 4, option_ids: []}
+      fulfillment: delivery
+      address_contains: "ร้านดอกไม้กลีบฝน"
+
+- id: sim-017
+  persona: "พ่อที่สั่งข้าวให้ครอบครัวแล้วนึกได้ว่าลูกอยากกินไข่เจียวด้วย"
+  opening: "Orders only the garlic rice for delivery and leaves out the address. Adds the standalone omelettes when answering with the address."
+  goal: "ข้าวหมูชิ้นกระเทียมพริกไทย 3 กล่อง ไข่เจียวแยก 2 ฟอง ส่งที่บ้านเลขที่ 61 ซอยสายน้ำผึ้ง 4"
+  expect:
+    card:
+      items:
+        - {dish_id: garlic, qty: 3, option_ids: [sliced_pork]}
+        - {dish_id: omelette_side, qty: 2, option_ids: []}
+      fulfillment: delivery
+      address_contains: "ซอยสายน้ำผึ้ง 4"
+
+- id: sim-018
+  persona: "พนักงานออฟฟิศที่สั่งข้าวคู่กับเครื่องดื่ม เพิ่งตัดสินใจเรื่องความหวานตอนร้านถาม"
+  opening: "Orders the chicken kaphrao and an iced cocoa with normal sweetness. Leaves out fulfillment. When asked, changes only the cocoa to extra sweet and says pickup."
+  goal: "ข้าวกะเพราไก่เผ็ดน้อยเพิ่มไข่ข้น 1 กล่อง โกโก้เย็นหวานมาก 1 แก้ว ไปรับที่ร้านค่ะ"
+  expect:
+    card:
+      items:
+        - {dish_id: kaphrao, qty: 1, option_ids: [chicken, soft_egg_addon, spice_mild]}
+        - {dish_id: cocoa, qty: 1, option_ids: [sweetness_extra]}
+      fulfillment: pickup
+
+- id: sim-019
+  persona: "นักเรียนที่รวบรวมรายการให้เพื่อนหลังซ้อมกีฬา ส่งข้อความแยกตามที่เพื่อนบอก"
+  opening: "Orders only pad Thai and says delivery without giving the address. Sends the standalone soft eggs and water in separate later messages before giving the address."
+  goal: "ผัดไทยเส้นจันท์ไก่ 3 กล่อง ไข่ข้นแยก 2 ที่ น้ำเปล่า 5 ขวด ส่งที่อาคารกีฬาลานเมฆ ห้องชมรมชั้น 1"
+  expect:
+    card:
+      items:
+        - {dish_id: pad_thai, qty: 3, option_ids: [chicken]}
+        - {dish_id: soft_egg_side, qty: 2, option_ids: []}
+        - {dish_id: water, qty: 5, option_ids: []}
+      fulfillment: delivery
+      address_contains: "อาคารกีฬาลานเมฆ"
+
+- id: sim-020
+  persona: "แม่ที่สั่งข้าวคนละระดับความเผ็ดให้ตัวเองกับลูก บอกแยกชัดว่ากล่องไหนของใคร"
+  opening: "Gives both kaphrao variants and their quantities. Leaves out fulfillment."
+  goal: "ข้าวกะเพราหมูสับ 2 กล่อง กล่องของลูกไม่เผ็ด กล่องของแม่เผ็ดมากเพิ่มไข่ดาวสุก แม่ไปรับเองค่ะ"
+  expect:
+    card:
+      items:
+        - {dish_id: kaphrao, qty: 1, option_ids: [minced_pork, spice_none]}
+        - {dish_id: kaphrao, qty: 1, option_ids: [minced_pork, fried_egg_cooked, spice_extra]}
+      fulfillment: pickup
