@@ -10,7 +10,7 @@ During lunch rush, small shop owners are cooking and cannot keep up with LINE me
 
 ## How it works
 
-1. **Customers (LINE OA):** Message in normal Thai (slang, abbreviations, typos, multi-dish orders, or LINE location pins). The bot answers shop/menu/sold-out questions, sends the full menu with meat choices and surcharges when asked ("มีเมนูอะไรบ้าง"), asks short clarifying questions only when needed, and sends a **LINE Flex order card** with code-calculated prices and the current wait (`ตอนนี้รอประมาณ 10–15 นาที`). Tapping **ยืนยันออเดอร์** queues the order immediately.
+1. **Customers (LINE OA):** Message in normal Thai (slang, abbreviations, typos, multi-dish orders, or LINE location pins). The bot answers shop hours, address, menu and sold-out questions, sends the full menu with meat choices and surcharges when asked ("มีเมนูอะไรบ้าง"), asks short clarifying questions only when needed, and sends a **LINE Flex order card** with code-calculated prices and the current wait (`ตอนนี้รอประมาณ 10–15 นาที`). Tapping **ยืนยันออเดอร์** queues the order immediately. Tapping **ยกเลิก** clears the dishes but keeps pickup or delivery, the address, the pin and the time, so the next order is quick.
    - **Receipt:** shows the queue position and wait (`คิวที่ 2 · ประมาณ 10–15 นาที`) and a **PromptPay QR with the exact amount**. If the customer still owes for earlier orders, the QR covers the whole unpaid balance and the receipt lists each order.
    - **Cash:** if the customer says they'll pay cash, the receipt says `ชำระเงินสด X฿ ตอนรับอาหารได้เลยค่ะ` and no QR is sent, unless they ask for it.
    - **Slips:** when a customer sends a transfer slip, the bot reads its QR, verifies it with [SlipOK](https://slipok.com/), and marks the matching orders paid (`ได้รับยอด 60฿ แล้วค่ะ ✅ (#3)`). A slip sent before tapping Confirm also confirms the open order card. Duplicates, wrong amounts, wrong receivers and unreadable slips go to the owner. The bot never tells a customer a slip is fake.
@@ -53,17 +53,19 @@ While quiet, the bot makes no replies and no LLM calls for that customer. Messag
 - **Few LINE pushes:** Customer replies, receipts, QR codes, and slip results use free LINE `reply` tokens. Pushes (counted against LINE's 300/month free plan) are only sent on owner cancellations, optional `เสร็จ + แจ้งลูกค้า` taps, and the owner alerts: new orders (off by default) and new inbox cards (on by default).
 - **Built for real Thai chats:** Defaults unspecified spice to `เผ็ดปกติ` and sweetness to `หวานปกติ`, remembers returning customers' delivery address and location pins, replies to greetings and asks what the customer wants, answers dishes the shop doesn't sell with similar menu items, and hands the chat to the owner (`hand_over`) for allergy or ingredient questions and edits to confirmed orders.
 - **Never talks over the owner:** the bot re-checks that it isn't quiet right before every reply, so an owner who taps **คุยเอง** mid-reply wins.
+- **Fast one-message orders:** when a single message gives the whole order, the bot sends the order card with a fixed line instead of a second LLM call. That's about 1.1 s faster: 4.35 s → 3.23 s on Haiku. Messages containing a Thai question word still get the second call, so side questions are answered ([ADR-0002](docs/adr/0002-card-fast-path-question-word-check.md)).
+- **Logs without personal data:** one log line per LLM call and per LINE event, with latency, token counts and cache hits. Message text, addresses and LINE user IDs are never logged.
 - **Small, swappable stack:** Python 3.13, FastAPI, SQLite (WAL), `httpx`, `zxing-cpp` + `Pillow` (reading slip QR codes), `segno` (PromptPay QR), and the OpenAI SDK pointed at any OpenAI-compatible provider via `.env` (defaults to OpenRouter).
 
 ---
 
 ## Quick start (local + live LINE OA)
 
-**Prerequisites:** Python 3.13+, [`uv`](https://docs.astral.sh/uv/), `sqlite3` CLI (for helper scripts), a LINE Official Account (Messaging API enabled), an OpenRouter (or OpenAI-compatible) API key, and `cloudflared` (`brew install cloudflared`) for a public HTTPS webhook URL. Optional: a PromptPay ID (for QR codes) and a [SlipOK](https://slipok.com/) account (for slip checks).
+**Prerequisites:** [`uv`](https://docs.astral.sh/uv/), which installs Python 3.13 (pinned in `.python-version`); the `sqlite3` CLI (for helper scripts); a LINE Official Account with the Messaging API enabled; an OpenRouter (or other OpenAI-compatible) API key; and `cloudflared` (`brew install cloudflared`) for a public HTTPS webhook URL while testing locally. Optional: a PromptPay ID (for QR codes) and a [SlipOK](https://slipok.com/) account (for slip checks).
 
 1. **Install dependencies:**
    ```bash
-   uv sync
+   uv sync --locked
    ```
 2. **Create `.env`:**
    ```bash
@@ -98,10 +100,24 @@ While quiet, the bot makes no replies and no LLM calls for that customer. Messag
 
 ---
 
+## Deploying to production
+
+The quick tunnel above is for testing only: its URL changes on every restart, and the bot stops when your computer sleeps. Production runs on a free Google Cloud `e2-micro` VM:
+- systemd keeps the app running;
+- Caddy serves HTTPS with automatic Let's Encrypt certificates;
+- a DuckDNS name gives the LINE webhook a fixed URL;
+- `shop.db` is backed up nightly to Cloud Storage;
+- pushes to `main` deploy automatically once CI is green and the shop is closed, with a health check and automatic rollback.
+
+[docs/deploy.md](docs/deploy.md) has the daily commands (deploy, rollback, logs), restoring a backup, and a step-by-step rebuild.
+
+---
+
 ## Adapting to a real shop
 
 Edit [menu.yaml](menu.yaml) directly — no admin UI needed:
 - `shop.name`, `shop.hours` (`open` / `close`, `Asia/Bangkok`), and `shop.delivery` (`fee` and `free_above`; set `fee: 0` for free delivery).
+- `shop.address` *(optional)*: the bot gives it when customers ask "ร้านอยู่ตรงไหน". If you leave it out, the bot has no address to give. It must be text, or the app won't start.
 - `wait` (`minutes_per_box` and `min_wait`): the automatic wait is meal boxes in the queue × `minutes_per_box`, never below `min_wait`. Sides and drinks count 0.
 - `ingredients`, `option_groups`, and `items` (base prices, `category`: `meal` / `side` / `drink`, allowed proteins, and Thai aliases). The menu list the bot sends is built from these, so it updates automatically.
 
@@ -110,13 +126,18 @@ Edit [menu.yaml](menu.yaml) directly — no admin UI needed:
 ## Development
 
 ```bash
-./scripts/check.sh           # ruff format --check, ruff check, mypy, pytest
+./scripts/check.sh           # ruff format --check, ruff check, mypy, pytest; ends with "check.sh: PASS" or FAIL
 ./scripts/dev.sh reset-db    # clear local test orders/chats/slips without stopping uvicorn
 ./scripts/dev.sh users       # list LINE userIds recorded in shop.db
 ./scripts/dev.sh slips [dir] # decode real slip images (default local/slips/); no API calls
 ./scripts/dev.sh demo        # real app on a seeded throwaway DB, stub LINE/LLM/SlipOK, port 8765
+./scripts/dev.sh demo-up     # the same demo in the background (demo-down stops it)
 ./scripts/dev.sh say U_DEMO slip 70  # send a fake LINE event to the demo, print what LINE got
 ```
+
+`check.sh` also runs in the git pre-commit hook and in CI (GitHub Actions on Ubuntu 24.04, the same as the production VM).
+
+The demo's stub LLM echoes the customer's text. To build an order card offline, start the message with `!tools` followed by a tool batch as JSON, for example `!tools [["update_cart", {...}], ["build_order_card", {}]]`. `DEMO_REAL_LLM=1` uses the real model from `.env`; those are paid calls.
 
 *(Note: `reset-db` and `users` need an existing DB, created after the app handles its first request; `users` also needs the `sqlite3` CLI. If you changed `DB_PATH` in `.env`, export `DB_PATH` in your shell before running them. Keep real slips in git-ignored `local/` and never commit them.)*
 
