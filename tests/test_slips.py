@@ -811,7 +811,7 @@ def test_slip_confirmation_is_in_the_next_llm_call(tmp_path: Path) -> None:
         {"role": "assistant", "content": "\n\n".join(texts)},
         {"role": "user", "content": "ขอบคุณ"},
     ]
-    assert calls[0]["messages"][1]["content"].endswith("| ยอดค้างชำระ=0 บาท | ที่อยู่เดิม=ไม่มี")
+    assert calls[0]["messages"][1]["content"].endswith("| ยอดค้างชำระ=0 บาท")
 
 
 def test_pause_during_the_check_pays_nothing_and_says_nothing(tmp_path: Path) -> None:

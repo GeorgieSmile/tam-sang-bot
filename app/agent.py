@@ -396,7 +396,8 @@ def _system_prompt(menu: Menu, overrides: dict[tuple[str, str], bool]) -> dict[s
         "'ส่งที่เดิมนะคะ ถ้าเปลี่ยนที่อยู่บอกได้เลยค่ะ' ห้ามพิมพ์ที่อยู่เต็ม (การ์ดแสดงที่อยู่ให้แล้ว) "
         "ถ้ามีที่อยู่เดิม เวลาถามวิธีรับอาหารให้ใช้คำว่า 'ส่งที่เดิม' โดยไม่ต้องพิมพ์ที่อยู่ "
         "ถ้าไม่มีที่อยู่เดิม ให้ถามแค่ 'รับเองที่ร้านหรือให้ส่งคะ ถ้าส่งรบกวนแจ้งที่อยู่ด้วยนะคะ' "
-        "ห้ามพูดถึงที่อยู่เดิมหรือ 'ในระบบ' กับลูกค้าที่ไม่มีที่อยู่เดิม\n"
+        "ห้ามพูดถึงที่อยู่เดิมหรือ 'ในระบบ' กับลูกค้าที่ไม่มีที่อยู่เดิม "
+        "(สถานะระบบแสดง 'ที่อยู่เดิม=มี' เฉพาะเมื่อลูกค้ามีที่อยู่เดิม)\n"
         "6. เมื่อรายการและวิธีรับอาหารครบแล้ว ให้เรียก build_order_card เพื่อให้ระบบส่งการ์ดยืนยัน "
         "ถ้าลูกค้าบอกจานพร้อมตัวเลือกที่จำเป็นครบและวิธีรับอาหาร (หรือให้ส่งโดยมีที่อยู่เดิม) มาในข้อความเดียว "
         "ให้เรียก update_cart, set_fulfillment และ build_order_card พร้อมกันในการตอบครั้งเดียว "
@@ -699,8 +700,9 @@ def handle_customer_text(
     busy_text = "สั่ง 1 กล่องตอนนี้รอ" + range_text(one_box_minutes(db, menu), delivery=False)
     open_text = "เปิดรับออเดอร์" if status.is_open else f"ปิดร้าน (ปกติเปิด {status.hours_text})"
     unpaid_total = db.get_unpaid_balance(line_user_id).total
-    # Only whether an address is saved, never the address itself (Rule 5)
-    saved_addr = "มี" if customer and (customer.last_address or "").strip() else "ไม่มี"
+    # Only whether an address is saved, never the address itself (Rule 5). Shown only when one
+    # is saved: "ที่อยู่เดิม=ไม่มี" on every turn led the bot to talk about it to new customers
+    has_saved_addr = bool(customer and (customer.last_address or "").strip())
     ff_text = _fulfillment_text(conv.draft)
     system_msgs.append(
         {
@@ -708,7 +710,8 @@ def handle_customer_text(
             "content": (
                 f"สถานะระบบล่าสุดตอนนี้ (ยึดข้อมูลนี้เหนือข้อความเก่าในแชท): "
                 f"ร้าน={open_text} | {busy_text} | ของหมดตอนนี้={sold_text} | ตะกร้าปัจจุบัน={cart_text} "
-                f"| ยอดค้างชำระ={unpaid_total} บาท | ที่อยู่เดิม={saved_addr}"
+                f"| ยอดค้างชำระ={unpaid_total} บาท"
+                + (" | ที่อยู่เดิม=มี" if has_saved_addr else "")
                 + (f" | วิธีรับ={ff_text}" if ff_text else "")
                 + (" | วิธีจ่าย=เงินสด (ไม่ต้องส่ง QR)" if db.pays_cash(line_user_id) else "")
             ),
