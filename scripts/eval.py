@@ -509,9 +509,17 @@ def project(
 
 
 def _git_commit() -> str:
+    """HEAD's short hash, plus "+dirty" when tracked app or script files have uncommitted edits."""
     try:
-        return subprocess.run(
+        head = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        dirty = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=no", "--", "app", "scripts"],
             cwd=ROOT,
             capture_output=True,
             text=True,
@@ -519,6 +527,7 @@ def _git_commit() -> str:
         ).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
         return "unknown"
+    return f"{head}+dirty" if dirty else head
 
 
 def run_eval(

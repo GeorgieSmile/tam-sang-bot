@@ -1686,6 +1686,51 @@ def test_a_question_word_keeps_the_llm_reply_and_logs_what_it_said(
     assert _card_paths(caplog) == [(path, "2")]
 
 
+# Information requests with no question word (docs/specs/2026-11-27-fast-path-request-check.md)
+INFO_REQUESTS = [
+    "คะน้าหมูชิ้นพิเศษ 1 กล่อง กับน้ำเปล่า 1 ขวด รับเองนะคะ ขอที่อยู่ร้านหน่อยค่ะ เพิ่งเคยสั่งครั้งแรก",
+    "กะเพราไก่ 1 รับเองค่ะ ขอเบอร์ร้านด้วยครับ",
+    "ขอโลเคชั่นร้านหน่อยค่ะ ข้าวผัดกุ้ง 1 รับเอง",
+    "บอกทางไปร้านหน่อยค่ะ ผัดไทย 1 รับเอง",
+    "ขอเลขบัญชีด้วยค่ะ กะเพรา 1 รับเอง",
+    "ขอคิวอาร์ด้วย ข้าวผัด 1 รับเอง",
+    "แจ้งเวลาปิดร้านด้วยนะคะ สุกี้น้ำ 1 รับเอง",
+]
+PLAIN_ORDERS = [
+    "ขอกะเพราหมูกรอบ 1 กล่อง รับเองค่ะ",
+    "ขอเผ็ดน้อยหน่อยนะคะ ข้าวผัด 1 รับเอง",
+    "ขอข้าวผัดกุ้ง 2 ส่งที่หอพักต้นฝน ห้อง 12",
+    "ส่งตอนเที่ยงนะคะ กะเพรา 1 ส่งคอนโดริมเมฆ",
+    "รบกวนแยกน้ำด้วยค่ะ สุกี้น้ำ 1 รับเอง",
+]
+
+
+@pytest.mark.parametrize("text", INFO_REQUESTS)
+def test_an_information_request_keeps_the_llm_reply(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, text: str
+) -> None:
+    caplog.set_level(logging.INFO)
+    h = Harness(tmp_path)
+    h.llm.responses += [_resp(tool_calls=BUILD_PICKUP_CARD), _resp(content="ร้านอยู่ซอยตามสั่ง 7 ค่ะ")]
+    h.text("U_A", text)
+    assert len(h.llm.calls) == 2
+    assert h.line.replies[-1][1][0] == {"type": "text", "text": "ร้านอยู่ซอยตามสั่ง 7 ค่ะ"}
+    assert _card_paths(caplog) == [("qword_diff", "2")]
+
+
+@pytest.mark.parametrize("text", PLAIN_ORDERS)
+def test_a_plain_order_with_request_verbs_keeps_the_fast_path(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, text: str
+) -> None:
+    caplog.set_level(logging.INFO)
+    h = Harness(tmp_path)
+    h.llm.responses.append(_resp(tool_calls=BUILD_PICKUP_CARD))
+    h.text("U_A", text)
+    assert len(h.llm.calls) == 1
+    assert h.line.replies[-1][1][0] == {"type": "text", "text": LINE_PICKUP}
+    assert _card_paths(caplog) == [("fast", "1")]
+
+
 def test_fast_path_falls_back_when_the_turn_ran_out_of_time(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

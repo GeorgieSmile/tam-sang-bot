@@ -1,0 +1,1000 @@
+{
+  "status": "COMPLETE",
+  "date": "2026-11-27T15:23:16+07:00",
+  "bot_model": "anthropic/claude-haiku-5.5",
+  "simulator_model": "google/gemini-4-hydrogen",
+  "commit": "f5069b9",
+  "goals_file": "570852602b3f5461",
+  "runs": 3,
+  "summary": {
+    "goals": 20,
+    "pass^1": 0.9833,
+    "pass^3": 0.95,
+    "ended_by_turn_limit": 0,
+    "reply_ms": {
+      "n": 134,
+      "median": 3210,
+      "p95": 5095
+    },
+    "bot_cost_usd": 0.0795,
+    "simulator_cost_usd": 0.295693
+  },
+  "results": [
+    {
+      "id": "sim-001",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 3,
+      "reply_ms": [
+        3407,
+        3361,
+        5192
+      ],
+      "bot_cost_usd": 0.003437795,
+      "simulator_cost_usd": 0.0066225,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-001-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-002",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        2783,
+        3159
+      ],
+      "bot_cost_usd": 0.00073346,
+      "simulator_cost_usd": 0.0031905,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-002-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-003",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        5047,
+        2305
+      ],
+      "bot_cost_usd": 0.0012866700000000002,
+      "simulator_cost_usd": 0.006618,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-003-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-004",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4450,
+        2259
+      ],
+      "bot_cost_usd": 0.00101094,
+      "simulator_cost_usd": 0.005719500000000001,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-004-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-005",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4202,
+        1465
+      ],
+      "bot_cost_usd": 0.000918565,
+      "simulator_cost_usd": 0.0046395,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-005-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-006",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 3,
+      "reply_ms": [
+        4769,
+        4349,
+        1404
+      ],
+      "bot_cost_usd": 0.0017529,
+      "simulator_cost_usd": 0.005598,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-006-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-007",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        2954,
+        1463
+      ],
+      "bot_cost_usd": 0.000676335,
+      "simulator_cost_usd": 0.0050100000000000006,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-007-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-008",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        5456,
+        3641
+      ],
+      "bot_cost_usd": 0.0014062950000000001,
+      "simulator_cost_usd": 0.0058590000000000005,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-008-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-009",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4821,
+        5060
+      ],
+      "bot_cost_usd": 0.00123492,
+      "simulator_cost_usd": 0.002571,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-009-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-010",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        2650,
+        3531
+      ],
+      "bot_cost_usd": 0.001130045,
+      "simulator_cost_usd": 0.0052695,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-010-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-011",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4040,
+        1684
+      ],
+      "bot_cost_usd": 0.00086419,
+      "simulator_cost_usd": 0.00465,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-011-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-012",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4513,
+        1375
+      ],
+      "bot_cost_usd": 0.000942565,
+      "simulator_cost_usd": 0.004107,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-012-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-013",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 4,
+      "reply_ms": [
+        3711,
+        3678,
+        2372,
+        2000
+      ],
+      "bot_cost_usd": 0.0027680900000000004,
+      "simulator_cost_usd": 0.007842,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-013-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-014",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        3939,
+        2779
+      ],
+      "bot_cost_usd": 0.001163795,
+      "simulator_cost_usd": 0.0041565,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-014-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-015",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        2622,
+        3014
+      ],
+      "bot_cost_usd": 0.001092045,
+      "simulator_cost_usd": 0.0030525,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-015-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-016",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4724,
+        2197
+      ],
+      "bot_cost_usd": 0.00130342,
+      "simulator_cost_usd": 0.0054855,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-016-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-017",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4078,
+        2696
+      ],
+      "bot_cost_usd": 0.0010890650000000002,
+      "simulator_cost_usd": 0.0047805,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-017-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-018",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4651,
+        2128
+      ],
+      "bot_cost_usd": 0.00113869,
+      "simulator_cost_usd": 0.0031739999999999997,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-018-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-019",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 3,
+      "reply_ms": [
+        5041,
+        3675,
+        1747
+      ],
+      "bot_cost_usd": 0.0017505250000000002,
+      "simulator_cost_usd": 0.0045344999999999995,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-019-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-020",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4585,
+        4331
+      ],
+      "bot_cost_usd": 0.0015116700000000001,
+      "simulator_cost_usd": 0.004014,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-020-r1/transcript.json",
+      "run": 1
+    },
+    {
+      "id": "sim-001",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 3,
+      "reply_ms": [
+        1999,
+        3086,
+        2931
+      ],
+      "bot_cost_usd": 0.001961505,
+      "simulator_cost_usd": 0.0058980000000000005,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-001-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-002",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4195,
+        2051
+      ],
+      "bot_cost_usd": 0.00123817,
+      "simulator_cost_usd": 0.004629,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-002-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-003",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        5331,
+        3255
+      ],
+      "bot_cost_usd": 0.00139667,
+      "simulator_cost_usd": 0.006501,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-003-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-004",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4821,
+        2386
+      ],
+      "bot_cost_usd": 0.001094065,
+      "simulator_cost_usd": 0.005934,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-004-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-005",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4452,
+        2109
+      ],
+      "bot_cost_usd": 0.0009356900000000001,
+      "simulator_cost_usd": 0.0045075,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-005-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-006",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 3,
+      "reply_ms": [
+        4973,
+        3343,
+        1471
+      ],
+      "bot_cost_usd": 0.001759025,
+      "simulator_cost_usd": 0.0057615,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-006-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-007",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        5632,
+        2241
+      ],
+      "bot_cost_usd": 0.001449045,
+      "simulator_cost_usd": 0.004692,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-007-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-008",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        2730,
+        3526
+      ],
+      "bot_cost_usd": 0.00086596,
+      "simulator_cost_usd": 0.004341,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-008-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-009",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4063,
+        3016
+      ],
+      "bot_cost_usd": 0.001227795,
+      "simulator_cost_usd": 0.0044789999999999995,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-009-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-010",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        2672,
+        3034
+      ],
+      "bot_cost_usd": 0.001168795,
+      "simulator_cost_usd": 0.00549,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-010-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-011",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        3901,
+        3403
+      ],
+      "bot_cost_usd": 0.0014560250000000001,
+      "simulator_cost_usd": 0.0037199999999999998,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-011-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-012",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        5095,
+        1413
+      ],
+      "bot_cost_usd": 0.0009736900000000001,
+      "simulator_cost_usd": 0.003759,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-012-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-013",
+      "passed": false,
+      "fails": [
+        "card: no order card"
+      ],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 3,
+      "reply_ms": [
+        3987,
+        2885,
+        2319
+      ],
+      "bot_cost_usd": 0.0020315050000000003,
+      "simulator_cost_usd": 0.00729,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-013-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-014",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4375,
+        4560
+      ],
+      "bot_cost_usd": 0.001458025,
+      "simulator_cost_usd": 0.0039030000000000002,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-014-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-015",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        2176,
+        1375
+      ],
+      "bot_cost_usd": 0.00057596,
+      "simulator_cost_usd": 0.004593,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-015-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-016",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4564,
+        2345
+      ],
+      "bot_cost_usd": 0.00130642,
+      "simulator_cost_usd": 0.0056715,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-016-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-017",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4723,
+        2728
+      ],
+      "bot_cost_usd": 0.001108065,
+      "simulator_cost_usd": 0.0070305,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-017-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-018",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4211,
+        2561
+      ],
+      "bot_cost_usd": 0.001128815,
+      "simulator_cost_usd": 0.0038745,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-018-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-019",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 3,
+      "reply_ms": [
+        4410,
+        3547,
+        2164
+      ],
+      "bot_cost_usd": 0.0016924000000000002,
+      "simulator_cost_usd": 0.0034980000000000002,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-019-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-020",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4831,
+        2011
+      ],
+      "bot_cost_usd": 0.001536545,
+      "simulator_cost_usd": 0.005076,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-020-r2/transcript.json",
+      "run": 2
+    },
+    {
+      "id": "sim-001",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 3,
+      "reply_ms": [
+        2079,
+        2588,
+        3422
+      ],
+      "bot_cost_usd": 0.0015641700000000001,
+      "simulator_cost_usd": 0.006585000000000001,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-001-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-002",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4314,
+        1890
+      ],
+      "bot_cost_usd": 0.0012014200000000001,
+      "simulator_cost_usd": 0.0032205,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-002-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-003",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4971,
+        2258
+      ],
+      "bot_cost_usd": 0.0012707950000000001,
+      "simulator_cost_usd": 0.003222,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-003-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-004",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4996,
+        1480
+      ],
+      "bot_cost_usd": 0.00100844,
+      "simulator_cost_usd": 0.004932,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-004-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-005",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        3989,
+        2021
+      ],
+      "bot_cost_usd": 0.0009519400000000001,
+      "simulator_cost_usd": 0.003204,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-005-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-006",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 4,
+      "reply_ms": [
+        5222,
+        4136,
+        2239,
+        2100
+      ],
+      "bot_cost_usd": 0.003238715,
+      "simulator_cost_usd": 0.0074325,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-006-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-007",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        2939,
+        2642
+      ],
+      "bot_cost_usd": 0.0007509600000000001,
+      "simulator_cost_usd": 0.0052425,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-007-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-008",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        5130,
+        2363
+      ],
+      "bot_cost_usd": 0.0014097950000000001,
+      "simulator_cost_usd": 0.0074459999999999995,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-008-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-009",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4316,
+        4324
+      ],
+      "bot_cost_usd": 0.001290045,
+      "simulator_cost_usd": 0.0061095,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-009-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-010",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        2047,
+        2038
+      ],
+      "bot_cost_usd": 0.00064771,
+      "simulator_cost_usd": 0.0044745,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-010-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-011",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4437,
+        1471
+      ],
+      "bot_cost_usd": 0.000896065,
+      "simulator_cost_usd": 0.004533,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-011-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-012",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4348,
+        1568
+      ],
+      "bot_cost_usd": 0.0009380650000000001,
+      "simulator_cost_usd": 0.0047834999999999996,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-012-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-013",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 3,
+      "reply_ms": [
+        3808,
+        3210,
+        1611
+      ],
+      "bot_cost_usd": 0.001654775,
+      "simulator_cost_usd": 0.0066585,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-013-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-014",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        3629,
+        4053
+      ],
+      "bot_cost_usd": 0.0014291500000000001,
+      "simulator_cost_usd": 0.003816,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-014-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-015",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        2102,
+        3102
+      ],
+      "bot_cost_usd": 0.0011190450000000002,
+      "simulator_cost_usd": 0.002898,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-015-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-016",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4060,
+        3007
+      ],
+      "bot_cost_usd": 0.001341545,
+      "simulator_cost_usd": 0.005582999999999999,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-016-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-017",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4870,
+        3037
+      ],
+      "bot_cost_usd": 0.00111519,
+      "simulator_cost_usd": 0.0047475,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-017-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-018",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4187,
+        1789
+      ],
+      "bot_cost_usd": 0.00110844,
+      "simulator_cost_usd": 0.0045,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-018-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-019",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 3,
+      "reply_ms": [
+        4501,
+        2990,
+        1367
+      ],
+      "bot_cost_usd": 0.0016454000000000002,
+      "simulator_cost_usd": 0.004353,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-019-r3/transcript.json",
+      "run": 3
+    },
+    {
+      "id": "sim-020",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "ended_by": "simulator",
+      "customer_turns": 2,
+      "reply_ms": [
+        4171,
+        1947
+      ],
+      "bot_cost_usd": 0.001342045,
+      "simulator_cost_usd": 0.00441,
+      "transcript": "local/evals/transcripts/google-gemini-4-hydrogen/sim-020-r3/transcript.json",
+      "run": 3
+    }
+  ]
+}

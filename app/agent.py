@@ -48,6 +48,19 @@ _CARD_TOOLS = frozenset({"update_cart", "set_fulfillment", "build_order_card"})
 _QUESTION_RE = re.compile(
     r"ไหม|มั้ย|มั๊ย|ไม๊|กี่|อะไร|ยังไง|อย่างไร|เท่าไหร่|เท่าไร|ไหน|เมื่อไหร่|ทำไม|รึเปล่า|หรือเปล่า|\?"
 )
+# A request for shop information with no question word ("ขอที่อยู่ร้านหน่อยค่ะ"): a request verb
+# shortly before an information noun. Polite orders ("ขอกะเพรา 1") don't match
+# (docs/specs/2026-11-27-fast-path-request-check.md)
+_INFO_REQUEST_RE = re.compile(
+    r"(?:ขอ|บอก|แจ้ง|รบกวน|ส่ง)\S{0,8}?"
+    r"(?:ที่อยู่ร้าน|ที่ตั้ง|โลเคชั่น|โลเคชัน|โลเค|พิกัด|แผนที่|ทางไป|เบอร์|เลขบัญชี|บัญชี|คิวอาร์|qr|QR|เวลา|เมนู)"
+)
+
+
+def has_side_question(text: str) -> bool:
+    """A question word or an information request: the fast path keeps the LLM reply for it."""
+    return bool(_QUESTION_RE.search(text) or _INFO_REQUEST_RE.search(text))
+
 
 STATUS_TH = {
     "queued": "กำลังรอทำ",
@@ -1118,7 +1131,7 @@ def handle_customer_text(
             line = CARD_LINE_SAVED_ADDRESS
         else:
             line = CARD_LINE_NEW_ADDRESS
-        if _QUESTION_RE.search(text):
+        if has_side_question(text):
             return None, line
         return line, None
 

@@ -432,3 +432,22 @@ def test_goals_are_validated_against_the_menu(tmp_path: Path) -> None:
     del bad["persona"]
     errors = order_eval.check_goal(bad, MENU)
     assert any("persona" in e for e in errors) and any("pizza" in e for e in errors)
+
+
+def test_the_fast_path_check_catches_every_side_question_in_the_eval_set() -> None:
+    """Over the frozen eval cases' first messages, every side question keeps the LLM reply and
+    order messages gain no new false alarms (docs/specs/2026-11-27-fast-path-request-check.md)."""
+    from app.agent import _QUESTION_RE, has_side_question
+
+    cases = [
+        c
+        for f in sorted((ROOT / "evals" / "cases").glob("*.yaml"))
+        for c in yaml.safe_load(f.read_text(encoding="utf-8"))
+    ]
+    side = [c["turns"][0] for c in cases if c["category"] == "side_question"]
+    orders = [c["turns"][0] for c in cases if c["category"] not in ("side_question", "not_order")]
+    assert len(side) == 10 and len(orders) == 58
+    assert [t for t in side if not has_side_question(t)] == []
+    question_word_alarms = sum(bool(_QUESTION_RE.search(t)) for t in orders)
+    assert question_word_alarms == 1  # the baseline this spec compares against
+    assert sum(has_side_question(t) for t in orders) == question_word_alarms

@@ -8,11 +8,12 @@ When a one-message order builds its order card cleanly, the bot sends a fixed li
 
 The risk is a side question that needs no tool, such as "…รับเองค่ะ ร้านอยู่ตรงไหน". The LLM returns only the 3 order tools and plans to answer in the second call. If that call is skipped, the question is silently dropped.
 
-So the fast path is also skipped when the customer's message contains a Thai question word (`_QUESTION_RE` in `app/agent.py`). This costs about 1.3 s on orders phrased as polite questions, such as "เผ็ดน้อยได้ไหม", where the second call only repeats the fixed line.
+So the fast path is also skipped when the customer's message contains a Thai question word (`_QUESTION_RE`) or a request for shop information such as "ขอที่อยู่ร้านหน่อย" (`_INFO_REQUEST_RE`, both in `app/agent.py`, checked by `has_side_question`). This costs about 1.3 s on orders phrased as polite questions, such as "เผ็ดน้อยได้ไหม", where the second call only repeats the fixed line.
 
 Evidence so far:
 - **False alarms:** 2, both "เผ็ดน้อยได้ไหม".
 - **Real catches:** 1, "…ร้านอยู่ตรงไหน". The LLM answered with the shop address, which the fast path would have dropped.
+- **A miss found by the offline eval (2026-11-27):** case gem-029, "…รับเองนะคะ ขอที่อยู่ร้านหน่อยค่ะ…", is a request with no question word, so the address was dropped in 3/3 runs on both Haiku and Sonnet. The information-request pattern was added for it (`docs/specs/2026-11-27-fast-path-request-check.md`). On the 80 eval messages it catches all 10 side questions and adds no false alarm on the 58 order messages.
 
 Spec: `docs/specs/2026-11-26-card-fast-path.md`.
 
@@ -28,8 +29,8 @@ Each `webhook_event` log line has a `card_path` field:
 | Value | Meaning |
 |---|---|
 | `fast` | The fast path ran. |
-| `qword_same` | Only the question word blocked the fast path, and the LLM said nothing more than the fixed line. This is a false alarm that cost ~1.3 s. |
-| `qword_diff` | Only the question word blocked the fast path, and the LLM said something different (an answer or a hand-over). This is a real catch. |
+| `qword_same` | Only the question word or information request blocked the fast path, and the LLM said nothing more than the fixed line. This is a false alarm that cost ~1.3 s. |
+| `qword_diff` | Only the question word or information request blocked the fast path, and the LLM said something different (an answer or a hand-over). This is a real catch. |
 | `-` | The fast path didn't apply. |
 
 After the first **50** real-traffic turns logged `qword_same` or `qword_diff`:
