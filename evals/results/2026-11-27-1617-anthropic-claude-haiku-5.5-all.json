@@ -1,0 +1,4442 @@
+{
+  "status": "COMPLETE",
+  "date": "2026-11-27T16:17:52+07:00",
+  "model": "anthropic/claude-haiku-5.5",
+  "reasoning_effort": "low",
+  "commit": "8683d1d+dirty",
+  "case_files": {
+    "gpt.yaml": "f3ae2deaa2e89586",
+    "gemini.yaml": "9ef89187e0445aa4"
+  },
+  "runs": 3,
+  "summary": {
+    "sets": {
+      "dev": {
+        "cases": 40,
+        "accuracy_per_run": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "accuracy_mean": 1.0,
+        "by_category": {
+          "simple": "18/18",
+          "options": "21/21",
+          "multi_item": "18/18",
+          "multi_turn": "15/15",
+          "side_question": "15/15",
+          "not_order": "18/18",
+          "messy": "15/15"
+        },
+        "flipped_ids": []
+      },
+      "hidden": {
+        "cases": 40,
+        "accuracy_per_run": [
+          0.975,
+          1.0,
+          1.0
+        ],
+        "accuracy_mean": 0.9917,
+        "by_category": {
+          "simple": "18/18",
+          "options": "21/21",
+          "multi_item": "18/18",
+          "multi_turn": "15/15",
+          "side_question": "15/15",
+          "not_order": "18/18",
+          "messy": "14/15"
+        },
+        "flipped_ids": [
+          "gem-039"
+        ]
+      }
+    },
+    "errors": 0,
+    "reply_ms": {
+      "n": 282,
+      "median": 2872,
+      "p95": 4777
+    },
+    "tokens_per_case": {
+      "prompt_tokens": 21487,
+      "cached_tokens": 20455,
+      "completion_tokens": 503
+    },
+    "llm_calls_per_case": 1.52,
+    "cost_usd_total": 0.140351,
+    "cost_usd_per_case": 0.000585
+  },
+  "projected_cost_usd_80x3": {
+    "anthropic/claude-haiku-5.5": 0.1404,
+    "anthropic/claude-sonnet-5.5": 2.3161,
+    "google/gemini-4-hydrogen": 1.6443,
+    "google/gemini-3.8-flash": 1.1068
+  },
+  "results": [
+    {
+      "id": "gpt-001",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2311
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13780,
+      "cached_tokens": 13450,
+      "completion_tokens": 304,
+      "cost_usd": 0.00032775,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-002",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3095
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13804,
+      "cached_tokens": 13450,
+      "completion_tokens": 433,
+      "cost_usd": 0.00039525,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-003",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2174
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13784,
+      "cached_tokens": 13450,
+      "completion_tokens": 304,
+      "cost_usd": 0.00032825,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-004",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2755
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13805,
+      "cached_tokens": 13450,
+      "completion_tokens": 457,
+      "cost_usd": 0.000407375,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-005",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2799
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13801,
+      "cached_tokens": 13450,
+      "completion_tokens": 425,
+      "cost_usd": 0.000390875,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-006",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2061
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13782,
+      "cached_tokens": 13450,
+      "completion_tokens": 263,
+      "cost_usd": 0.0003075,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-007",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2862
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13830,
+      "cached_tokens": 13450,
+      "completion_tokens": 540,
+      "cost_usd": 0.000452,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-008",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2846
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13802,
+      "cached_tokens": 13450,
+      "completion_tokens": 378,
+      "cost_usd": 0.0003675,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-009",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2992
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13830,
+      "cached_tokens": 13450,
+      "completion_tokens": 528,
+      "cost_usd": 0.000446,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-010",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3589
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28214,
+      "cached_tokens": 26900,
+      "completion_tokens": 420,
+      "cost_usd": 0.0006432499999999999,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-011",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2895
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13821,
+      "cached_tokens": 13450,
+      "completion_tokens": 543,
+      "cost_usd": 0.000452375,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-012",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2182
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13783,
+      "cached_tokens": 13450,
+      "completion_tokens": 311,
+      "cost_usd": 0.000331625,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-013",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2330
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13831,
+      "cached_tokens": 13450,
+      "completion_tokens": 448,
+      "cost_usd": 0.000406125,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-014",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3119
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13825,
+      "cached_tokens": 13450,
+      "completion_tokens": 408,
+      "cost_usd": 0.000385375,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-015",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3106
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13819,
+      "cached_tokens": 13450,
+      "completion_tokens": 443,
+      "cost_usd": 0.000402125,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-016",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3171
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13848,
+      "cached_tokens": 13450,
+      "completion_tokens": 570,
+      "cost_usd": 0.00046925,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-017",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2829
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13831,
+      "cached_tokens": 13450,
+      "completion_tokens": 447,
+      "cost_usd": 0.000405625,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-018",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2936
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13833,
+      "cached_tokens": 13450,
+      "completion_tokens": 511,
+      "cost_usd": 0.000437875,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-019",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2604
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13817,
+      "cached_tokens": 13450,
+      "completion_tokens": 451,
+      "cost_usd": 0.000405875,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-020",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        1936,
+        4161
+      ],
+      "llm_calls": 4,
+      "prompt_tokens": 57809,
+      "cached_tokens": 53800,
+      "completion_tokens": 607,
+      "cost_usd": 0.001342625,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-021",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2630,
+        2905
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43395,
+      "cached_tokens": 40350,
+      "completion_tokens": 678,
+      "cost_usd": 0.001123125,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-022",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2639,
+        2900,
+        2245
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 73588,
+      "cached_tokens": 67250,
+      "completion_tokens": 808,
+      "cost_usd": 0.00186875,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-023",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2293,
+        2449
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43022,
+      "cached_tokens": 40350,
+      "completion_tokens": 550,
+      "cost_usd": 0.0010125,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-024",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2540,
+        2872,
+        2554
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 73674,
+      "cached_tokens": 67250,
+      "completion_tokens": 887,
+      "cost_usd": 0.001919,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-025",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3964
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28118,
+      "cached_tokens": 26900,
+      "completion_tokens": 558,
+      "cost_usd": 0.0007002499999999999,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-026",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4505
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28503,
+      "cached_tokens": 26900,
+      "completion_tokens": 667,
+      "cost_usd": 0.000802875,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-027",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4777
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28391,
+      "cached_tokens": 26900,
+      "completion_tokens": 809,
+      "cost_usd": 0.000859875,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-028",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3996
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28127,
+      "cached_tokens": 26900,
+      "completion_tokens": 454,
+      "cost_usd": 0.000649375,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-029",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        5104
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28313,
+      "cached_tokens": 26900,
+      "completion_tokens": 765,
+      "cost_usd": 0.0008281249999999999,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-030",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2681
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13775,
+      "cached_tokens": 13450,
+      "completion_tokens": 389,
+      "cost_usd": 0.000369625,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-031",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3359
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13798,
+      "cached_tokens": 13450,
+      "completion_tokens": 441,
+      "cost_usd": 0.0003985,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-032",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2044
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13785,
+      "cached_tokens": 13450,
+      "completion_tokens": 130,
+      "cost_usd": 0.000241375,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-033",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2233
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13798,
+      "cached_tokens": 13450,
+      "completion_tokens": 150,
+      "cost_usd": 0.000253,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-034",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2205
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13813,
+      "cached_tokens": 13450,
+      "completion_tokens": 302,
+      "cost_usd": 0.000330875,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-035",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2227
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13821,
+      "cached_tokens": 13450,
+      "completion_tokens": 252,
+      "cost_usd": 0.000306875,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-036",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3047
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13807,
+      "cached_tokens": 13450,
+      "completion_tokens": 499,
+      "cost_usd": 0.000428625,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-037",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        5504
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42803,
+      "cached_tokens": 40350,
+      "completion_tokens": 534,
+      "cost_usd": 0.000977125,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-038",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2970
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13813,
+      "cached_tokens": 13450,
+      "completion_tokens": 521,
+      "cost_usd": 0.000440375,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-039",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3324
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13800,
+      "cached_tokens": 13450,
+      "completion_tokens": 492,
+      "cost_usd": 0.00042425,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gpt-040",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3036
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13819,
+      "cached_tokens": 13450,
+      "completion_tokens": 511,
+      "cost_usd": 0.000436125,
+      "set": "dev",
+      "run": 1
+    },
+    {
+      "id": "gem-001",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        1943
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13781,
+      "cached_tokens": 13450,
+      "completion_tokens": 248,
+      "cost_usd": 0.000299875,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-002",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2867
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13807,
+      "cached_tokens": 13450,
+      "completion_tokens": 469,
+      "cost_usd": 0.000413625,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-003",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2002
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13772,
+      "cached_tokens": 13450,
+      "completion_tokens": 247,
+      "cost_usd": 0.00029825,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-004",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2735
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13805,
+      "cached_tokens": 13450,
+      "completion_tokens": 362,
+      "cost_usd": 0.000359875,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-005",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3107
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13817,
+      "cached_tokens": 13450,
+      "completion_tokens": 464,
+      "cost_usd": 0.000412375,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-006",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2103
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13779,
+      "cached_tokens": 13450,
+      "completion_tokens": 300,
+      "cost_usd": 0.000325625,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-007",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2174
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13797,
+      "cached_tokens": 13450,
+      "completion_tokens": 320,
+      "cost_usd": 0.000337875,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-008",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3744
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13855,
+      "cached_tokens": 13450,
+      "completion_tokens": 695,
+      "cost_usd": 0.000532625,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-009",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3107
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13833,
+      "cached_tokens": 13450,
+      "completion_tokens": 527,
+      "cost_usd": 0.000445875,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-010",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2656
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13796,
+      "cached_tokens": 13450,
+      "completion_tokens": 353,
+      "cost_usd": 0.00035425,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-011",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2769
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13834,
+      "cached_tokens": 13450,
+      "completion_tokens": 511,
+      "cost_usd": 0.000438,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-012",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3003
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13843,
+      "cached_tokens": 13450,
+      "completion_tokens": 564,
+      "cost_usd": 0.000465625,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-013",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2009
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13810,
+      "cached_tokens": 13450,
+      "completion_tokens": 326,
+      "cost_usd": 0.0003425,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-014",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3569
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13866,
+      "cached_tokens": 13450,
+      "completion_tokens": 694,
+      "cost_usd": 0.0005335,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-015",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3253
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13853,
+      "cached_tokens": 13450,
+      "completion_tokens": 633,
+      "cost_usd": 0.000501375,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-016",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3128
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13822,
+      "cached_tokens": 13450,
+      "completion_tokens": 566,
+      "cost_usd": 0.000464,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-017",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2967
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13835,
+      "cached_tokens": 13450,
+      "completion_tokens": 633,
+      "cost_usd": 0.000499125,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-018",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3163
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13856,
+      "cached_tokens": 13450,
+      "completion_tokens": 656,
+      "cost_usd": 0.00051325,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-019",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2399
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13815,
+      "cached_tokens": 13450,
+      "completion_tokens": 372,
+      "cost_usd": 0.000366125,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-020",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2893,
+        3976
+      ],
+      "llm_calls": 4,
+      "prompt_tokens": 58121,
+      "cached_tokens": 53800,
+      "completion_tokens": 695,
+      "cost_usd": 0.001425625,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-021",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2736,
+        3201
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43612,
+      "cached_tokens": 40350,
+      "completion_tokens": 795,
+      "cost_usd": 0.00120875,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-022",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2145,
+        2193
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43416,
+      "cached_tokens": 40350,
+      "completion_tokens": 573,
+      "cost_usd": 0.00107325,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-023",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2783,
+        3435,
+        2786
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 73657,
+      "cached_tokens": 67250,
+      "completion_tokens": 982,
+      "cost_usd": 0.001964375,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-024",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2128,
+        2682,
+        2042
+      ],
+      "llm_calls": 4,
+      "prompt_tokens": 58364,
+      "cached_tokens": 53800,
+      "completion_tokens": 946,
+      "cost_usd": 0.0015815,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-025",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3664
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28236,
+      "cached_tokens": 26900,
+      "completion_tokens": 491,
+      "cost_usd": 0.0006815,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-026",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4356
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28589,
+      "cached_tokens": 26900,
+      "completion_tokens": 692,
+      "cost_usd": 0.000826125,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-027",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        5983
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28281,
+      "cached_tokens": 26900,
+      "completion_tokens": 940,
+      "cost_usd": 0.0009116249999999999,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-028",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4823
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28601,
+      "cached_tokens": 26900,
+      "completion_tokens": 820,
+      "cost_usd": 0.0008916250000000001,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-029",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4357
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28331,
+      "cached_tokens": 26900,
+      "completion_tokens": 563,
+      "cost_usd": 0.000729375,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-030",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2779
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13798,
+      "cached_tokens": 13450,
+      "completion_tokens": 328,
+      "cost_usd": 0.000342,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-031",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4332
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13807,
+      "cached_tokens": 13450,
+      "completion_tokens": 770,
+      "cost_usd": 0.000564125,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-032",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        1920
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13800,
+      "cached_tokens": 13450,
+      "completion_tokens": 142,
+      "cost_usd": 0.00024925,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-033",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2461
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13812,
+      "cached_tokens": 13450,
+      "completion_tokens": 151,
+      "cost_usd": 0.00025525,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-034",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2120
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13842,
+      "cached_tokens": 13450,
+      "completion_tokens": 241,
+      "cost_usd": 0.000304,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-035",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2414
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13808,
+      "cached_tokens": 13450,
+      "completion_tokens": 318,
+      "cost_usd": 0.00033825,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-036",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2739
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13809,
+      "cached_tokens": 13450,
+      "completion_tokens": 383,
+      "cost_usd": 0.000370875,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-037",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3451
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13843,
+      "cached_tokens": 13450,
+      "completion_tokens": 631,
+      "cost_usd": 0.000499125,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-038",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3515
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13837,
+      "cached_tokens": 13450,
+      "completion_tokens": 716,
+      "cost_usd": 0.000540875,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-039",
+      "category": "messy",
+      "passed": false,
+      "fails": [
+        "card: no order card"
+      ],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3255
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13838,
+      "cached_tokens": 13450,
+      "completion_tokens": 412,
+      "cost_usd": 0.000389,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gem-040",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3409
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13840,
+      "cached_tokens": 13450,
+      "completion_tokens": 720,
+      "cost_usd": 0.00054325,
+      "set": "hidden",
+      "run": 1
+    },
+    {
+      "id": "gpt-001",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2280
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13780,
+      "cached_tokens": 13450,
+      "completion_tokens": 283,
+      "cost_usd": 0.00031725,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-002",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2929
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13804,
+      "cached_tokens": 13450,
+      "completion_tokens": 476,
+      "cost_usd": 0.00041675,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-003",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2009
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13784,
+      "cached_tokens": 13450,
+      "completion_tokens": 266,
+      "cost_usd": 0.00030925,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-004",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3071
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13805,
+      "cached_tokens": 13450,
+      "completion_tokens": 437,
+      "cost_usd": 0.000397375,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-005",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2799
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13801,
+      "cached_tokens": 13450,
+      "completion_tokens": 401,
+      "cost_usd": 0.000378875,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-006",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2423
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13782,
+      "cached_tokens": 13450,
+      "completion_tokens": 319,
+      "cost_usd": 0.0003355,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-007",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3180
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13830,
+      "cached_tokens": 13450,
+      "completion_tokens": 615,
+      "cost_usd": 0.0004895,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-008",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2872
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13802,
+      "cached_tokens": 13450,
+      "completion_tokens": 383,
+      "cost_usd": 0.00037,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-009",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3166
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13830,
+      "cached_tokens": 13450,
+      "completion_tokens": 524,
+      "cost_usd": 0.000444,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-010",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3604
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28215,
+      "cached_tokens": 26900,
+      "completion_tokens": 498,
+      "cost_usd": 0.000682375,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-011",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2973
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13821,
+      "cached_tokens": 13450,
+      "completion_tokens": 463,
+      "cost_usd": 0.000412375,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-012",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2359
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13783,
+      "cached_tokens": 13450,
+      "completion_tokens": 303,
+      "cost_usd": 0.000327625,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-013",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3077
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13831,
+      "cached_tokens": 13450,
+      "completion_tokens": 497,
+      "cost_usd": 0.000430625,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-014",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2157
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13825,
+      "cached_tokens": 13450,
+      "completion_tokens": 392,
+      "cost_usd": 0.000377375,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-015",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2869
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13819,
+      "cached_tokens": 13450,
+      "completion_tokens": 379,
+      "cost_usd": 0.000370125,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-016",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2890
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13848,
+      "cached_tokens": 13450,
+      "completion_tokens": 516,
+      "cost_usd": 0.00044225,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-017",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2816
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13831,
+      "cached_tokens": 13450,
+      "completion_tokens": 476,
+      "cost_usd": 0.000420125,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-018",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2802
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13833,
+      "cached_tokens": 13450,
+      "completion_tokens": 449,
+      "cost_usd": 0.000406875,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-019",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2957
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13817,
+      "cached_tokens": 13450,
+      "completion_tokens": 526,
+      "cost_usd": 0.000443375,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-020",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2020,
+        2212
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43099,
+      "cached_tokens": 40350,
+      "completion_tokens": 452,
+      "cost_usd": 0.000973125,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-021",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        3034,
+        3224
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43399,
+      "cached_tokens": 40350,
+      "completion_tokens": 703,
+      "cost_usd": 0.001136125,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-022",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2101,
+        2901,
+        2081
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 73594,
+      "cached_tokens": 67250,
+      "completion_tokens": 809,
+      "cost_usd": 0.00187,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-023",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2109,
+        2311
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43025,
+      "cached_tokens": 40350,
+      "completion_tokens": 569,
+      "cost_usd": 0.001022375,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-024",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        1912,
+        3235,
+        2451
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 73689,
+      "cached_tokens": 67250,
+      "completion_tokens": 723,
+      "cost_usd": 0.001838875,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-025",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4285
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28121,
+      "cached_tokens": 26900,
+      "completion_tokens": 515,
+      "cost_usd": 0.000679125,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-026",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        6811
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42545,
+      "cached_tokens": 40350,
+      "completion_tokens": 821,
+      "cost_usd": 0.001088375,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-027",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        5191
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28382,
+      "cached_tokens": 26900,
+      "completion_tokens": 764,
+      "cost_usd": 0.00083625,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-028",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4034
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28125,
+      "cached_tokens": 26900,
+      "completion_tokens": 462,
+      "cost_usd": 0.0006531250000000001,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-029",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        5574
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28312,
+      "cached_tokens": 26900,
+      "completion_tokens": 863,
+      "cost_usd": 0.000877,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-030",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2716
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13775,
+      "cached_tokens": 13450,
+      "completion_tokens": 317,
+      "cost_usd": 0.000333625,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-031",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2830
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13798,
+      "cached_tokens": 13450,
+      "completion_tokens": 412,
+      "cost_usd": 0.000384,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-032",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        1904
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13785,
+      "cached_tokens": 13450,
+      "completion_tokens": 134,
+      "cost_usd": 0.000243375,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-033",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2319
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13798,
+      "cached_tokens": 13450,
+      "completion_tokens": 193,
+      "cost_usd": 0.0002745,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-034",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2166
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13813,
+      "cached_tokens": 13450,
+      "completion_tokens": 271,
+      "cost_usd": 0.000315375,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-035",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2833
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13821,
+      "cached_tokens": 13450,
+      "completion_tokens": 297,
+      "cost_usd": 0.000329375,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-036",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2978
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13807,
+      "cached_tokens": 13450,
+      "completion_tokens": 473,
+      "cost_usd": 0.000415625,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-037",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2770
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13790,
+      "cached_tokens": 13450,
+      "completion_tokens": 376,
+      "cost_usd": 0.000365,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-038",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3008
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13813,
+      "cached_tokens": 13450,
+      "completion_tokens": 559,
+      "cost_usd": 0.000459375,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-039",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3055
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13800,
+      "cached_tokens": 13450,
+      "completion_tokens": 489,
+      "cost_usd": 0.00042275,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gpt-040",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4260
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13819,
+      "cached_tokens": 13450,
+      "completion_tokens": 573,
+      "cost_usd": 0.000467125,
+      "set": "dev",
+      "run": 2
+    },
+    {
+      "id": "gem-001",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        1901
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13781,
+      "cached_tokens": 13450,
+      "completion_tokens": 269,
+      "cost_usd": 0.000310375,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-002",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2947
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13807,
+      "cached_tokens": 13450,
+      "completion_tokens": 470,
+      "cost_usd": 0.000414125,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-003",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2223
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13772,
+      "cached_tokens": 13450,
+      "completion_tokens": 301,
+      "cost_usd": 0.00032525,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-004",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2293
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13805,
+      "cached_tokens": 13450,
+      "completion_tokens": 354,
+      "cost_usd": 0.000355875,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-005",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2610
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13817,
+      "cached_tokens": 13450,
+      "completion_tokens": 461,
+      "cost_usd": 0.000410875,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-006",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2049
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13779,
+      "cached_tokens": 13450,
+      "completion_tokens": 294,
+      "cost_usd": 0.000322625,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-007",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2357
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13797,
+      "cached_tokens": 13450,
+      "completion_tokens": 356,
+      "cost_usd": 0.000355875,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-008",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3745
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13855,
+      "cached_tokens": 13450,
+      "completion_tokens": 681,
+      "cost_usd": 0.000525625,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-009",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3475
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13833,
+      "cached_tokens": 13450,
+      "completion_tokens": 545,
+      "cost_usd": 0.000454875,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-010",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2815
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13796,
+      "cached_tokens": 13450,
+      "completion_tokens": 406,
+      "cost_usd": 0.00038075,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-011",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3408
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13834,
+      "cached_tokens": 13450,
+      "completion_tokens": 599,
+      "cost_usd": 0.000482,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-012",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3204
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13843,
+      "cached_tokens": 13450,
+      "completion_tokens": 614,
+      "cost_usd": 0.000490625,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-013",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2372
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13810,
+      "cached_tokens": 13450,
+      "completion_tokens": 326,
+      "cost_usd": 0.0003425,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-014",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3567
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13866,
+      "cached_tokens": 13450,
+      "completion_tokens": 506,
+      "cost_usd": 0.0004395,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-015",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3107
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13853,
+      "cached_tokens": 13450,
+      "completion_tokens": 584,
+      "cost_usd": 0.000476875,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-016",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2860
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13822,
+      "cached_tokens": 13450,
+      "completion_tokens": 509,
+      "cost_usd": 0.0004355,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-017",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3175
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13835,
+      "cached_tokens": 13450,
+      "completion_tokens": 635,
+      "cost_usd": 0.000500125,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-018",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3217
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13856,
+      "cached_tokens": 13450,
+      "completion_tokens": 675,
+      "cost_usd": 0.00052275,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-019",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2346
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13815,
+      "cached_tokens": 13450,
+      "completion_tokens": 353,
+      "cost_usd": 0.000356625,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-020",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        1858,
+        4380
+      ],
+      "llm_calls": 4,
+      "prompt_tokens": 58125,
+      "cached_tokens": 53800,
+      "completion_tokens": 626,
+      "cost_usd": 0.001391625,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-021",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2451,
+        3158
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43606,
+      "cached_tokens": 40350,
+      "completion_tokens": 677,
+      "cost_usd": 0.001149,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-022",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2982,
+        4283
+      ],
+      "llm_calls": 4,
+      "prompt_tokens": 58195,
+      "cached_tokens": 53800,
+      "completion_tokens": 763,
+      "cost_usd": 0.001468875,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-023",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2943,
+        3633,
+        2356
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 73679,
+      "cached_tokens": 67250,
+      "completion_tokens": 989,
+      "cost_usd": 0.001970625,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-024",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2730,
+        2663,
+        2190
+      ],
+      "llm_calls": 4,
+      "prompt_tokens": 58370,
+      "cached_tokens": 53800,
+      "completion_tokens": 1011,
+      "cost_usd": 0.00161475,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-025",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4251
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28233,
+      "cached_tokens": 26900,
+      "completion_tokens": 516,
+      "cost_usd": 0.000693625,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-026",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        5635
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42636,
+      "cached_tokens": 40350,
+      "completion_tokens": 567,
+      "cost_usd": 0.00097275,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-027",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        5919
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28282,
+      "cached_tokens": 26900,
+      "completion_tokens": 799,
+      "cost_usd": 0.00084125,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-028",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        7971
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42678,
+      "cached_tokens": 40350,
+      "completion_tokens": 1003,
+      "cost_usd": 0.001196,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-029",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4047
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28331,
+      "cached_tokens": 26900,
+      "completion_tokens": 493,
+      "cost_usd": 0.000694375,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-030",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3124
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13798,
+      "cached_tokens": 13450,
+      "completion_tokens": 444,
+      "cost_usd": 0.0004,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-031",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3255
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13807,
+      "cached_tokens": 13450,
+      "completion_tokens": 576,
+      "cost_usd": 0.000467125,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-032",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2016
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13800,
+      "cached_tokens": 13450,
+      "completion_tokens": 134,
+      "cost_usd": 0.00024525,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-033",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2248
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13812,
+      "cached_tokens": 13450,
+      "completion_tokens": 173,
+      "cost_usd": 0.00026625,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-034",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2207
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13842,
+      "cached_tokens": 13450,
+      "completion_tokens": 259,
+      "cost_usd": 0.000313,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-035",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        1963
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13808,
+      "cached_tokens": 13450,
+      "completion_tokens": 221,
+      "cost_usd": 0.00028975,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-036",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2587
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13809,
+      "cached_tokens": 13450,
+      "completion_tokens": 436,
+      "cost_usd": 0.000397375,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-037",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3055
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13843,
+      "cached_tokens": 13450,
+      "completion_tokens": 594,
+      "cost_usd": 0.000480625,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-038",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2763
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13837,
+      "cached_tokens": 13450,
+      "completion_tokens": 505,
+      "cost_usd": 0.000435375,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-039",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3792
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13838,
+      "cached_tokens": 13450,
+      "completion_tokens": 707,
+      "cost_usd": 0.0005365,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gem-040",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3862
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13840,
+      "cached_tokens": 13450,
+      "completion_tokens": 742,
+      "cost_usd": 0.00055425,
+      "set": "hidden",
+      "run": 2
+    },
+    {
+      "id": "gpt-001",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        1917
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13780,
+      "cached_tokens": 13450,
+      "completion_tokens": 303,
+      "cost_usd": 0.00032725,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-002",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3043
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13804,
+      "cached_tokens": 13450,
+      "completion_tokens": 494,
+      "cost_usd": 0.00042575,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-003",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2478
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13784,
+      "cached_tokens": 13450,
+      "completion_tokens": 307,
+      "cost_usd": 0.00032975,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-004",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2695
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13805,
+      "cached_tokens": 13450,
+      "completion_tokens": 419,
+      "cost_usd": 0.000388375,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-005",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2874
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13801,
+      "cached_tokens": 13450,
+      "completion_tokens": 468,
+      "cost_usd": 0.000412375,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-006",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2300
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13782,
+      "cached_tokens": 13450,
+      "completion_tokens": 315,
+      "cost_usd": 0.0003335,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-007",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3120
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13830,
+      "cached_tokens": 13450,
+      "completion_tokens": 557,
+      "cost_usd": 0.0004605,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-008",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2577
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13802,
+      "cached_tokens": 13450,
+      "completion_tokens": 390,
+      "cost_usd": 0.0003735,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-009",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3139
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13830,
+      "cached_tokens": 13450,
+      "completion_tokens": 544,
+      "cost_usd": 0.000454,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-010",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3595
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28213,
+      "cached_tokens": 26900,
+      "completion_tokens": 459,
+      "cost_usd": 0.000662625,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-011",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2648
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13821,
+      "cached_tokens": 13450,
+      "completion_tokens": 495,
+      "cost_usd": 0.000428375,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-012",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2014
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13783,
+      "cached_tokens": 13450,
+      "completion_tokens": 287,
+      "cost_usd": 0.000319625,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-013",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3103
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13831,
+      "cached_tokens": 13450,
+      "completion_tokens": 515,
+      "cost_usd": 0.000439625,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-014",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3150
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13825,
+      "cached_tokens": 13450,
+      "completion_tokens": 480,
+      "cost_usd": 0.000421375,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-015",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3278
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13819,
+      "cached_tokens": 13450,
+      "completion_tokens": 454,
+      "cost_usd": 0.000407625,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-016",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2925
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13848,
+      "cached_tokens": 13450,
+      "completion_tokens": 542,
+      "cost_usd": 0.00045525,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-017",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2853
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13831,
+      "cached_tokens": 13450,
+      "completion_tokens": 493,
+      "cost_usd": 0.000428625,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-018",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3012
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13833,
+      "cached_tokens": 13450,
+      "completion_tokens": 476,
+      "cost_usd": 0.000420375,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-019",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2949
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13817,
+      "cached_tokens": 13450,
+      "completion_tokens": 511,
+      "cost_usd": 0.000435875,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-020",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        1867,
+        2910
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43106,
+      "cached_tokens": 40350,
+      "completion_tokens": 494,
+      "cost_usd": 0.000995,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-021",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2230,
+        3116
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43402,
+      "cached_tokens": 40350,
+      "completion_tokens": 672,
+      "cost_usd": 0.001121,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-022",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2355,
+        3247,
+        2123
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 73598,
+      "cached_tokens": 67250,
+      "completion_tokens": 826,
+      "cost_usd": 0.001879,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-023",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2053,
+        2289
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43033,
+      "cached_tokens": 40350,
+      "completion_tokens": 541,
+      "cost_usd": 0.0010093749999999999,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-024",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2043,
+        4389,
+        2393
+      ],
+      "llm_calls": 6,
+      "prompt_tokens": 88326,
+      "cached_tokens": 80700,
+      "completion_tokens": 922,
+      "cost_usd": 0.00222125,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-025",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3866
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28120,
+      "cached_tokens": 26900,
+      "completion_tokens": 470,
+      "cost_usd": 0.0006565,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-026",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        7477
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 42543,
+      "cached_tokens": 40350,
+      "completion_tokens": 775,
+      "cost_usd": 0.001065125,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-027",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4807
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28381,
+      "cached_tokens": 26900,
+      "completion_tokens": 745,
+      "cost_usd": 0.000826625,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-028",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3950
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28127,
+      "cached_tokens": 26900,
+      "completion_tokens": 426,
+      "cost_usd": 0.000635375,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-029",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        5635
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28311,
+      "cached_tokens": 26900,
+      "completion_tokens": 915,
+      "cost_usd": 0.000902875,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-030",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3036
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13775,
+      "cached_tokens": 13450,
+      "completion_tokens": 502,
+      "cost_usd": 0.000426125,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-031",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2764
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13798,
+      "cached_tokens": 13450,
+      "completion_tokens": 401,
+      "cost_usd": 0.0003785,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-032",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        959
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13785,
+      "cached_tokens": 13450,
+      "completion_tokens": 52,
+      "cost_usd": 0.000202375,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-033",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        1998
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13798,
+      "cached_tokens": 13450,
+      "completion_tokens": 125,
+      "cost_usd": 0.0002405,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-034",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2004
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13813,
+      "cached_tokens": 13450,
+      "completion_tokens": 244,
+      "cost_usd": 0.000301875,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-035",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2608
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13821,
+      "cached_tokens": 13450,
+      "completion_tokens": 305,
+      "cost_usd": 0.000333375,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-036",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2788
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13807,
+      "cached_tokens": 13450,
+      "completion_tokens": 475,
+      "cost_usd": 0.000416625,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-037",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3003
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13790,
+      "cached_tokens": 13450,
+      "completion_tokens": 354,
+      "cost_usd": 0.000354,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-038",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2989
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13813,
+      "cached_tokens": 13450,
+      "completion_tokens": 569,
+      "cost_usd": 0.000464375,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-039",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2672
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13800,
+      "cached_tokens": 13450,
+      "completion_tokens": 451,
+      "cost_usd": 0.00040375,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gpt-040",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3213
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13819,
+      "cached_tokens": 13450,
+      "completion_tokens": 598,
+      "cost_usd": 0.000479625,
+      "set": "dev",
+      "run": 3
+    },
+    {
+      "id": "gem-001",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2215
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13781,
+      "cached_tokens": 13450,
+      "completion_tokens": 321,
+      "cost_usd": 0.000336375,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-002",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3391
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13807,
+      "cached_tokens": 13450,
+      "completion_tokens": 513,
+      "cost_usd": 0.000435625,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-003",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        1867
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13772,
+      "cached_tokens": 13450,
+      "completion_tokens": 247,
+      "cost_usd": 0.00029825,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-004",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2292
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13805,
+      "cached_tokens": 13450,
+      "completion_tokens": 323,
+      "cost_usd": 0.000340375,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-005",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3371
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13817,
+      "cached_tokens": 13450,
+      "completion_tokens": 514,
+      "cost_usd": 0.000437375,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-006",
+      "category": "simple",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2734
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13779,
+      "cached_tokens": 13450,
+      "completion_tokens": 366,
+      "cost_usd": 0.000358625,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-007",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2057
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13797,
+      "cached_tokens": 13450,
+      "completion_tokens": 333,
+      "cost_usd": 0.000344375,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-008",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3368
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13855,
+      "cached_tokens": 13450,
+      "completion_tokens": 657,
+      "cost_usd": 0.000513625,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-009",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2984
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13833,
+      "cached_tokens": 13450,
+      "completion_tokens": 447,
+      "cost_usd": 0.000405875,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-010",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3002
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13796,
+      "cached_tokens": 13450,
+      "completion_tokens": 359,
+      "cost_usd": 0.00035725,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-011",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3131
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13834,
+      "cached_tokens": 13450,
+      "completion_tokens": 467,
+      "cost_usd": 0.000416,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-012",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3614
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13843,
+      "cached_tokens": 13450,
+      "completion_tokens": 625,
+      "cost_usd": 0.000496125,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-013",
+      "category": "options",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        1848
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13810,
+      "cached_tokens": 13450,
+      "completion_tokens": 327,
+      "cost_usd": 0.000343,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-014",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3350
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13866,
+      "cached_tokens": 13450,
+      "completion_tokens": 666,
+      "cost_usd": 0.0005195,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-015",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3411
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13853,
+      "cached_tokens": 13450,
+      "completion_tokens": 729,
+      "cost_usd": 0.000549375,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-016",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2897
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13822,
+      "cached_tokens": 13450,
+      "completion_tokens": 511,
+      "cost_usd": 0.0004365,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-017",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2747
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13835,
+      "cached_tokens": 13450,
+      "completion_tokens": 540,
+      "cost_usd": 0.000452625,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-018",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2996
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13856,
+      "cached_tokens": 13450,
+      "completion_tokens": 595,
+      "cost_usd": 0.00048275,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-019",
+      "category": "multi_item",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2319
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13815,
+      "cached_tokens": 13450,
+      "completion_tokens": 350,
+      "cost_usd": 0.000355125,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-020",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2374,
+        3512
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43294,
+      "cached_tokens": 40350,
+      "completion_tokens": 670,
+      "cost_usd": 0.0011065,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-021",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2173,
+        3112
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43605,
+      "cached_tokens": 40350,
+      "completion_tokens": 644,
+      "cost_usd": 0.001132375,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-022",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 2,
+      "reply_ms": [
+        2322,
+        2368
+      ],
+      "llm_calls": 3,
+      "prompt_tokens": 43412,
+      "cached_tokens": 40350,
+      "completion_tokens": 574,
+      "cost_usd": 0.00107325,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-023",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2866,
+        3905,
+        2712
+      ],
+      "llm_calls": 5,
+      "prompt_tokens": 73714,
+      "cached_tokens": 67250,
+      "completion_tokens": 1150,
+      "cost_usd": 0.0020555,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-024",
+      "category": "multi_turn",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 3,
+      "reply_ms": [
+        2133,
+        2572,
+        2261
+      ],
+      "llm_calls": 4,
+      "prompt_tokens": 58374,
+      "cached_tokens": 53800,
+      "completion_tokens": 993,
+      "cost_usd": 0.00160625,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-025",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3752
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28237,
+      "cached_tokens": 26900,
+      "completion_tokens": 460,
+      "cost_usd": 0.000666125,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-026",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3716
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28589,
+      "cached_tokens": 26900,
+      "completion_tokens": 519,
+      "cost_usd": 0.000739625,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-027",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4159
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28286,
+      "cached_tokens": 26900,
+      "completion_tokens": 634,
+      "cost_usd": 0.0007592499999999999,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-028",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4986
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28600,
+      "cached_tokens": 26900,
+      "completion_tokens": 781,
+      "cost_usd": 0.0008719999999999999,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-029",
+      "category": "side_question",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4250
+      ],
+      "llm_calls": 2,
+      "prompt_tokens": 28333,
+      "cached_tokens": 26900,
+      "completion_tokens": 562,
+      "cost_usd": 0.000729125,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-030",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3232
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13798,
+      "cached_tokens": 13450,
+      "completion_tokens": 427,
+      "cost_usd": 0.0003915,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-031",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4025
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13807,
+      "cached_tokens": 13450,
+      "completion_tokens": 553,
+      "cost_usd": 0.000455625,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-032",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2677
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13800,
+      "cached_tokens": 13450,
+      "completion_tokens": 162,
+      "cost_usd": 0.00025925,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-033",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2188
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13812,
+      "cached_tokens": 13450,
+      "completion_tokens": 173,
+      "cost_usd": 0.00026625,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-034",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2147
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13842,
+      "cached_tokens": 13450,
+      "completion_tokens": 263,
+      "cost_usd": 0.000315,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-035",
+      "category": "not_order",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2223
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13808,
+      "cached_tokens": 13450,
+      "completion_tokens": 265,
+      "cost_usd": 0.00031175,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-036",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        2158
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13809,
+      "cached_tokens": 13450,
+      "completion_tokens": 372,
+      "cost_usd": 0.000365375,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-037",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3394
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13843,
+      "cached_tokens": 13450,
+      "completion_tokens": 614,
+      "cost_usd": 0.000490625,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-038",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        4438
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13837,
+      "cached_tokens": 13450,
+      "completion_tokens": 766,
+      "cost_usd": 0.000565875,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-039",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3612
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13838,
+      "cached_tokens": 13450,
+      "completion_tokens": 604,
+      "cost_usd": 0.000485,
+      "set": "hidden",
+      "run": 3
+    },
+    {
+      "id": "gem-040",
+      "category": "messy",
+      "passed": true,
+      "fails": [],
+      "errors": [],
+      "turns": 1,
+      "reply_ms": [
+        3270
+      ],
+      "llm_calls": 1,
+      "prompt_tokens": 13840,
+      "cached_tokens": 13450,
+      "completion_tokens": 599,
+      "cost_usd": 0.00048275,
+      "set": "hidden",
+      "run": 3
+    }
+  ]
+}
